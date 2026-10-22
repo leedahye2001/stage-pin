@@ -36,7 +36,7 @@ export function ConcertCard({ concert, onPress }: ConcertCardProps) {
           style={styles.poster}
         />
       ) : (
-        <View style={styles.dateBox}>
+        <View style={styles.posterFallback}>
           <Text style={styles.dateMonth}>
             {new Intl.DateTimeFormat('en-US', { month: 'short' })
               .format(new Date(concert.startsAt))
@@ -68,33 +68,28 @@ export function ConcertCard({ concert, onPress }: ConcertCardProps) {
           {concert.venue.name} · {concert.venue.city}
         </Text>
       </View>
-
-      <Text style={styles.chevron}>›</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    alignItems: 'center',
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderRadius: radius.md,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
+    overflow: 'hidden',
+    width: 196,
   },
   pressed: {
     opacity: 0.72,
   },
-  dateBox: {
+  posterFallback: {
     alignItems: 'center',
     backgroundColor: colors.primarySoft,
-    borderRadius: radius.sm,
-    minWidth: 58,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
+    height: 264,
+    justifyContent: 'center',
+    width: '100%',
   },
   dateMonth: {
     color: colors.primary,
@@ -108,13 +103,13 @@ const styles = StyleSheet.create({
   },
   poster: {
     backgroundColor: colors.primarySoft,
-    borderRadius: radius.sm,
-    height: 88,
-    width: 62,
+    height: 264,
+    width: '100%',
   },
   content: {
-    flex: 1,
     gap: 3,
+    minHeight: 152,
+    padding: spacing.md,
   },
   artist: {
     color: colors.primary,
@@ -144,9 +139,5 @@ const styles = StyleSheet.create({
   meta: {
     color: colors.textMuted,
     fontSize: typography.caption,
-  },
-  chevron: {
-    color: colors.textMuted,
-    fontSize: 28,
   },
 });
