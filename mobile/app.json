@@ -26,7 +26,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-maps"
+      "expo-maps",
+      "expo-font"
     ]
   }
 }
