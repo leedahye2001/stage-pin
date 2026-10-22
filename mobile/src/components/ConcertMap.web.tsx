@@ -15,19 +15,18 @@ type ConcertMapProps = {
 };
 
 function KoreaSilhouette() {
+  // Simplified from Natural Earth 1:10m public-domain country geometry.
   return createElement(
     'svg',
     {
       'aria-hidden': true,
-      style: { height: '88%', left: '50%', opacity: 0.7, position: 'absolute', top: '4%', transform: 'translateX(-50%)', width: 230 },
+      style: { height: '88%', left: '50%', marginLeft: -115, opacity: 0.72, position: 'absolute', top: '4%', width: 230 },
       viewBox: '0 0 180 260',
     },
     createElement('path', {
-      d: 'M102 8c-14 9-23 20-25 34-2 13 7 19 1 31-5 11-18 15-20 29-2 13 8 21 4 33-3 11-17 18-14 32 2 11 14 15 17 26 4 13-5 24 3 38 7 13 18 21 29 18 9-3 8-17 17-24 8-7 21-8 24-20 4-14-10-22-9-35 1-12 14-19 12-31-2-12-17-13-22-24-5-10 3-20-2-31-4-10-17-15-19-25-3-13 9-25 1-38-5-9-16-12-19-20-4-11 5-21 1-31-4-10-17-13-26-7z',
-      fill: '#CBC5DD',
+      d: 'M109 114L136 154L135 181L140 182L136 195L125 207L115 202L116 206L109 208L112 207L111 212L101 210L102 206L97 209L93 208L89 210L94 212L91 218L88 211L84 213L88 219L84 219L86 220L84 222L78 220L84 216L81 214L72 223L69 219L63 226L63 219L57 219L57 214L62 219L59 216L66 218L59 215L67 213L64 211L59 213L61 208L58 210L59 208L56 205L61 207L58 202L62 194L67 194L62 191L71 185L63 183L72 180L67 182L62 179L65 178L62 171L65 170L62 170L62 163L61 166L59 163L57 167L53 162L58 157L59 161L59 156L62 160L65 159L63 155L66 158L70 157L71 162L76 156L73 158L72 154L69 155L72 151L67 153L66 149L72 149L65 146L63 136L69 139L67 132L77 123L101 122L109 114ZM74 248L65 254L57 255L54 252L62 246L74 248ZM60 221L53 224L56 219L60 221ZM102 213L101 216L97 215L96 211L98 210L102 213ZM119 211L115 216L115 212L112 211L118 207L119 211ZM63 140L59 140L60 135L63 140ZM109 114L101 122L77 123L65 136L60 133L53 137L51 133L40 129L43 132L34 138L38 133L33 135L32 132L24 132L32 128L17 127L25 124L22 121L28 113L41 114L28 109L35 98L36 94L34 93L36 89L28 89L19 84L16 89L14 83L8 80L12 77L9 75L22 65L50 55L63 43L67 33L73 31L78 38L104 42L108 37L101 26L124 25L134 14L143 14L147 0L153 0L167 18L160 18L142 35L141 40L145 42L143 56L131 60L127 66L116 70L116 73L108 77L100 77L88 85L89 96L87 93L84 94L87 95L85 99L94 101L109 114Z',
+      fill: '#C8C3D8',
     }),
-    createElement('circle', { cx: 54, cy: 232, fill: '#CBC5DD', r: 7 }),
-    createElement('circle', { cx: 39, cy: 243, fill: '#CBC5DD', r: 3 }),
   );
 }
 
@@ -72,27 +71,31 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
         )
       ) : (
         <>
+          <View style={[styles.land, styles.landLeft]} />
+          <View style={[styles.land, styles.landRight]} />
           <KoreaSilhouette />
           <Text style={styles.mapLabel}>MY STAGE TRAIL</Text>
 
-          {venues.slice(0, 12).map((concert, index) => {
-            const left = 42 + ((concert.venue.longitude - 126) / 3.5) * 16 + (index % 3) * 0.5;
-            const top = 10 + ((38.6 - concert.venue.latitude) / 5.3) * 78 + (index % 2);
+          <View pointerEvents="box-none" style={styles.markerLayer}>
+            {venues.slice(0, 12).map((concert, index) => {
+              const left = ((concert.venue.longitude - 124) / 7.2) * 100 + (index % 3) * 0.5;
+              const top = ((43 - concert.venue.latitude) / 10) * 100 + (index % 2);
 
-            return (
-              <Pressable
-                accessibilityLabel={`${concert.venue.city} 공연 보기`}
-                key={concert.id}
-                onPress={() => onSelect(concert.id)}
-                style={[styles.marker, { left: `${left}%`, top: `${top}%` }]}
-              >
-                <View style={styles.pin}>
-                  <View style={styles.pinCenter} />
-                </View>
-                <Text numberOfLines={1} style={styles.city}>{concert.venue.name}</Text>
-              </Pressable>
-            );
-          })}
+              return (
+                <Pressable
+                  accessibilityLabel={`${concert.venue.city} 공연 보기`}
+                  key={concert.id}
+                  onPress={() => onSelect(concert.id)}
+                  style={[styles.marker, { left: `${left}%`, top: `${top}%` }]}
+                >
+                  <View style={styles.pin}>
+                    <View style={styles.pinCenter} />
+                  </View>
+                  <Text numberOfLines={1} style={styles.city}>{concert.venue.name}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </>
       )}
 
@@ -123,6 +126,25 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
+  land: {
+    backgroundColor: '#D7D1EA',
+    borderRadius: 999,
+    opacity: 0.8,
+    position: 'absolute',
+    transform: [{ rotate: '-12deg' }],
+  },
+  landLeft: {
+    height: 170,
+    left: -35,
+    top: 80,
+    width: 190,
+  },
+  landRight: {
+    height: 220,
+    right: -22,
+    top: 34,
+    width: 245,
+  },
   mapLabel: {
     color: '#8B849F',
     fontSize: 11,
@@ -135,6 +157,14 @@ const styles = StyleSheet.create({
   marker: {
     alignItems: 'center',
     position: 'absolute',
+  },
+  markerLayer: {
+    height: '88%',
+    left: '50%',
+    marginLeft: -115,
+    position: 'absolute',
+    top: '4%',
+    width: 230,
   },
   pin: {
     alignItems: 'center',

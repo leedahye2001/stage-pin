@@ -49,6 +49,9 @@ set. Register `http://localhost:8081` and `https://stage-pin.vercel.app` as
 JavaScript SDK domains in Kakao Developers. Without a key, the web build falls
 back to OpenStreetMap automatically.
 
+The decorative Korean peninsula silhouette is derived from Natural Earth 1:10m
+public-domain country geometry and simplified for the StagePin map card.
+
 ### iOS app
 
 Install Xcode and an iOS Simulator, then run the backend and:
