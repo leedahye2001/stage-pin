@@ -15,20 +15,25 @@ type ConcertMapProps = {
 };
 
 function KoreaSilhouette() {
-  // Simplified from Natural Earth 1:10m public-domain country geometry.
+  // Simplified from Natural Earth 1:10m public-domain South Korea geometry.
   return createElement(
     'svg',
     {
       'aria-hidden': true,
-      style: { height: '88%', left: '50%', marginLeft: -115, opacity: 0.72, position: 'absolute', top: '4%', width: 230 },
-      viewBox: '0 0 180 260',
+      style: { height: 268, left: '50%', marginLeft: -105, opacity: 0.78, position: 'absolute', top: 16, width: 210 },
+      viewBox: '0 0 180 230',
     },
     createElement('path', {
-      d: 'M109 114L136 154L135 181L140 182L136 195L125 207L115 202L116 206L109 208L112 207L111 212L101 210L102 206L97 209L93 208L89 210L94 212L91 218L88 211L84 213L88 219L84 219L86 220L84 222L78 220L84 216L81 214L72 223L69 219L63 226L63 219L57 219L57 214L62 219L59 216L66 218L59 215L67 213L64 211L59 213L61 208L58 210L59 208L56 205L61 207L58 202L62 194L67 194L62 191L71 185L63 183L72 180L67 182L62 179L65 178L62 171L65 170L62 170L62 163L61 166L59 163L57 167L53 162L58 157L59 161L59 156L62 160L65 159L63 155L66 158L70 157L71 162L76 156L73 158L72 154L69 155L72 151L67 153L66 149L72 149L65 146L63 136L69 139L67 132L77 123L101 122L109 114ZM74 248L65 254L57 255L54 252L62 246L74 248ZM60 221L53 224L56 219L60 221ZM102 213L101 216L97 215L96 211L98 210L102 213ZM119 211L115 216L115 212L112 211L118 207L119 211ZM63 140L59 140L60 135L63 140ZM109 114L101 122L77 123L65 136L60 133L53 137L51 133L40 129L43 132L34 138L38 133L33 135L32 132L24 132L32 128L17 127L25 124L22 121L28 113L41 114L28 109L35 98L36 94L34 93L36 89L28 89L19 84L16 89L14 83L8 80L12 77L9 75L22 65L50 55L63 43L67 33L73 31L78 38L104 42L108 37L101 26L124 25L134 14L143 14L147 0L153 0L167 18L160 18L142 35L141 40L145 42L143 56L131 60L127 66L116 70L116 73L108 77L100 77L88 85L89 96L87 93L84 94L87 95L85 99L94 101L109 114Z',
+      d: 'M115 3L127 22L147 41L163 66L165 79L161 107L164 109L169 106L170 108L164 129L161 128L160 135L144 147L142 144L131 145L126 141L128 147L121 145L116 149L121 147L119 156L114 151L102 152L102 146L94 151L86 150L80 153L84 157L89 155L87 160L82 161L83 165L79 163L77 154L70 156L77 166L70 166L74 168L69 172L60 168L64 164L63 166L65 166L66 161L70 161L65 159L54 165L49 173L45 171L44 166L42 172L32 178L30 171L33 167L22 166L22 159L30 166L26 161L37 164L25 159L39 157L35 156L35 153L32 158L26 158L29 150L23 152L26 149L20 144L24 143L28 149L29 145L23 140L30 135L31 128L40 128L30 123L39 117L44 119L41 115L47 113L37 113L32 110L48 106L40 109L36 104L31 104L36 102L32 96L35 95L31 92L37 90L31 91L31 79L28 84L24 79L22 85L21 80L17 82L19 80L15 81L15 78L19 77L18 73L21 74L23 70L22 77L25 77L24 75L28 72L25 69L29 68L31 75L32 71L35 73L32 66L37 69L37 72L40 69L45 70L47 79L48 74L56 69L50 71L46 68L50 68L49 65L43 67L48 61L40 63L41 60L39 58L48 58L37 53L38 48L33 38L39 38L39 41L43 43L40 41L39 31L58 17L101 16L109 12L112 5L115 3ZM52 211L47 217L36 220L21 222L16 218L23 211L31 209L45 207L52 211Z',
       fill: '#C8C3D8',
+      stroke: '#B8B0D1',
+      strokeLinejoin: 'round',
+      strokeWidth: 1,
     }),
   );
 }
+
+const clampPercent = (value: number) => Math.min(100, Math.max(0, value));
 
 export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
   const [showRealMap, setShowRealMap] = useState(false);
@@ -74,12 +79,14 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
           <View style={[styles.land, styles.landLeft]} />
           <View style={[styles.land, styles.landRight]} />
           <KoreaSilhouette />
-          <Text style={styles.mapLabel}>MY STAGE TRAIL</Text>
+          <Ionicons color="#A59DBD" name="sparkles" size={13} style={styles.sparkleLeft} />
+          <Text style={styles.mapLabel}>나의 공연 발자국</Text>
+          <Ionicons color="#A59DBD" name="sparkles" size={11} style={styles.sparkleRight} />
 
           <View pointerEvents="box-none" style={styles.markerLayer}>
-            {venues.slice(0, 12).map((concert, index) => {
-              const left = ((concert.venue.longitude - 124) / 7.2) * 100 + (index % 3) * 0.5;
-              const top = ((43 - concert.venue.latitude) / 10) * 100 + (index % 2);
+            {venues.slice(0, 12).map((concert) => {
+              const left = clampPercent(((concert.venue.longitude - 125.8) / 4) * 100);
+              const top = clampPercent(((38.7 - concert.venue.latitude) / 5.7) * 100);
 
               return (
                 <Pressable
@@ -89,7 +96,7 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
                   style={[styles.marker, { left: `${left}%`, top: `${top}%` }]}
                 >
                   <View style={styles.pin}>
-                    <View style={styles.pinCenter} />
+                    <Ionicons color={colors.white} name="musical-note" size={12} />
                   </View>
                   <Text numberOfLines={1} style={styles.city}>{concert.venue.name}</Text>
                 </Pressable>
@@ -147,24 +154,35 @@ const styles = StyleSheet.create({
   },
   mapLabel: {
     color: '#8B849F',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '900',
-    left: spacing.md,
-    letterSpacing: 1.5,
+    left: 34,
+    letterSpacing: -0.2,
     position: 'absolute',
     top: spacing.md,
+  },
+  sparkleLeft: {
+    left: spacing.md,
+    position: 'absolute',
+    top: 17,
+  },
+  sparkleRight: {
+    left: 136,
+    position: 'absolute',
+    top: 13,
   },
   marker: {
     alignItems: 'center',
     position: 'absolute',
+    transform: [{ translateX: -14 }, { translateY: -14 }],
   },
   markerLayer: {
-    height: '88%',
+    height: 268,
     left: '50%',
-    marginLeft: -115,
+    marginLeft: -105,
     position: 'absolute',
-    top: '4%',
-    width: 230,
+    top: 16,
+    width: 210,
   },
   pin: {
     alignItems: 'center',
@@ -173,16 +191,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 3,
     boxShadow: '0 4px 10px rgba(71, 50, 168, 0.35)',
-    height: 24,
+    height: 28,
     justifyContent: 'center',
-    width: 24,
-  },
-  pinCenter: {
-    backgroundColor: colors.white,
-    borderRadius: 999,
-    height: 5,
-    opacity: 0.9,
-    width: 5,
+    width: 28,
   },
   city: {
     backgroundColor: colors.surface,
