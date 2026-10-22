@@ -17,12 +17,15 @@ services:
     build:
       context: ../backend
     environment:
-      DB_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-stagepin}
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-stagepin}
       DB_USERNAME: ${POSTGRES_USER:-stagepin}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-stagepin}
       KOPIS_API_KEY: ${KOPIS_API_KEY:-}
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      APP_CORS_ALLOWED_ORIGIN_PATTERNS: http://localhost:*,https://*.vercel.app
     depends_on:
       database:
         condition: service_healthy

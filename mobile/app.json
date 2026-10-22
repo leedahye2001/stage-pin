@@ -20,7 +20,8 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/stagepin-favicon.png"
+      "favicon": "./assets/stagepin-favicon.png",
+      "output": "single"
     },
     "plugins": [
       "expo-router",

@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: stage-pin-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: stage-pin-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: stage-pin-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: stage-pin-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: stage-pin-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: stage-pin-db
+          property: password
+      - key: KOPIS_API_KEY
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGIN_PATTERNS
+        value: https://*.vercel.app
+
+databases:
+  - name: stage-pin-db
+    plan: free
+    region: singapore
+    databaseName: stagepin
+    user: stagepin

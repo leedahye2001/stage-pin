@@ -2,6 +2,7 @@ package com.leedahye.stagepin.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -28,9 +29,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    CorsConfigurationSource corsConfigurationSource(
+            @Value("${APP_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*}") String allowedOriginPatterns) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:8081", "http://localhost:19006"));
+        configuration.setAllowedOriginPatterns(List.of(allowedOriginPatterns.split(",")));
         configuration.setAllowedMethods(List.of("GET"));
         configuration.setAllowedHeaders(List.of("*"));
 
