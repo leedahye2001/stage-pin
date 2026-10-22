@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getConcert, type ConcertGenre, type ScheduleType } from '@/api/concerts';
+import { getConcert, type ConcertGenre, type FanCategory, type ScheduleType } from '@/api/concerts';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const scheduleLabels: Record<ScheduleType, string> = {
@@ -22,6 +22,13 @@ const genreLabels: Record<ConcertGenre, string> = {
   MUSICAL: '뮤지컬',
   PLAY: '연극',
   CLASSICAL: '클래식',
+};
+
+const fanCategoryLabels: Record<FanCategory, string> = {
+  IDOL: '아이돌',
+  SOLO: '솔로',
+  BAND: '밴드',
+  OTHER: '기타',
 };
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -74,7 +81,11 @@ export default function ConcertDetailScreen() {
       <Text style={styles.artist}>{artistNames}</Text>
       <Text style={styles.title}>{concert.title}</Text>
       <Text style={styles.date}>{concertDate}</Text>
-      {isKopis ? <Text style={styles.sourceBadge}>KOPIS · {genreLabels[concert.genre]}</Text> : null}
+      {isKopis ? (
+        <Text style={styles.sourceBadge}>
+          KOPIS · {genreLabels[concert.genre]} · {fanCategoryLabels[concert.fanCategory]}
+        </Text>
+      ) : null}
 
       <View style={styles.venueCard}>
         <Text style={styles.cardLabel}>VENUE</Text>

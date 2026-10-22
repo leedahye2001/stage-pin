@@ -4,27 +4,29 @@ import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getConcerts, type ConcertGenre } from '@/api/concerts';
+import { getConcerts, type FanCategory } from '@/api/concerts';
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
-const genres: { value: ConcertGenre; label: string }[] = [
-  { value: 'POPULAR_MUSIC', label: '대중음악' },
-  { value: 'MUSICAL', label: '뮤지컬' },
-  { value: 'PLAY', label: '연극' },
-  { value: 'CLASSICAL', label: '클래식' },
+type FanFilter = FanCategory | 'ALL';
+
+const fanFilters: { value: FanFilter; label: string }[] = [
+  { value: 'ALL', label: '전체' },
+  { value: 'IDOL', label: '아이돌' },
+  { value: 'SOLO', label: '솔로' },
+  { value: 'BAND', label: '밴드' },
 ];
 
 export default function HomeScreen() {
-  const [genre, setGenre] = useState<ConcertGenre>('POPULAR_MUSIC');
+  const [fanFilter, setFanFilter] = useState<FanFilter>('ALL');
   const concertsQuery = useQuery({
-    queryKey: ['concerts', genre],
-    queryFn: () => getConcerts(genre),
+    queryKey: ['concerts', 'POPULAR_MUSIC'],
+    queryFn: () => getConcerts('POPULAR_MUSIC'),
   });
 
   const openConcert = (id: string) => {
-    router.push({ pathname: '/concerts/[id]', params: { id, genre } });
+    router.push({ pathname: '/concerts/[id]', params: { id, genre: 'POPULAR_MUSIC' } });
   };
 
   if (concertsQuery.isPending) {
@@ -48,11 +50,15 @@ export default function HomeScreen() {
     );
   }
 
+  const concerts = fanFilter === 'ALL'
+    ? concertsQuery.data
+    : concertsQuery.data.filter((concert) => concert.fanCategory === fanFilter);
+
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <FlatList
         contentContainerStyle={styles.content}
-        data={concertsQuery.data}
+        data={concerts}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         keyExtractor={(concert) => concert.id}
         ListFooterComponent={
@@ -73,14 +79,14 @@ export default function HomeScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
             >
-              {genres.map((item) => {
-                const selected = item.value === genre;
+              {fanFilters.map((item) => {
+                const selected = item.value === fanFilter;
                 return (
                   <Pressable
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
                     key={item.value}
-                    onPress={() => setGenre(item.value)}
+                    onPress={() => setFanFilter(item.value)}
                     style={[styles.genreChip, selected && styles.genreChipSelected]}
                   >
                     <Text style={[styles.genreLabel, selected && styles.genreLabelSelected]}>
@@ -91,14 +97,17 @@ export default function HomeScreen() {
               })}
             </ScrollView>
 
-            <ConcertMap concerts={concertsQuery.data} onSelect={openConcert} />
+            <Text style={styles.classificationNote}>KOPIS 공연명·출연진 기준 자동 분류</Text>
+
+            <ConcertMap concerts={concerts} onSelect={openConcert} />
 
             <View style={styles.sectionHeading}>
               <Text style={styles.sectionTitle}>예정 공연</Text>
-              <Text style={styles.count}>{concertsQuery.data.length}</Text>
+              <Text style={styles.count}>{concerts.length}</Text>
             </View>
           </View>
         }
+        ListEmptyComponent={<Text style={styles.empty}>해당 분류의 예정 공연이 아직 없어요.</Text>}
         renderItem={({ item }) => <ConcertCard concert={item} onPress={() => openConcert(item.id)} />}
       />
     </SafeAreaView>
@@ -158,6 +167,16 @@ const styles = StyleSheet.create({
   },
   genreLabelSelected: {
     color: colors.white,
+  },
+  classificationNote: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginTop: -spacing.md,
+  },
+  empty: {
+    color: colors.textMuted,
+    paddingVertical: spacing.xl,
+    textAlign: 'center',
   },
   sectionHeading: {
     alignItems: 'center',

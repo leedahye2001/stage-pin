@@ -60,6 +60,7 @@ class KopisConcertClientTest {
 
         assertThat(concert.source()).isEqualTo("KOPIS");
         assertThat(concert.genre()).isEqualTo(ConcertGenre.POPULAR_MUSIC);
+        assertThat(concert.fanCategory()).isEqualTo(FanCategory.BAND);
         assertThat(concert.artists()).extracting(ConcertResponse.ArtistSummary::name)
                 .containsExactly("DAY6", "LUCY");
         assertThat(concert.venue().countryCode()).isEqualTo("KR");

@@ -8,6 +8,7 @@ export type ConcertStatus =
   | 'CANCELLED';
 
 export type ConcertGenre = 'POPULAR_MUSIC' | 'MUSICAL' | 'PLAY' | 'CLASSICAL';
+export type FanCategory = 'IDOL' | 'SOLO' | 'BAND' | 'OTHER';
 
 export type ScheduleType =
   | 'FAN_VERIFICATION_OPEN'
@@ -58,6 +59,7 @@ export type Concert = {
   officialUrl: string;
   source: string;
   genre: ConcertGenre;
+  fanCategory: FanCategory;
   verifiedAt: string;
   schedules: ConcertSchedule[];
 };

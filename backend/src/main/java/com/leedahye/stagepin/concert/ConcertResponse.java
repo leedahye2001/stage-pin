@@ -18,6 +18,7 @@ public record ConcertResponse(
         String officialUrl,
         String source,
         ConcertGenre genre,
+        FanCategory fanCategory,
         Instant verifiedAt,
         List<ScheduleSummary> schedules) {
 

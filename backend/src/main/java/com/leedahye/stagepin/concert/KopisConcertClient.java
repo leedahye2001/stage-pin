@@ -150,6 +150,7 @@ public class KopisConcertClient {
                 "https://www.kopis.or.kr/por/db/pblprfr/pblprfrView.do?menuId=MNU_00020&mt20Id=" + kopisId,
                 "KOPIS",
                 genre,
+                FanCategoryClassifier.classify(requiredText(detail, "prfnm"), artists),
                 verifiedAt,
                 List.of());
     }

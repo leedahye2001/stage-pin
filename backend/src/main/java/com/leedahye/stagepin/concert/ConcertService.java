@@ -63,13 +63,14 @@ public class ConcertService {
 
     private ConcertResponse toResponse(Concert concert) {
         var venue = concert.getVenue();
+        var artists = concert.getArtists().stream()
+                .map(artist -> new ArtistSummary(artist.getId(), artist.getName(), artist.getImageUrl()))
+                .sorted(Comparator.comparing(ArtistSummary::name))
+                .toList();
         return new ConcertResponse(
                 concert.getId(),
                 concert.getTitle(),
-                concert.getArtists().stream()
-                        .map(artist -> new ArtistSummary(artist.getId(), artist.getName(), artist.getImageUrl()))
-                        .sorted(Comparator.comparing(ArtistSummary::name))
-                        .toList(),
+                artists,
                 new VenueSummary(
                         venue.getId(),
                         venue.getName(),
@@ -86,6 +87,7 @@ public class ConcertService {
                 concert.getOfficialUrl(),
                 concert.getSource(),
                 ConcertGenre.POPULAR_MUSIC,
+                FanCategoryClassifier.classify(concert.getTitle(), artists),
                 concert.getVerifiedAt(),
                 concert.getSchedules().stream()
                         .map(schedule -> new ScheduleSummary(
