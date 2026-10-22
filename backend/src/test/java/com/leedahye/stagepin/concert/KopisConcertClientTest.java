@@ -40,6 +40,7 @@ class KopisConcertClientTest {
                   <prfpdfrom>2026.11.12</prfpdfrom>
                   <prfpdto>2026.11.13</prfpdto>
                   <prfcast>DAY6, LUCY</prfcast>
+                  <poster>http://www.kopis.or.kr/upload/pfmPoster/day6.jpg</poster>
                   <area>서울특별시</area>
                   <prfstate>공연예정</prfstate>
                 </db></dbs>
@@ -68,7 +69,7 @@ class KopisConcertClientTest {
         assertThat(concert.venue().latitude()).isEqualTo(37.52112);
         assertThat(concert.startsAt()).isEqualTo("2026-11-12T03:00:00Z");
         assertThat(concert.schedules()).isEmpty();
-        assertThat(concert.posterUrl()).isNull();
+        assertThat(concert.posterUrl()).isEqualTo("https://kopis.or.kr/upload/pfmPoster/day6.jpg");
     }
 
     @Test
@@ -93,5 +94,24 @@ class KopisConcertClientTest {
         assertThat(concerts.getFirst().venue().latitude()).isEqualTo(37.5665);
         assertThat(concerts.getFirst().venue().longitude()).isEqualTo(126.9780);
         assertThat(concerts.getFirst().posterUrl()).isEqualTo("https://example.com/day6.jpg");
+    }
+
+    @Test
+    void upgradesKopisSearchPosterToHttps() {
+        List<ConcertResponse> concerts = client.parseSearchConcerts("""
+                <dbs><db>
+                  <mt20id>PF292781</mt20id>
+                  <prfnm>DAY6 Tour</prfnm>
+                  <prfpdfrom>2026.07.03</prfpdfrom>
+                  <prfpdto>2026.07.05</prfpdto>
+                  <fcltynm>올림픽공원</fcltynm>
+                  <poster>http://www.kopis.or.kr/upload/pfmPoster/day6.jpg</poster>
+                  <area>서울특별시</area>
+                  <prfstate>공연완료</prfstate>
+                </db></dbs>
+                """, ConcertGenre.POPULAR_MUSIC, Instant.parse("2026-10-22T00:00:00Z"));
+
+        assertThat(concerts.getFirst().posterUrl())
+                .isEqualTo("https://kopis.or.kr/upload/pfmPoster/day6.jpg");
     }
 }

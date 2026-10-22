@@ -151,7 +151,7 @@ public class KopisConcertClient {
                     date(item, "prfpdfrom"),
                     date(item, "prfpdto"),
                     status(text(item, "prfstate")),
-                    nullableText(item, "poster"),
+                    secureUrl(nullableText(item, "poster")),
                     "https://www.kopis.or.kr/por/db/pblprfr/pblprfrView.do?menuId=MNU_00020&mt20Id=" + kopisId,
                     "KOPIS",
                     genre,
@@ -264,7 +264,7 @@ public class KopisConcertClient {
                 date(detail, "prfpdfrom"),
                 date(detail, "prfpdto"),
                 status(text(detail, "prfstate")),
-                null,
+                secureUrl(nullableText(detail, "poster")),
                 "https://www.kopis.or.kr/por/db/pblprfr/pblprfrView.do?menuId=MNU_00020&mt20Id=" + kopisId,
                 "KOPIS",
                 genre,
@@ -326,6 +326,13 @@ public class KopisConcertClient {
     private String nullableText(Element parent, String tagName) {
         String value = text(parent, tagName);
         return value.isBlank() ? null : value;
+    }
+
+    private String secureUrl(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replaceFirst("^http://(www\\.)?kopis\\.or\\.kr", "https://kopis.or.kr");
     }
 
     private String text(Element parent, String tagName) {
