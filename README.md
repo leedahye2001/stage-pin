@@ -44,10 +44,11 @@ For an Android emulator, set `EXPO_PUBLIC_API_URL=http://10.0.2.2:8080`. A
 physical device must use the development machine's LAN address. `expo-maps`
 contains native code, so use an Expo development build for full map testing.
 
-The web build uses Kakao Maps when `EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY` is
-set. Register `http://localhost:8081` and `https://stage-pin.vercel.app` as
-JavaScript SDK domains in Kakao Developers. Without a key, the web build falls
-back to OpenStreetMap automatically.
+The concert-detail map uses Kakao Maps on web and inside the native app when
+`EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY` is set. Register
+`http://localhost:8081` and `https://stage-pin.vercel.app` as JavaScript SDK
+domains in Kakao Developers. Without a key, the detail page provides a direct
+link that opens the venue in Kakao Maps instead of rendering a broken map.
 
 The decorative Korean peninsula silhouette is derived from Natural Earth 1:10m
 public-domain country geometry and simplified for the StagePin map card.
