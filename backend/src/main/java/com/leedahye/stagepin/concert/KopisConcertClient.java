@@ -10,6 +10,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -58,7 +59,7 @@ public class KopisConcertClient {
         }
 
         LocalDate startDate = LocalDate.ofInstant(from, SEOUL);
-        String listXml = restClient.get()
+        byte[] listResponse = restClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/pblprfr")
                         .queryParam("service", apiKey)
                         .queryParam("stdate", startDate.format(REQUEST_DATE))
@@ -68,10 +69,10 @@ public class KopisConcertClient {
                         .queryParam("shcate", "CCCD")
                         .build())
                 .retrieve()
-                .body(String.class);
+                .body(byte[].class);
 
         List<ConcertResponse> concerts = new ArrayList<>();
-        for (String kopisId : parseConcertIds(listXml)) {
+        for (String kopisId : parseConcertIds(decode(listResponse))) {
             try {
                 String detailXml = get("/pblprfr/" + kopisId);
                 String facilityId = text(firstDb(detailXml), "mt10id");
@@ -84,6 +85,7 @@ public class KopisConcertClient {
                 break;
             }
         }
+        concerts.sort(Comparator.comparing(ConcertResponse::startsAt));
 
         cachedConcerts = List.copyOf(concerts);
         cacheExpiresAt = Instant.now().plus(CACHE_TTL);
@@ -146,14 +148,18 @@ public class KopisConcertClient {
     }
 
     private String get(String path) {
-        String response = restClient.get()
+        byte[] response = restClient.get()
                 .uri(uriBuilder -> uriBuilder.path(path).queryParam("service", apiKey).build())
                 .retrieve()
-                .body(String.class);
-        if (response == null || response.isBlank()) {
+                .body(byte[].class);
+        return decode(response);
+    }
+
+    String decode(byte[] response) {
+        if (response == null || response.length == 0) {
             throw new IllegalStateException("KOPIS returned an empty response");
         }
-        return response;
+        return new String(response, StandardCharsets.UTF_8);
     }
 
     private Element firstDb(String xml) {

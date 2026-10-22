@@ -51,6 +51,7 @@ export default function ConcertDetailScreen() {
   }
 
   const concert = concertQuery.data;
+  const artistNames = concert.artists.map((artist) => artist.name).join(', ') || '출연진 미등록';
   const isKopis = concert.source === 'KOPIS';
   const concertDate = isKopis
     ? new Intl.DateTimeFormat('ko-KR', {
@@ -63,7 +64,7 @@ export default function ConcertDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Text style={styles.artist}>{concert.artists.map((artist) => artist.name).join(', ')}</Text>
+      <Text style={styles.artist}>{artistNames}</Text>
       <Text style={styles.title}>{concert.title}</Text>
       <Text style={styles.date}>{concertDate}</Text>
       {isKopis ? <Text style={styles.sourceBadge}>KOPIS · 대중음악</Text> : null}

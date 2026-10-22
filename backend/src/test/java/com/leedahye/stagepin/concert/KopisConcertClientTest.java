@@ -2,12 +2,20 @@ package com.leedahye.stagepin.concert;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
 class KopisConcertClientTest {
     private final KopisConcertClient client = new KopisConcertClient("test-key");
+
+    @Test
+    void decodesKopisResponseAsUtf8() {
+        byte[] response = "소란 겨울 콘서트".getBytes(StandardCharsets.UTF_8);
+
+        assertThat(client.decode(response)).isEqualTo("소란 겨울 콘서트");
+    }
 
     @Test
     void readsConcertIdsFromListResponse() {
