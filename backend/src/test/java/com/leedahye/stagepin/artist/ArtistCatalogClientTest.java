@@ -28,6 +28,19 @@ class ArtistCatalogClientTest {
     }
 
     @Test
+    void ranksKoreanAliasMatchAheadOfSameNamedForeignArtist() {
+        var artists = client.parseMusicBrainz(json("""
+                {"artists":[
+                  {"id":"foreign","name":"Young K","disambiguation":"US rapper","aliases":[]},
+                  {"id":"day6","name":"강영현","country":"KR","disambiguation":"DAY6",
+                   "aliases":[{"name":"영케이"},{"name":"Young K"}]}
+                ]}
+                """));
+
+        assertThat(artists.get(1).rank("youngk")).isGreaterThan(artists.get(0).rank("youngk"));
+    }
+
+    @Test
     void mapsWikidataCommonsFilenameByMusicBrainzId() {
         var images = client.parseWikidataImages(json("""
                 {"results":{"bindings":[{

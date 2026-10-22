@@ -1,6 +1,8 @@
 package com.leedahye.stagepin.artist;
 
+import java.net.URI;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -14,12 +16,15 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class ArtistCatalogClient {
+    private static final Logger log = LoggerFactory.getLogger(ArtistCatalogClient.class);
     private static final Duration CACHE_TTL = Duration.ofHours(6);
     private static final int RESULT_LIMIT = 5;
     private static final String USER_AGENT = "StagePin/1.0 (https://github.com/leedahye2001/stage-pin)";
@@ -56,7 +61,7 @@ public class ArtistCatalogClient {
                 candidates = merge(candidates, searchMusicBrainz(spaced));
             }
         }
-        candidates.sort((left, right) -> Boolean.compare(right.matches(keyword), left.matches(keyword)));
+        candidates.sort((left, right) -> Integer.compare(right.rank(keyword), left.rank(keyword)));
         candidates = candidates.stream().limit(RESULT_LIMIT).toList();
 
         Map<String, CommonsImage> images = loadImages(candidates);
@@ -126,15 +131,15 @@ public class ArtistCatalogClient {
             String sparql = "SELECT ?mbid ?image WHERE { VALUES ?mbid {" + values
                     + " } ?item wdt:P434 ?mbid. OPTIONAL { ?item wdt:P18 ?image. } }";
             byte[] response = wikidata.get()
-                    .uri(uriBuilder -> uriBuilder.path("/sparql")
-                            .queryParam("query", sparql)
-                            .queryParam("format", "json")
-                            .build())
+                    .uri(URI.create("https://query.wikidata.org/sparql?query="
+                            + URLEncoder.encode(sparql, StandardCharsets.UTF_8)
+                            + "&format=json"))
                     .retrieve()
                     .body(byte[].class);
             Map<String, String> filenames = parseWikidataImages(response);
             return loadCommonsMetadata(filenames);
         } catch (RuntimeException exception) {
+            log.warn("Unable to enrich artist search with Wikimedia images", exception);
             return Map.of();
         }
     }
@@ -255,6 +260,17 @@ public class ArtistCatalogClient {
         boolean matches(String query) {
             String normalizedQuery = normalize(query);
             return aliases.stream().map(Candidate::normalize).anyMatch(normalizedQuery::equals);
+        }
+
+        int rank(String query) {
+            int score = matches(query) ? 100 : 0;
+            if (description.equals("KR") || description.endsWith(" · KR")) {
+                score += 20;
+            }
+            if (aliases.size() > 1) {
+                score += 5;
+            }
+            return score;
         }
 
         ArtistSearchResponse toResponse(CommonsImage image, String query) {
