@@ -17,7 +17,8 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 });
 
 export function ConcertCard({ concert, onPress }: ConcertCardProps) {
-  const artistNames = concert.artists.map((artist) => artist.name).join(', ') || '출연진 미등록';
+  const artistNames = concert.artists.map((artist) => artist.name).join(', ')
+    || (concert.status === 'COMPLETED' ? '공연 완료' : '출연진 미등록');
   const isKopis = concert.source === 'KOPIS';
 
   return (
