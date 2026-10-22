@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Concert } from '@/api/concerts';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -28,14 +28,23 @@ export function ConcertCard({ concert, onPress }: ConcertCardProps) {
       onPress={onPress}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
-      <View style={styles.dateBox}>
-        <Text style={styles.dateMonth}>
-          {new Intl.DateTimeFormat('en-US', { month: 'short' })
-            .format(new Date(concert.startsAt))
-            .toUpperCase()}
-        </Text>
-        <Text style={styles.dateDay}>{new Date(concert.startsAt).getDate()}</Text>
-      </View>
+      {concert.posterUrl ? (
+        <Image
+          accessibilityIgnoresInvertColors
+          accessibilityLabel={`${concert.title} 포스터`}
+          source={{ uri: concert.posterUrl }}
+          style={styles.poster}
+        />
+      ) : (
+        <View style={styles.dateBox}>
+          <Text style={styles.dateMonth}>
+            {new Intl.DateTimeFormat('en-US', { month: 'short' })
+              .format(new Date(concert.startsAt))
+              .toUpperCase()}
+          </Text>
+          <Text style={styles.dateDay}>{new Date(concert.startsAt).getDate()}</Text>
+        </View>
+      )}
 
       <View style={styles.content}>
         <View style={styles.artistRow}>
@@ -96,6 +105,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 24,
     fontWeight: '800',
+  },
+  poster: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.sm,
+    height: 88,
+    width: 62,
   },
   content: {
     flex: 1,

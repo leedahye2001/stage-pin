@@ -26,6 +26,18 @@ export type ArtistSummary = {
   imageUrl: string | null;
 };
 
+export type ArtistSearchResult = {
+  id: string;
+  name: string;
+  searchName: string;
+  description: string;
+  aliases: string[];
+  imageUrl: string | null;
+  imagePageUrl: string | null;
+  imageAttribution: string | null;
+  imageLicense: string | null;
+};
+
 export type VenueSummary = {
   id: string;
   name: string;
@@ -91,6 +103,10 @@ async function request<T>(path: string): Promise<T> {
 export function getConcerts(genre: ConcertGenre, query?: string): Promise<Concert[]> {
   const search = query ? `&query=${encodeURIComponent(query)}` : '';
   return request(`/api/v1/concerts?genre=${genre}${search}`);
+}
+
+export function getArtists(query: string): Promise<ArtistSearchResult[]> {
+  return request(`/api/v1/artists?query=${encodeURIComponent(query)}`);
 }
 
 export function getConcert(id: string, genre: ConcertGenre): Promise<Concert> {

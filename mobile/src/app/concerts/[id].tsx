@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getConcert, type ConcertGenre, type FanCategory, type ScheduleType } from '@/api/concerts';
@@ -78,6 +78,15 @@ export default function ConcertDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
+      {concert.posterUrl ? (
+        <Image
+          accessibilityIgnoresInvertColors
+          accessibilityLabel={`${concert.title} 포스터`}
+          resizeMode="cover"
+          source={{ uri: concert.posterUrl }}
+          style={styles.poster}
+        />
+      ) : null}
       <Text style={styles.artist}>{artistNames}</Text>
       <Text style={styles.title}>{concert.title}</Text>
       <Text style={styles.date}>{concertDate}</Text>
@@ -145,6 +154,13 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: typography.body,
     fontWeight: '800',
+  },
+  poster: {
+    alignSelf: 'center',
+    aspectRatio: 2 / 3,
+    borderRadius: radius.md,
+    marginBottom: spacing.lg,
+    width: '62%',
   },
   title: {
     color: colors.text,
