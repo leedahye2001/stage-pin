@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 import { CircleMarker, MapContainer, TileLayer, Tooltip } from 'react-leaflet';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -13,6 +13,23 @@ type ConcertMapProps = {
   concerts: Concert[];
   onSelect: (concertId: string) => void;
 };
+
+function KoreaSilhouette() {
+  return createElement(
+    'svg',
+    {
+      'aria-hidden': true,
+      style: { height: '88%', left: '50%', opacity: 0.7, position: 'absolute', top: '4%', transform: 'translateX(-50%)', width: 230 },
+      viewBox: '0 0 180 260',
+    },
+    createElement('path', {
+      d: 'M102 8c-14 9-23 20-25 34-2 13 7 19 1 31-5 11-18 15-20 29-2 13 8 21 4 33-3 11-17 18-14 32 2 11 14 15 17 26 4 13-5 24 3 38 7 13 18 21 29 18 9-3 8-17 17-24 8-7 21-8 24-20 4-14-10-22-9-35 1-12 14-19 12-31-2-12-17-13-22-24-5-10 3-20-2-31-4-10-17-15-19-25-3-13 9-25 1-38-5-9-16-12-19-20-4-11 5-21 1-31-4-10-17-13-26-7z',
+      fill: '#CBC5DD',
+    }),
+    createElement('circle', { cx: 54, cy: 232, fill: '#CBC5DD', r: 7 }),
+    createElement('circle', { cx: 39, cy: 243, fill: '#CBC5DD', r: 3 }),
+  );
+}
 
 export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
   const [showRealMap, setShowRealMap] = useState(false);
@@ -55,13 +72,12 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
         )
       ) : (
         <>
-          <View style={[styles.land, styles.landLeft]} />
-          <View style={[styles.land, styles.landRight]} />
+          <KoreaSilhouette />
           <Text style={styles.mapLabel}>MY STAGE TRAIL</Text>
 
           {venues.slice(0, 12).map((concert, index) => {
-            const left = 10 + ((concert.venue.longitude - 126) / 3.5) * 78 + (index % 3) * 1.5;
-            const top = 12 + ((38.6 - concert.venue.latitude) / 5.3) * 72 + (index % 2) * 2;
+            const left = 42 + ((concert.venue.longitude - 126) / 3.5) * 16 + (index % 3) * 0.5;
+            const top = 10 + ((38.6 - concert.venue.latitude) / 5.3) * 78 + (index % 2);
 
             return (
               <Pressable
@@ -106,25 +122,6 @@ const styles = StyleSheet.create({
     height: 300,
     overflow: 'hidden',
     position: 'relative',
-  },
-  land: {
-    backgroundColor: '#D7D1EA',
-    borderRadius: 999,
-    opacity: 0.8,
-    position: 'absolute',
-    transform: [{ rotate: '-12deg' }],
-  },
-  landLeft: {
-    height: 170,
-    left: -35,
-    top: 80,
-    width: 190,
-  },
-  landRight: {
-    height: 220,
-    right: -22,
-    top: 34,
-    width: 245,
   },
   mapLabel: {
     color: '#8B849F',

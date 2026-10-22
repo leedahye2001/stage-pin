@@ -25,6 +25,7 @@ import {
 } from '@/api/concerts';
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
+import { TicketingCarousel } from '@/components/TicketingCarousel';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 type FanFilter = FanCategory | 'ALL';
@@ -382,6 +383,21 @@ export default function HomeScreen() {
                   : '해당 분류의 예정 공연이 아직 없어요.'}
               </Text>
             )}
+
+            {!selectedArtist ? (
+              <>
+                <TicketingCarousel
+                  concerts={upcomingQuery.data}
+                  scheduleType="FAN_PRESALE"
+                  title="곧 열리는 선예매"
+                />
+                <TicketingCarousel
+                  concerts={upcomingQuery.data}
+                  scheduleType="GENERAL_SALE"
+                  title="곧 열리는 일반예매"
+                />
+              </>
+            ) : null}
           </View>
         }
         renderItem={() => null}
