@@ -1,7 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getConcerts, type FanCategory } from '@/api/concerts';
@@ -20,6 +30,7 @@ const fanFilters: { value: FanFilter; label: string }[] = [
 
 export default function HomeScreen() {
   const [fanFilter, setFanFilter] = useState<FanFilter>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const concertsQuery = useQuery({
     queryKey: ['concerts', 'POPULAR_MUSIC'],
     queryFn: () => getConcerts('POPULAR_MUSIC'),
@@ -50,9 +61,20 @@ export default function HomeScreen() {
     );
   }
 
-  const concerts = fanFilter === 'ALL'
+  const categorizedConcerts = fanFilter === 'ALL'
     ? concertsQuery.data
     : concertsQuery.data.filter((concert) => concert.fanCategory === fanFilter);
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ko-KR');
+  const concerts = normalizedQuery
+    ? categorizedConcerts.filter((concert) =>
+        [
+          concert.title,
+          concert.venue.name,
+          concert.venue.city,
+          ...concert.artists.map((artist) => artist.name),
+        ].some((value) => value.toLocaleLowerCase('ko-KR').includes(normalizedQuery)),
+      )
+    : categorizedConcerts;
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -72,6 +94,30 @@ export default function HomeScreen() {
               <Text style={styles.eyebrow}>STAGEPIN</Text>
               <Text style={styles.hero}>다음 무대를{`\n`}놓치지 마세요.</Text>
               <Text style={styles.subtitle}>공연과 티켓팅 일정을 한 지도에서 확인해요.</Text>
+            </View>
+
+            <View style={styles.searchBox}>
+              <Ionicons color={colors.textMuted} name="search" size={20} />
+              <TextInput
+                accessibilityLabel="공연 검색"
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={setSearchQuery}
+                placeholder="아티스트, 공연명, 공연장을 검색해보세요"
+                placeholderTextColor={colors.textMuted}
+                returnKeyType="search"
+                style={styles.searchInput}
+                value={searchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <Pressable
+                  accessibilityLabel="검색어 지우기"
+                  hitSlop={10}
+                  onPress={() => setSearchQuery('')}
+                >
+                  <Ionicons color={colors.textMuted} name="close-circle" size={20} />
+                </Pressable>
+              )}
             </View>
 
             <ScrollView
@@ -107,7 +153,13 @@ export default function HomeScreen() {
             </View>
           </View>
         }
-        ListEmptyComponent={<Text style={styles.empty}>해당 분류의 예정 공연이 아직 없어요.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.empty}>
+            {normalizedQuery
+              ? `‘${searchQuery.trim()}’ 검색 결과가 없어요.`
+              : '해당 분류의 예정 공연이 아직 없어요.'}
+          </Text>
+        }
         renderItem={({ item }) => <ConcertCard concert={item} onPress={() => openConcert(item.id)} />}
       />
     </SafeAreaView>
@@ -145,6 +197,22 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: typography.body,
     marginTop: spacing.sm,
+  },
+  searchBox: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  searchInput: {
+    color: colors.text,
+    flex: 1,
+    fontSize: typography.body,
+    paddingVertical: 14,
   },
   genreList: {
     gap: spacing.sm,
