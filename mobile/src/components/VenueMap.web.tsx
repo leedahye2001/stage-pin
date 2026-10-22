@@ -1,37 +1,71 @@
-import { CircleMarker, MapContainer, TileLayer, Tooltip } from 'react-leaflet';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { VenueSummary } from '@/api/concerts';
 import { colors, radius } from '@/theme/tokens';
 
-import 'leaflet/dist/leaflet.css';
+type KakaoWindow = Window & {
+  kakao?: {
+    maps: {
+      LatLng: new (latitude: number, longitude: number) => unknown;
+      Map: new (container: HTMLElement, options: { center: unknown; level: number }) => unknown;
+      Marker: new (options: { map: unknown; position: unknown; title: string }) => unknown;
+      load: (callback: () => void) => void;
+    };
+  };
+};
+
+let kakaoMapsPromise: Promise<NonNullable<KakaoWindow['kakao']>['maps']> | undefined;
+
+function loadKakaoMaps(appKey: string) {
+  if (kakaoMapsPromise) return kakaoMapsPromise;
+
+  kakaoMapsPromise = new Promise((resolve, reject) => {
+    const kakaoWindow = window as KakaoWindow;
+    const ready = () => kakaoWindow.kakao?.maps.load(() => resolve(kakaoWindow.kakao!.maps));
+    if (kakaoWindow.kakao?.maps) return ready();
+
+    const script = document.createElement('script');
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(appKey)}&autoload=false`;
+    script.onload = ready;
+    script.onerror = () => reject(new Error('카카오맵 SDK를 불러오지 못했습니다.'));
+    document.head.appendChild(script);
+  });
+
+  return kakaoMapsPromise;
+}
 
 export function VenueMap({ venue }: { venue: VenueSummary }) {
-  const center: [number, number] = [venue.latitude, venue.longitude];
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [failed, setFailed] = useState(false);
+  const appKey = process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY;
+  const kakaoMapUrl = `https://map.kakao.com/link/map/${encodeURIComponent(venue.name)},${venue.latitude},${venue.longitude}`;
 
-  return (
-    <View style={styles.container}>
-      <MapContainer
-        attributionControl
-        center={center}
-        scrollWheelZoom={false}
-        style={{ height: '100%', width: '100%' }}
-        zoom={15}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <CircleMarker
-          center={center}
-          pathOptions={{ color: colors.white, fillColor: colors.primary, fillOpacity: 1, weight: 3 }}
-          radius={10}
-        >
-          <Tooltip direction="top" offset={[0, -9]} permanent>{venue.name}</Tooltip>
-        </CircleMarker>
-      </MapContainer>
-    </View>
-  );
+  useEffect(() => {
+    if (!appKey || !containerRef.current) return;
+
+    loadKakaoMaps(appKey)
+      .then((maps) => {
+        if (!containerRef.current) return;
+        const position = new maps.LatLng(venue.latitude, venue.longitude);
+        const map = new maps.Map(containerRef.current, { center: position, level: 4 });
+        new maps.Marker({ map, position, title: venue.name });
+      })
+      .catch(() => setFailed(true));
+  }, [appKey, venue.latitude, venue.longitude, venue.name]);
+
+  if (!appKey || failed) {
+    return (
+      <View style={[styles.container, styles.fallback]}>
+        <Text style={styles.fallbackTitle}>카카오맵에서 공연장 위치를 확인해요</Text>
+        <Pressable accessibilityRole="link" onPress={() => Linking.openURL(kakaoMapUrl)}>
+          <Text style={styles.link}>카카오맵 열기 →</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return <div aria-label={`${venue.name} 카카오맵`} ref={containerRef} style={styles.map} />;
 }
 
 const styles = StyleSheet.create({
@@ -40,5 +74,29 @@ const styles = StyleSheet.create({
     height: 190,
     marginTop: 14,
     overflow: 'hidden',
+  },
+  map: {
+    borderRadius: radius.md,
+    height: 190,
+    marginTop: 14,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  fallback: {
+    alignItems: 'center',
+    backgroundColor: '#FEE500',
+    justifyContent: 'center',
+  },
+  fallbackTitle: {
+    color: '#191919',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  link: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 8,
+    textDecorationLine: 'underline',
   },
 });
