@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { FlatList, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { FlatList, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Concert, ConcertSchedule, ScheduleType } from '@/api/concerts';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -15,19 +16,31 @@ type TicketingItem = {
   schedule: ConcertSchedule;
 };
 
-const vendorName = (url: string) => {
+type TicketVendor = 'ALL' | 'NOL' | 'YES24' | 'MELON' | 'TICKETLINK' | 'OTHER';
+
+const vendorOptions: { id: TicketVendor; label: string }[] = [
+  { id: 'ALL', label: '전체' },
+  { id: 'NOL', label: 'NOL' },
+  { id: 'YES24', label: 'YES24' },
+  { id: 'MELON', label: '멜론티켓' },
+  { id: 'TICKETLINK', label: '티켓링크' },
+  { id: 'OTHER', label: '기타' },
+];
+
+const ticketVendor = (url: string): { id: Exclude<TicketVendor, 'ALL'>; label: string } => {
   let hostname = '';
   try {
     hostname = new URL(url).hostname.toLowerCase();
   } catch {
-    return '공식 예매처';
+    return { id: 'OTHER', label: '공식 예매처' };
   }
-  if (hostname.includes('yes24')) return 'YES24';
-  if (hostname.includes('nol.yanolja')) return 'NOL 티켓';
-  if (hostname.includes('interpark')) return '인터파크 티켓';
-  if (hostname.includes('melon')) return '멜론티켓';
-  if (hostname.includes('ticketlink')) return '티켓링크';
-  return '공식 예매처';
+  if (hostname.includes('nol.yanolja') || hostname.includes('interpark')) {
+    return { id: 'NOL', label: 'NOL' };
+  }
+  if (hostname.includes('yes24')) return { id: 'YES24', label: 'YES24' };
+  if (hostname.includes('melon')) return { id: 'MELON', label: '멜론티켓' };
+  if (hostname.includes('ticketlink')) return { id: 'TICKETLINK', label: '티켓링크' };
+  return { id: 'OTHER', label: '공식 예매처' };
 };
 
 const countdownLabel = (startsAt: string) => {
@@ -55,12 +68,19 @@ const scheduleLabel = (schedule: ConcertSchedule) => {
 };
 
 export function TicketingCarousel({ concerts, scheduleType, title }: TicketingCarouselProps) {
-  const items = concerts
-    .flatMap((concert) => concert.schedules
-      .filter((schedule) => schedule.type === scheduleType && new Date(schedule.startsAt).getTime() >= Date.now())
-      .map((schedule) => ({ concert, schedule })))
-    .sort((left, right) => left.schedule.startsAt.localeCompare(right.schedule.startsAt))
+  const [selectedVendor, setSelectedVendor] = useState<TicketVendor>('ALL');
+  const [renderedAt] = useState(Date.now);
+  const items = useMemo(() => {
+    return concerts
+      .flatMap((concert) => concert.schedules
+        .filter((schedule) => schedule.type === scheduleType && new Date(schedule.startsAt).getTime() >= renderedAt)
+        .map((schedule) => ({ concert, schedule })))
+      .sort((left, right) => new Date(left.schedule.startsAt).getTime() - new Date(right.schedule.startsAt).getTime());
+  }, [concerts, renderedAt, scheduleType]);
+  const filteredItems = items
+    .filter((item) => selectedVendor === 'ALL' || ticketVendor(item.schedule.sourceUrl).id === selectedVendor)
     .slice(0, 10);
+  const selectedVendorLabel = vendorOptions.find((option) => option.id === selectedVendor)?.label;
 
   return (
     <View style={styles.section}>
@@ -72,10 +92,37 @@ export function TicketingCarousel({ concerts, scheduleType, title }: TicketingCa
         {items.length ? <Text style={styles.count}>{items.length}</Text> : null}
       </View>
 
-      {items.length ? (
+      <ScrollView
+        contentContainerStyle={styles.vendorFilters}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+      >
+        {vendorOptions.map((option) => {
+          const selected = option.id === selectedVendor;
+          const count = option.id === 'ALL'
+            ? items.length
+            : items.filter((item) => ticketVendor(item.schedule.sourceUrl).id === option.id).length;
+
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              key={option.id}
+              onPress={() => setSelectedVendor(option.id)}
+              style={[styles.vendorFilter, selected && styles.vendorFilterSelected]}
+            >
+              <Text style={[styles.vendorFilterText, selected && styles.vendorFilterTextSelected]}>
+                {option.label}{count ? ` ${count}` : ''}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {filteredItems.length ? (
         <FlatList
           contentContainerStyle={styles.list}
-          data={items}
+          data={filteredItems}
           horizontal
           keyExtractor={(item) => item.schedule.id}
           renderItem={({ item }) => <TicketingCard item={item} />}
@@ -87,8 +134,12 @@ export function TicketingCarousel({ concerts, scheduleType, title }: TicketingCa
             <Ionicons color={colors.primary} name="notifications-outline" size={20} />
           </View>
           <View style={styles.emptyContent}>
-            <Text style={styles.emptyTitle}>아직 확인된 일정이 없어요.</Text>
-            <Text style={styles.emptyDescription}>공식 공지와 예매처 링크가 확인된 일정만 보여드릴게요.</Text>
+            <Text style={styles.emptyTitle}>
+              {items.length ? `${selectedVendorLabel}의 예정 일정이 없어요.` : '아직 확인된 일정이 없어요.'}
+            </Text>
+            <Text style={styles.emptyDescription}>
+              공식 공지와 예매처 링크가 확인된 일정만 오픈 임박순으로 보여드릴게요.
+            </Text>
           </View>
         </View>
       )}
@@ -97,7 +148,7 @@ export function TicketingCarousel({ concerts, scheduleType, title }: TicketingCa
 }
 
 function TicketingCard({ item }: { item: TicketingItem }) {
-  const vendor = vendorName(item.schedule.sourceUrl);
+  const vendor = ticketVendor(item.schedule.sourceUrl).label;
 
   return (
     <Pressable
@@ -163,6 +214,30 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.md,
+  },
+  vendorFilters: {
+    gap: spacing.sm,
+    paddingRight: spacing.md,
+  },
+  vendorFilter: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  vendorFilterSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  vendorFilterText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  vendorFilterTextSelected: {
+    color: colors.surface,
   },
   card: {
     backgroundColor: colors.surface,
