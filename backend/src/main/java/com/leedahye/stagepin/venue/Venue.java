@@ -14,6 +14,8 @@ public class Venue {
     private String countryCode;
     private String address;
     private String timezone;
+    private double latitude;
+    private double longitude;
     protected Venue() {
     }
 
@@ -39,5 +41,13 @@ public class Venue {
 
     public String getTimezone() {
         return timezone;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
     }
 }

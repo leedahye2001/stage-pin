@@ -13,6 +13,8 @@ CREATE TABLE venue (
     country_code CHAR(2) NOT NULL,
     address VARCHAR(500),
     timezone VARCHAR(60) NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
+    longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
     location GEOGRAPHY(POINT, 4326) NOT NULL
 );
 
@@ -54,4 +56,3 @@ CREATE TABLE concert_schedule (
 );
 
 CREATE INDEX idx_schedule_concert ON concert_schedule (concert_id, starts_at);
-

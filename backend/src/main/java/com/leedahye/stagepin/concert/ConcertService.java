@@ -49,7 +49,9 @@ public class ConcertService {
                         venue.getCity(),
                         venue.getCountryCode(),
                         venue.getAddress(),
-                        venue.getTimezone()),
+                        venue.getTimezone(),
+                        venue.getLatitude(),
+                        venue.getLongitude()),
                 concert.getStartsAt(),
                 concert.getEndsAt(),
                 concert.getStatus(),
@@ -69,4 +71,3 @@ public class ConcertService {
                         .toList());
     }
 }
-

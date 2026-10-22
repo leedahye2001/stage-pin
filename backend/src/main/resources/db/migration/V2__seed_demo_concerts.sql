@@ -3,10 +3,10 @@ INSERT INTO artist (id, name, image_url) VALUES
 ('10000000-0000-0000-0000-000000000002', 'DAY6', NULL),
 ('10000000-0000-0000-0000-000000000003', 'IU', NULL);
 
-INSERT INTO venue (id, name, city, country_code, address, timezone, location) VALUES
-('20000000-0000-0000-0000-000000000001', 'KSPO DOME', 'Seoul', 'KR', '424 Olympic-ro, Songpa-gu', 'Asia/Seoul', ST_GeogFromText('POINT(127.1267 37.5192)')),
-('20000000-0000-0000-0000-000000000002', 'Tokyo Dome', 'Tokyo', 'JP', '1-3-61 Koraku, Bunkyo City', 'Asia/Tokyo', ST_GeogFromText('POINT(139.7519 35.7056)')),
-('20000000-0000-0000-0000-000000000003', 'Kia Forum', 'Inglewood', 'US', '3900 W Manchester Blvd', 'America/Los_Angeles', ST_GeogFromText('POINT(-118.3419 33.9582)'));
+INSERT INTO venue (id, name, city, country_code, address, timezone, latitude, longitude, location) VALUES
+('20000000-0000-0000-0000-000000000001', 'KSPO DOME', 'Seoul', 'KR', '424 Olympic-ro, Songpa-gu', 'Asia/Seoul', 37.5192, 127.1267, ST_GeogFromText('POINT(127.1267 37.5192)')),
+('20000000-0000-0000-0000-000000000002', 'Tokyo Dome', 'Tokyo', 'JP', '1-3-61 Koraku, Bunkyo City', 'Asia/Tokyo', 35.7056, 139.7519, ST_GeogFromText('POINT(139.7519 35.7056)')),
+('20000000-0000-0000-0000-000000000003', 'Kia Forum', 'Inglewood', 'US', '3900 W Manchester Blvd', 'America/Los_Angeles', 33.9582, -118.3419, ST_GeogFromText('POINT(-118.3419 33.9582)'));
 
 INSERT INTO concert (id, title, venue_id, starts_at, ends_at, status, poster_url, official_url, source, verified_at) VALUES
 ('30000000-0000-0000-0000-000000000001', 'LUCY WORLD TOUR: SEOUL', '20000000-0000-0000-0000-000000000001', '2026-12-12T09:00:00Z', '2026-12-12T11:30:00Z', 'UPCOMING', NULL, 'https://example.com/lucy-seoul', 'DEMO', NOW()),
@@ -23,4 +23,3 @@ INSERT INTO concert_schedule (id, concert_id, type, starts_at, ends_at, timezone
 ('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001', 'GENERAL_SALE', '2026-11-07T11:00:00Z', NULL, 'Asia/Seoul', 'https://example.com/lucy-seoul', 'General sale'),
 ('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', 'GENERAL_SALE', '2026-11-20T10:00:00Z', NULL, 'Asia/Tokyo', 'https://example.com/day6-tokyo', 'General sale'),
 ('40000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000003', 'GENERAL_SALE', '2026-12-01T18:00:00Z', NULL, 'America/Los_Angeles', 'https://example.com/iu-la', 'General sale');
-

@@ -29,7 +29,9 @@ public record ConcertResponse(
             String city,
             String countryCode,
             String address,
-            String timezone) {
+            String timezone,
+            double latitude,
+            double longitude) {
     }
 
     public record ScheduleSummary(
@@ -42,4 +44,3 @@ public record ConcertResponse(
             String description) {
     }
 }
-
