@@ -1,0 +1,13 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Local infrastructure data
+infra/data/
+
