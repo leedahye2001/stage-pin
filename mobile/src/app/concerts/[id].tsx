@@ -114,7 +114,7 @@ export default function ConcertDetailScreen() {
       ) : null}
 
       <View style={styles.venueCard}>
-        <Text style={styles.cardLabel}>VENUE</Text>
+        <Text style={styles.cardLabel}>공연장</Text>
         <Text style={styles.venueName}>{concert.venue.name}</Text>
         <Text style={styles.meta}>
           {concert.venue.city}
