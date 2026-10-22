@@ -43,6 +43,12 @@ class KopisConcertClientTest {
                   <poster>http://www.kopis.or.kr/upload/pfmPoster/day6.jpg</poster>
                   <area>서울특별시</area>
                   <prfstate>공연예정</prfstate>
+                  <relates>
+                    <relate>
+                      <relatenm>NOL 티켓</relatenm>
+                      <relateurl>https://nol.yanolja.com/ticket/products/26012624</relateurl>
+                    </relate>
+                  </relates>
                 </db></dbs>
                 """;
         String facility = """
@@ -69,6 +75,10 @@ class KopisConcertClientTest {
         assertThat(concert.venue().latitude()).isEqualTo(37.52112);
         assertThat(concert.startsAt()).isEqualTo("2026-11-12T03:00:00Z");
         assertThat(concert.schedules()).isEmpty();
+        assertThat(concert.ticketLinks()).containsExactly(
+                new ConcertResponse.TicketLinkSummary(
+                        "NOL 티켓",
+                        "https://nol.yanolja.com/ticket/products/26012624"));
         assertThat(concert.posterUrl()).isEqualTo("https://kopis.or.kr/upload/pfmPoster/day6.jpg");
     }
 

@@ -98,6 +98,7 @@ public class ConcertService {
                 ConcertGenre.POPULAR_MUSIC,
                 FanCategoryClassifier.classify(concert.getTitle(), artists),
                 concert.getVerifiedAt(),
+                List.of(),
                 concert.getSchedules().stream()
                         .map(schedule -> new ScheduleSummary(
                                 schedule.getId(),

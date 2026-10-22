@@ -31,6 +31,7 @@ import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
 import com.leedahye.stagepin.concert.ConcertResponse.ArtistSummary;
+import com.leedahye.stagepin.concert.ConcertResponse.TicketLinkSummary;
 import com.leedahye.stagepin.concert.ConcertResponse.VenueSummary;
 
 @Component
@@ -157,6 +158,7 @@ public class KopisConcertClient {
                     genre,
                     FanCategoryClassifier.classify(title, List.of()),
                     verifiedAt,
+                    List.of(),
                     List.of()));
         }
         return concerts;
@@ -190,7 +192,16 @@ public class KopisConcertClient {
                 .findFirst()
                 .orElse(null);
         if (searchedConcert != null) {
-            return searchedConcert;
+            try {
+                String kopisId = searchedConcert.officialUrl().substring(
+                        searchedConcert.officialUrl().lastIndexOf('=') + 1);
+                String detailXml = get("/pblprfr/" + kopisId);
+                String facilityId = text(firstDb(detailXml), "mt10id");
+                return toConcert(detailXml, get("/prfplc/" + facilityId), genre, Instant.now());
+            } catch (RuntimeException exception) {
+                log.warn("KOPIS detail unavailable for searched concert {}", id, exception);
+                return searchedConcert;
+            }
         }
         return findUpcoming(from, genre).stream()
                 .filter(concert -> concert.id().equals(id))
@@ -270,7 +281,32 @@ public class KopisConcertClient {
                 genre,
                 FanCategoryClassifier.classify(requiredText(detail, "prfnm"), artists),
                 verifiedAt,
+                ticketLinks(detail),
                 List.of());
+    }
+
+    private List<TicketLinkSummary> ticketLinks(Element detail) {
+        var nodes = detail.getElementsByTagName("relate");
+        List<TicketLinkSummary> links = new ArrayList<>();
+        for (int index = 0; index < nodes.getLength(); index++) {
+            Element relate = (Element) nodes.item(index);
+            String url = text(relate, "relateurl");
+            if (!url.startsWith("https://") && !url.startsWith("http://")) {
+                continue;
+            }
+            String name = text(relate, "relatenm");
+            links.add(new TicketLinkSummary(name.isBlank() ? ticketVendor(url) : name, url));
+        }
+        return List.copyOf(links);
+    }
+
+    private String ticketVendor(String url) {
+        String normalized = url.toLowerCase(Locale.ROOT);
+        if (normalized.contains("yes24")) return "YES24";
+        if (normalized.contains("nol.yanolja") || normalized.contains("interpark")) return "NOL 티켓";
+        if (normalized.contains("ticketlink")) return "티켓링크";
+        if (normalized.contains("melon")) return "멜론티켓";
+        return "공식 예매처";
     }
 
     private String get(String path) {

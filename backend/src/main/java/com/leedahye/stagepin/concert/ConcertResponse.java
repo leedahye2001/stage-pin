@@ -20,6 +20,7 @@ public record ConcertResponse(
         ConcertGenre genre,
         FanCategory fanCategory,
         Instant verifiedAt,
+        List<TicketLinkSummary> ticketLinks,
         List<ScheduleSummary> schedules) {
 
     public record ArtistSummary(UUID id, String name, String imageUrl) {
@@ -34,6 +35,9 @@ public record ConcertResponse(
             String timezone,
             double latitude,
             double longitude) {
+    }
+
+    public record TicketLinkSummary(String name, String url) {
     }
 
     public record ScheduleSummary(

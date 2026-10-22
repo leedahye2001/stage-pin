@@ -59,6 +59,11 @@ export type ConcertSchedule = {
   description: string | null;
 };
 
+export type TicketLink = {
+  name: string;
+  url: string;
+};
+
 export type Concert = {
   id: string;
   title: string;
@@ -73,6 +78,7 @@ export type Concert = {
   genre: ConcertGenre;
   fanCategory: FanCategory;
   verifiedAt: string;
+  ticketLinks: TicketLink[];
   schedules: ConcertSchedule[];
 };
 
