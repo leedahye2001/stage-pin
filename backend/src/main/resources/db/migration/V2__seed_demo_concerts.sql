@@ -1,0 +1,26 @@
+INSERT INTO artist (id, name, image_url) VALUES
+('10000000-0000-0000-0000-000000000001', 'LUCY', NULL),
+('10000000-0000-0000-0000-000000000002', 'DAY6', NULL),
+('10000000-0000-0000-0000-000000000003', 'IU', NULL);
+
+INSERT INTO venue (id, name, city, country_code, address, timezone, location) VALUES
+('20000000-0000-0000-0000-000000000001', 'KSPO DOME', 'Seoul', 'KR', '424 Olympic-ro, Songpa-gu', 'Asia/Seoul', ST_GeogFromText('POINT(127.1267 37.5192)')),
+('20000000-0000-0000-0000-000000000002', 'Tokyo Dome', 'Tokyo', 'JP', '1-3-61 Koraku, Bunkyo City', 'Asia/Tokyo', ST_GeogFromText('POINT(139.7519 35.7056)')),
+('20000000-0000-0000-0000-000000000003', 'Kia Forum', 'Inglewood', 'US', '3900 W Manchester Blvd', 'America/Los_Angeles', ST_GeogFromText('POINT(-118.3419 33.9582)'));
+
+INSERT INTO concert (id, title, venue_id, starts_at, ends_at, status, poster_url, official_url, source, verified_at) VALUES
+('30000000-0000-0000-0000-000000000001', 'LUCY WORLD TOUR: SEOUL', '20000000-0000-0000-0000-000000000001', '2026-12-12T09:00:00Z', '2026-12-12T11:30:00Z', 'UPCOMING', NULL, 'https://example.com/lucy-seoul', 'DEMO', NOW()),
+('30000000-0000-0000-0000-000000000002', 'DAY6 WORLD TOUR: TOKYO', '20000000-0000-0000-0000-000000000002', '2027-01-16T09:00:00Z', '2027-01-16T12:00:00Z', 'UPCOMING', NULL, 'https://example.com/day6-tokyo', 'DEMO', NOW()),
+('30000000-0000-0000-0000-000000000003', 'IU WORLD TOUR: LOS ANGELES', '20000000-0000-0000-0000-000000000003', '2027-02-21T03:00:00Z', '2027-02-21T06:00:00Z', 'UPCOMING', NULL, 'https://example.com/iu-la', 'DEMO', NOW());
+
+INSERT INTO concert_artist (concert_id, artist_id, role) VALUES
+('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'HEADLINER'),
+('30000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'HEADLINER'),
+('30000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'HEADLINER');
+
+INSERT INTO concert_schedule (id, concert_id, type, starts_at, ends_at, timezone, source_url, description) VALUES
+('40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'FAN_PRESALE', '2026-11-05T11:00:00Z', NULL, 'Asia/Seoul', 'https://example.com/lucy-seoul', 'Fan club presale'),
+('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001', 'GENERAL_SALE', '2026-11-07T11:00:00Z', NULL, 'Asia/Seoul', 'https://example.com/lucy-seoul', 'General sale'),
+('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', 'GENERAL_SALE', '2026-11-20T10:00:00Z', NULL, 'Asia/Tokyo', 'https://example.com/day6-tokyo', 'General sale'),
+('40000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000003', 'GENERAL_SALE', '2026-12-01T18:00:00Z', NULL, 'America/Los_Angeles', 'https://example.com/iu-la', 'General sale');
+
