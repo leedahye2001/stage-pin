@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 CREATE TABLE artist (
     id UUID PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
@@ -10,15 +8,12 @@ CREATE TABLE venue (
     id UUID PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     city VARCHAR(120) NOT NULL,
-    country_code CHAR(2) NOT NULL,
+    country_code VARCHAR(2) NOT NULL,
     address VARCHAR(500),
     timezone VARCHAR(60) NOT NULL,
     latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
-    longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
-    location GEOGRAPHY(POINT, 4326) NOT NULL
+    longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180)
 );
-
-CREATE INDEX idx_venue_location ON venue USING GIST (location);
 
 CREATE TABLE concert (
     id UUID PRIMARY KEY,

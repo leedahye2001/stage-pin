@@ -1,0 +1,31 @@
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stagepin}
+      POSTGRES_USER: ${POSTGRES_USER:-stagepin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stagepin}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - stagepin-postgres:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ../backend
+    environment:
+      DB_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-stagepin}
+      DB_USERNAME: ${POSTGRES_USER:-stagepin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-stagepin}
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  stagepin-postgres:
