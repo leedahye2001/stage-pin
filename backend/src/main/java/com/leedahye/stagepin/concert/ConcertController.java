@@ -23,13 +23,15 @@ public class ConcertController {
     @GetMapping
     List<ConcertResponse> findUpcoming(
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from) {
-        return concertService.findUpcoming(from == null ? Instant.now() : from);
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(defaultValue = "POPULAR_MUSIC") ConcertGenre genre) {
+        return concertService.findUpcoming(from == null ? Instant.now() : from, genre);
     }
 
     @GetMapping("/{id}")
-    ConcertResponse findById(@PathVariable UUID id) {
-        return concertService.findById(id);
+    ConcertResponse findById(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "POPULAR_MUSIC") ConcertGenre genre) {
+        return concertService.findById(id, genre);
     }
 }
-

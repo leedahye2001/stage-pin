@@ -7,6 +7,8 @@ export type ConcertStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
+export type ConcertGenre = 'POPULAR_MUSIC' | 'MUSICAL' | 'PLAY' | 'CLASSICAL';
+
 export type ScheduleType =
   | 'FAN_VERIFICATION_OPEN'
   | 'FAN_VERIFICATION_CLOSE'
@@ -55,6 +57,7 @@ export type Concert = {
   posterUrl: string | null;
   officialUrl: string;
   source: string;
+  genre: ConcertGenre;
   verifiedAt: string;
   schedules: ConcertSchedule[];
 };
@@ -74,11 +77,10 @@ async function request<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function getConcerts(): Promise<Concert[]> {
-  return request('/api/v1/concerts');
+export function getConcerts(genre: ConcertGenre): Promise<Concert[]> {
+  return request(`/api/v1/concerts?genre=${genre}`);
 }
 
-export function getConcert(id: string): Promise<Concert> {
-  return request(`/api/v1/concerts/${id}`);
+export function getConcert(id: string, genre: ConcertGenre): Promise<Concert> {
+  return request(`/api/v1/concerts/${id}?genre=${genre}`);
 }
-

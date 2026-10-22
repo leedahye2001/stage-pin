@@ -11,7 +11,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.xml.XMLConstants;
@@ -40,8 +42,8 @@ public class KopisConcertClient {
 
     private final RestClient restClient;
     private final String apiKey;
-    private List<ConcertResponse> cachedConcerts = List.of();
-    private Instant cacheExpiresAt = Instant.EPOCH;
+    private final Map<ConcertGenre, List<ConcertResponse>> cachedConcerts = new EnumMap<>(ConcertGenre.class);
+    private final Map<ConcertGenre, Instant> cacheExpiresAt = new EnumMap<>(ConcertGenre.class);
 
     public KopisConcertClient(@Value("${kopis.api-key:}") String apiKey) {
         this.apiKey = apiKey;
@@ -50,12 +52,12 @@ public class KopisConcertClient {
                 .build();
     }
 
-    public synchronized List<ConcertResponse> findUpcoming(Instant from) {
+    public synchronized List<ConcertResponse> findUpcoming(Instant from, ConcertGenre genre) {
         if (apiKey.isBlank()) {
             return List.of();
         }
-        if (Instant.now().isBefore(cacheExpiresAt)) {
-            return cachedConcerts;
+        if (Instant.now().isBefore(cacheExpiresAt.getOrDefault(genre, Instant.EPOCH))) {
+            return cachedConcerts.getOrDefault(genre, List.of());
         }
 
         LocalDate startDate = LocalDate.ofInstant(from, SEOUL);
@@ -66,7 +68,7 @@ public class KopisConcertClient {
                         .queryParam("eddate", startDate.plusDays(30).format(REQUEST_DATE))
                         .queryParam("cpage", 1)
                         .queryParam("rows", 100)
-                        .queryParam("shcate", "CCCD")
+                        .queryParam("shcate", genre.kopisCode())
                         .build())
                 .retrieve()
                 .body(byte[].class);
@@ -77,7 +79,7 @@ public class KopisConcertClient {
                 String detailXml = get("/pblprfr/" + kopisId);
                 String facilityId = text(firstDb(detailXml), "mt10id");
                 String facilityXml = get("/prfplc/" + facilityId);
-                concerts.add(toConcert(detailXml, facilityXml, Instant.now()));
+                concerts.add(toConcert(detailXml, facilityXml, genre, Instant.now()));
             } catch (RuntimeException exception) {
                 log.warn("Skipping invalid KOPIS concert {}", kopisId, exception);
             }
@@ -87,13 +89,13 @@ public class KopisConcertClient {
         }
         concerts.sort(Comparator.comparing(ConcertResponse::startsAt));
 
-        cachedConcerts = List.copyOf(concerts);
-        cacheExpiresAt = Instant.now().plus(CACHE_TTL);
-        return cachedConcerts;
+        cachedConcerts.put(genre, List.copyOf(concerts));
+        cacheExpiresAt.put(genre, Instant.now().plus(CACHE_TTL));
+        return cachedConcerts.get(genre);
     }
 
-    public ConcertResponse findById(UUID id, Instant from) {
-        return findUpcoming(from).stream()
+    public ConcertResponse findById(UUID id, Instant from, ConcertGenre genre) {
+        return findUpcoming(from, genre).stream()
                 .filter(concert -> concert.id().equals(id))
                 .findFirst()
                 .orElse(null);
@@ -112,7 +114,11 @@ public class KopisConcertClient {
         return ids;
     }
 
-    ConcertResponse toConcert(String detailXml, String facilityXml, Instant verifiedAt) {
+    ConcertResponse toConcert(
+            String detailXml,
+            String facilityXml,
+            ConcertGenre genre,
+            Instant verifiedAt) {
         Element detail = firstDb(detailXml);
         Element facility = firstDb(facilityXml);
         String kopisId = requiredText(detail, "mt20id");
@@ -143,6 +149,7 @@ public class KopisConcertClient {
                 null,
                 "https://www.kopis.or.kr/por/db/pblprfr/pblprfrView.do?menuId=MNU_00020&mt20Id=" + kopisId,
                 "KOPIS",
+                genre,
                 verifiedAt,
                 List.of());
     }

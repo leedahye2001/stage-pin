@@ -1,21 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getConcerts } from '@/api/concerts';
+import { getConcerts, type ConcertGenre } from '@/api/concerts';
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
+const genres: { value: ConcertGenre; label: string }[] = [
+  { value: 'POPULAR_MUSIC', label: '대중음악' },
+  { value: 'MUSICAL', label: '뮤지컬' },
+  { value: 'PLAY', label: '연극' },
+  { value: 'CLASSICAL', label: '클래식' },
+];
+
 export default function HomeScreen() {
+  const [genre, setGenre] = useState<ConcertGenre>('POPULAR_MUSIC');
   const concertsQuery = useQuery({
-    queryKey: ['concerts'],
-    queryFn: getConcerts,
+    queryKey: ['concerts', genre],
+    queryFn: () => getConcerts(genre),
   });
 
   const openConcert = (id: string) => {
-    router.push({ pathname: '/concerts/[id]', params: { id } });
+    router.push({ pathname: '/concerts/[id]', params: { id, genre } });
   };
 
   if (concertsQuery.isPending) {
@@ -58,6 +67,29 @@ export default function HomeScreen() {
               <Text style={styles.hero}>다음 무대를{`\n`}놓치지 마세요.</Text>
               <Text style={styles.subtitle}>공연과 티켓팅 일정을 한 지도에서 확인해요.</Text>
             </View>
+
+            <ScrollView
+              contentContainerStyle={styles.genreList}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {genres.map((item) => {
+                const selected = item.value === genre;
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    key={item.value}
+                    onPress={() => setGenre(item.value)}
+                    style={[styles.genreChip, selected && styles.genreChipSelected]}
+                  >
+                    <Text style={[styles.genreLabel, selected && styles.genreLabelSelected]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
 
             <ConcertMap concerts={concertsQuery.data} onSelect={openConcert} />
 
@@ -104,6 +136,28 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: typography.body,
     marginTop: spacing.sm,
+  },
+  genreList: {
+    gap: spacing.sm,
+  },
+  genreChip: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+  },
+  genreChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  genreLabel: {
+    color: colors.textMuted,
+    fontWeight: '800',
+  },
+  genreLabelSelected: {
+    color: colors.white,
   },
   sectionHeading: {
     alignItems: 'center',

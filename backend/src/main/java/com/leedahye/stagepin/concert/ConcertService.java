@@ -30,14 +30,17 @@ public class ConcertService {
         this.kopisConcertClient = kopisConcertClient;
     }
 
-    public List<ConcertResponse> findUpcoming(Instant from) {
+    public List<ConcertResponse> findUpcoming(Instant from, ConcertGenre genre) {
         try {
-            List<ConcertResponse> liveConcerts = kopisConcertClient.findUpcoming(from);
+            List<ConcertResponse> liveConcerts = kopisConcertClient.findUpcoming(from, genre);
             if (!liveConcerts.isEmpty()) {
                 return liveConcerts;
             }
         } catch (RuntimeException exception) {
             log.warn("KOPIS unavailable; returning Korean demo concerts", exception);
+        }
+        if (genre != ConcertGenre.POPULAR_MUSIC) {
+            return List.of();
         }
         return concertRepository
                 .findDistinctByStartsAtGreaterThanEqualAndVenueCountryCodeOrderByStartsAtAsc(from, "KR")
@@ -46,11 +49,11 @@ public class ConcertService {
                 .toList();
     }
 
-    public ConcertResponse findById(UUID id) {
+    public ConcertResponse findById(UUID id, ConcertGenre genre) {
         return concertRepository.findById(id)
                 .map(this::toResponse)
                 .orElseGet(() -> {
-                    ConcertResponse liveConcert = kopisConcertClient.findById(id, Instant.now());
+                    ConcertResponse liveConcert = kopisConcertClient.findById(id, Instant.now(), genre);
                     if (liveConcert == null) {
                         throw new NotFoundException("Concert not found: " + id);
                     }
@@ -82,6 +85,7 @@ public class ConcertService {
                 concert.getPosterUrl(),
                 concert.getOfficialUrl(),
                 concert.getSource(),
+                ConcertGenre.POPULAR_MUSIC,
                 concert.getVerifiedAt(),
                 concert.getSchedules().stream()
                         .map(schedule -> new ScheduleSummary(

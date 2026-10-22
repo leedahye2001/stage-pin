@@ -27,10 +27,10 @@ class ConcertServiceTest {
         UUID id = UUID.randomUUID();
         when(concertRepository.findById(id)).thenReturn(Optional.empty());
 
-        when(kopisConcertClient.findById(eq(id), any())).thenReturn(null);
+        when(kopisConcertClient.findById(eq(id), any(), eq(ConcertGenre.POPULAR_MUSIC))).thenReturn(null);
         ConcertService service = new ConcertService(concertRepository, kopisConcertClient);
 
-        assertThatThrownBy(() -> service.findById(id))
+        assertThatThrownBy(() -> service.findById(id, ConcertGenre.POPULAR_MUSIC))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("Concert not found: " + id);
     }

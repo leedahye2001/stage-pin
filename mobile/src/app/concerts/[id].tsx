@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getConcert, type ScheduleType } from '@/api/concerts';
+import { getConcert, type ConcertGenre, type ScheduleType } from '@/api/concerts';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const scheduleLabels: Record<ScheduleType, string> = {
@@ -17,6 +17,13 @@ const scheduleLabels: Record<ScheduleType, string> = {
   SHOW: '공연 시작',
 };
 
+const genreLabels: Record<ConcertGenre, string> = {
+  POPULAR_MUSIC: '대중음악',
+  MUSICAL: '뮤지컬',
+  PLAY: '연극',
+  CLASSICAL: '클래식',
+};
+
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
   year: 'numeric',
   month: 'long',
@@ -27,10 +34,10 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 });
 
 export default function ConcertDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, genre = 'POPULAR_MUSIC' } = useLocalSearchParams<{ id: string; genre: ConcertGenre }>();
   const concertQuery = useQuery({
-    queryKey: ['concert', id],
-    queryFn: () => getConcert(id),
+    queryKey: ['concert', id, genre],
+    queryFn: () => getConcert(id, genre),
     enabled: Boolean(id),
   });
 
@@ -67,7 +74,7 @@ export default function ConcertDetailScreen() {
       <Text style={styles.artist}>{artistNames}</Text>
       <Text style={styles.title}>{concert.title}</Text>
       <Text style={styles.date}>{concertDate}</Text>
-      {isKopis ? <Text style={styles.sourceBadge}>KOPIS · 대중음악</Text> : null}
+      {isKopis ? <Text style={styles.sourceBadge}>KOPIS · {genreLabels[concert.genre]}</Text> : null}
 
       <View style={styles.venueCard}>
         <Text style={styles.cardLabel}>VENUE</Text>

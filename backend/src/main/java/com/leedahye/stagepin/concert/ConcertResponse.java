@@ -17,6 +17,7 @@ public record ConcertResponse(
         String posterUrl,
         String officialUrl,
         String source,
+        ConcertGenre genre,
         Instant verifiedAt,
         List<ScheduleSummary> schedules) {
 

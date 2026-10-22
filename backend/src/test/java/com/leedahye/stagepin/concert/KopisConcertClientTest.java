@@ -55,9 +55,11 @@ class KopisConcertClientTest {
         ConcertResponse concert = client.toConcert(
                 detail,
                 facility,
+                ConcertGenre.POPULAR_MUSIC,
                 Instant.parse("2026-10-22T00:00:00Z"));
 
         assertThat(concert.source()).isEqualTo("KOPIS");
+        assertThat(concert.genre()).isEqualTo(ConcertGenre.POPULAR_MUSIC);
         assertThat(concert.artists()).extracting(ConcertResponse.ArtistSummary::name)
                 .containsExactly("DAY6", "LUCY");
         assertThat(concert.venue().countryCode()).isEqualTo("KR");
