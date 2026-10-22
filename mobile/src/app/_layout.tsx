@@ -19,11 +19,10 @@ export default function RootLayout() {
             headerTintColor: colors.text,
           }}
         >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="concerts/[id]" options={{ title: '공연 상세' }} />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>
   );
 }
-
