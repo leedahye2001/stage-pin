@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -31,9 +31,17 @@ const fanFilters: { value: FanFilter; label: string }[] = [
 export default function HomeScreen() {
   const [fanFilter, setFanFilter] = useState<FanFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 500);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  const serverQuery = debouncedQuery.length >= 2 ? debouncedQuery : '';
   const concertsQuery = useQuery({
-    queryKey: ['concerts', 'POPULAR_MUSIC'],
-    queryFn: () => getConcerts('POPULAR_MUSIC'),
+    queryKey: ['concerts', 'POPULAR_MUSIC', serverQuery],
+    queryFn: () => getConcerts('POPULAR_MUSIC', serverQuery || undefined),
+    placeholderData: (previousData) => previousData,
   });
 
   const openConcert = (id: string) => {
@@ -145,17 +153,19 @@ export default function HomeScreen() {
 
             <Text style={styles.classificationNote}>KOPIS 공연명·출연진 기준 자동 분류</Text>
 
-            <ConcertMap concerts={concerts} onSelect={openConcert} />
+            {!normalizedQuery && <ConcertMap concerts={concerts} onSelect={openConcert} />}
 
             <View style={styles.sectionHeading}>
-              <Text style={styles.sectionTitle}>예정 공연</Text>
+              <Text style={styles.sectionTitle}>{normalizedQuery ? '검색 결과' : '예정 공연'}</Text>
               <Text style={styles.count}>{concerts.length}</Text>
             </View>
           </View>
         }
         ListEmptyComponent={
           <Text style={styles.empty}>
-            {normalizedQuery
+            {concertsQuery.isFetching && serverQuery
+              ? 'KOPIS 공연 기록을 찾는 중이에요.'
+              : normalizedQuery
               ? `‘${searchQuery.trim()}’ 검색 결과가 없어요.`
               : '해당 분류의 예정 공연이 아직 없어요.'}
           </Text>

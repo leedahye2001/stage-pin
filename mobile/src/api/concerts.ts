@@ -79,8 +79,9 @@ async function request<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function getConcerts(genre: ConcertGenre): Promise<Concert[]> {
-  return request(`/api/v1/concerts?genre=${genre}`);
+export function getConcerts(genre: ConcertGenre, query?: string): Promise<Concert[]> {
+  const search = query ? `&query=${encodeURIComponent(query)}` : '';
+  return request(`/api/v1/concerts?genre=${genre}${search}`);
 }
 
 export function getConcert(id: string, genre: ConcertGenre): Promise<Concert> {

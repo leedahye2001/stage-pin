@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -68,5 +69,27 @@ class KopisConcertClientTest {
         assertThat(concert.startsAt()).isEqualTo("2026-11-12T03:00:00Z");
         assertThat(concert.schedules()).isEmpty();
         assertThat(concert.posterUrl()).isNull();
+    }
+
+    @Test
+    void mapsPastConcertsFromSearchListWithoutDetailRequests() {
+        List<ConcertResponse> concerts = client.parseSearchConcerts("""
+                <dbs><db>
+                  <mt20id>PF292781</mt20id>
+                  <prfnm>DAY6 10th Anniversary Tour</prfnm>
+                  <prfpdfrom>2026.07.03</prfpdfrom>
+                  <prfpdto>2026.07.05</prfpdto>
+                  <fcltynm>올림픽공원</fcltynm>
+                  <poster>https://example.com/day6.jpg</poster>
+                  <area>서울특별시</area>
+                  <prfstate>공연완료</prfstate>
+                </db></dbs>
+                """, ConcertGenre.POPULAR_MUSIC, Instant.parse("2026-10-22T00:00:00Z"));
+
+        assertThat(concerts).hasSize(1);
+        assertThat(concerts.getFirst().title()).isEqualTo("DAY6 10th Anniversary Tour");
+        assertThat(concerts.getFirst().status()).isEqualTo(ConcertStatus.COMPLETED);
+        assertThat(concerts.getFirst().venue().name()).isEqualTo("올림픽공원");
+        assertThat(concerts.getFirst().posterUrl()).isEqualTo("https://example.com/day6.jpg");
     }
 }

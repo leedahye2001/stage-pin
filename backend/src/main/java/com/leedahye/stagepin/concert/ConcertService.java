@@ -49,6 +49,15 @@ public class ConcertService {
                 .toList();
     }
 
+    public List<ConcertResponse> search(String query, ConcertGenre genre) {
+        try {
+            return kopisConcertClient.search(query, genre);
+        } catch (RuntimeException exception) {
+            log.warn("KOPIS search unavailable for query: {}", query, exception);
+            return List.of();
+        }
+    }
+
     public ConcertResponse findById(UUID id, ConcertGenre genre) {
         return concertRepository.findById(id)
                 .map(this::toResponse)

@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,11 +41,15 @@ public class KopisConcertClient {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
     private static final Duration CACHE_TTL = Duration.ofMinutes(30);
     private static final int RESULT_LIMIT = 12;
+    private static final int SEARCH_RESULT_LIMIT = 30;
+    private static final LocalDate HISTORY_START = LocalDate.of(2014, 1, 1);
 
     private final RestClient restClient;
     private final String apiKey;
     private final Map<ConcertGenre, List<ConcertResponse>> cachedConcerts = new EnumMap<>(ConcertGenre.class);
     private final Map<ConcertGenre, Instant> cacheExpiresAt = new EnumMap<>(ConcertGenre.class);
+    private final Map<String, List<ConcertResponse>> cachedSearches = new HashMap<>();
+    private final Map<String, Instant> searchCacheExpiresAt = new HashMap<>();
 
     public KopisConcertClient(@Value("${kopis.api-key:}") String apiKey) {
         this.apiKey = apiKey;
@@ -73,6 +79,106 @@ public class KopisConcertClient {
                 .retrieve()
                 .body(byte[].class);
 
+        List<ConcertResponse> concerts = loadConcerts(listResponse, genre, RESULT_LIMIT);
+        concerts.sort(Comparator.comparing(ConcertResponse::startsAt));
+
+        cachedConcerts.put(genre, List.copyOf(concerts));
+        cacheExpiresAt.put(genre, Instant.now().plus(CACHE_TTL));
+        return cachedConcerts.get(genre);
+    }
+
+    public synchronized List<ConcertResponse> search(String query, ConcertGenre genre) {
+        String keyword = query.trim();
+        if (apiKey.isBlank() || keyword.isBlank()) {
+            return List.of();
+        }
+
+        String cacheKey = genre.name() + ":" + keyword.toLowerCase(Locale.ROOT);
+        if (Instant.now().isBefore(searchCacheExpiresAt.getOrDefault(cacheKey, Instant.EPOCH))) {
+            return cachedSearches.getOrDefault(cacheKey, List.of());
+        }
+
+        LocalDate endDate = LocalDate.now(SEOUL).plusDays(30);
+        byte[] listResponse = restClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/pblprfr")
+                        .queryParam("service", apiKey)
+                        .queryParam("stdate", HISTORY_START.format(REQUEST_DATE))
+                        .queryParam("eddate", endDate.format(REQUEST_DATE))
+                        .queryParam("cpage", 1)
+                        .queryParam("rows", 100)
+                        .queryParam("shcate", genre.kopisCode())
+                        .queryParam("shprfnm", keyword)
+                        .build())
+                .retrieve()
+                .body(byte[].class);
+
+        List<ConcertResponse> concerts = parseSearchConcerts(
+                decode(listResponse),
+                genre,
+                Instant.now());
+        concerts.sort(Comparator.comparing(ConcertResponse::startsAt).reversed());
+        cachedSearches.put(cacheKey, List.copyOf(concerts));
+        searchCacheExpiresAt.put(cacheKey, Instant.now().plus(CACHE_TTL));
+        return cachedSearches.get(cacheKey);
+    }
+
+    List<ConcertResponse> parseSearchConcerts(
+            String xml,
+            ConcertGenre genre,
+            Instant verifiedAt) {
+        var dbs = parse(xml).getElementsByTagName("db");
+        List<ConcertResponse> concerts = new ArrayList<>();
+        for (int index = 0; index < dbs.getLength() && concerts.size() < SEARCH_RESULT_LIMIT; index++) {
+            Element item = (Element) dbs.item(index);
+            String kopisId = requiredText(item, "mt20id");
+            String title = requiredText(item, "prfnm");
+            String venueName = requiredText(item, "fcltynm");
+            concerts.add(new ConcertResponse(
+                    stableId("concert", kopisId),
+                    title,
+                    List.of(),
+                    new VenueSummary(
+                            stableId("venue", venueName),
+                            venueName,
+                            requiredText(item, "area"),
+                            "KR",
+                            null,
+                            SEOUL.getId(),
+                            0,
+                            0),
+                    date(item, "prfpdfrom"),
+                    date(item, "prfpdto"),
+                    status(text(item, "prfstate")),
+                    nullableText(item, "poster"),
+                    "https://www.kopis.or.kr/por/db/pblprfr/pblprfrView.do?menuId=MNU_00020&mt20Id=" + kopisId,
+                    "KOPIS",
+                    genre,
+                    FanCategoryClassifier.classify(title, List.of()),
+                    verifiedAt,
+                    List.of()));
+        }
+        return concerts;
+    }
+
+    public ConcertResponse findById(UUID id, Instant from, ConcertGenre genre) {
+        ConcertResponse searchedConcert = cachedSearches.values().stream()
+                .flatMap(List::stream)
+                .filter(concert -> concert.id().equals(id))
+                .findFirst()
+                .orElse(null);
+        if (searchedConcert != null) {
+            return searchedConcert;
+        }
+        return findUpcoming(from, genre).stream()
+                .filter(concert -> concert.id().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<ConcertResponse> loadConcerts(
+            byte[] listResponse,
+            ConcertGenre genre,
+            int resultLimit) {
         List<ConcertResponse> concerts = new ArrayList<>();
         for (String kopisId : parseConcertIds(decode(listResponse))) {
             try {
@@ -83,22 +189,11 @@ public class KopisConcertClient {
             } catch (RuntimeException exception) {
                 log.warn("Skipping invalid KOPIS concert {}", kopisId, exception);
             }
-            if (concerts.size() == RESULT_LIMIT) {
+            if (concerts.size() == resultLimit) {
                 break;
             }
         }
-        concerts.sort(Comparator.comparing(ConcertResponse::startsAt));
-
-        cachedConcerts.put(genre, List.copyOf(concerts));
-        cacheExpiresAt.put(genre, Instant.now().plus(CACHE_TTL));
-        return cachedConcerts.get(genre);
-    }
-
-    public ConcertResponse findById(UUID id, Instant from, ConcertGenre genre) {
-        return findUpcoming(from, genre).stream()
-                .filter(concert -> concert.id().equals(id))
-                .findFirst()
-                .orElse(null);
+        return concerts;
     }
 
     List<String> parseConcertIds(String xml) {

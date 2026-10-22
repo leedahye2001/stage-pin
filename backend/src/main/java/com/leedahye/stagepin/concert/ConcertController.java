@@ -24,7 +24,11 @@ public class ConcertController {
     List<ConcertResponse> findUpcoming(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "POPULAR_MUSIC") ConcertGenre genre) {
+        if (query != null && !query.isBlank()) {
+            return concertService.search(query, genre);
+        }
         return concertService.findUpcoming(from == null ? Instant.now() : from, genre);
     }
 

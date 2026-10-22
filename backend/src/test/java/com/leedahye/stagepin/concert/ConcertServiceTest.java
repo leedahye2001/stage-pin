@@ -1,10 +1,13 @@
 package com.leedahye.stagepin.concert;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,5 +36,14 @@ class ConcertServiceTest {
         assertThatThrownBy(() -> service.findById(id, ConcertGenre.POPULAR_MUSIC))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("Concert not found: " + id);
+    }
+
+    @Test
+    void delegatesSearchToKopis() {
+        when(kopisConcertClient.search("DAY6", ConcertGenre.POPULAR_MUSIC)).thenReturn(List.of());
+        ConcertService service = new ConcertService(concertRepository, kopisConcertClient);
+
+        assertThat(service.search("DAY6", ConcertGenre.POPULAR_MUSIC)).isEmpty();
+        verify(kopisConcertClient).search("DAY6", ConcertGenre.POPULAR_MUSIC);
     }
 }
