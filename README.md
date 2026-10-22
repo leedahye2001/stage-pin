@@ -44,6 +44,23 @@ For an Android emulator, set `EXPO_PUBLIC_API_URL=http://10.0.2.2:8080`. A
 physical device must use the development machine's LAN address. `expo-maps`
 contains native code, so use an Expo development build for full map testing.
 
+### iOS app
+
+Install Xcode and an iOS Simulator, then run the backend and:
+
+```bash
+cd mobile
+npm run ios
+```
+
+This creates and launches an iOS development build, which is required because
+`expo-maps` is not available in the App Store version of Expo Go. To use a real
+iPhone, connect it to the Mac, enable Developer Mode, select a signing team in
+Xcode when prompted, and run `npm run ios:device`. In `mobile/.env`, set
+`EXPO_PUBLIC_API_URL` to the Mac's LAN address, for example
+`http://192.168.0.10:8080`, because an iPhone cannot reach the Mac through
+`localhost`.
+
 ## Verification
 
 ```bash

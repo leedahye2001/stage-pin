@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -149,7 +150,14 @@ export default function HomeScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>STAGEPIN</Text>
+              <View style={styles.brand}>
+                <Image
+                  accessibilityIgnoresInvertColors
+                  source={require('../../../assets/stagepin-mark.png')}
+                  style={styles.brandMark}
+                />
+                <Text style={styles.eyebrow}>STAGEPIN</Text>
+              </View>
               <Text style={styles.hero}>다음 무대를{`\n`}놓치지 마세요.</Text>
               <Text style={styles.subtitle}>공연과 티켓팅 일정을 한 지도에서 확인해요.</Text>
             </View>
@@ -265,6 +273,15 @@ const styles = StyleSheet.create({
   header: {
     gap: spacing.lg,
     marginBottom: spacing.md,
+  },
+  brand: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  brandMark: {
+    height: 28,
+    width: 28,
   },
   eyebrow: {
     color: colors.primary,
