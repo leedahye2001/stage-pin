@@ -4,6 +4,7 @@ import { CircleMarker, MapContainer, TileLayer, Tooltip } from 'react-leaflet';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Concert } from '@/api/concerts';
+import { KakaoConcertMap } from '@/components/KakaoConcertMap.web';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import 'leaflet/dist/leaflet.css';
@@ -18,35 +19,40 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
   const venues = Array.from(
     new Map(concerts.map((concert) => [concert.venue.name, concert])).values(),
   ).slice(0, 30);
+  const useKakaoMap = Boolean(process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY);
 
   return (
     <View style={styles.map}>
       {showRealMap ? (
-        <MapContainer
+        useKakaoMap ? (
+          <KakaoConcertMap concerts={venues} onSelect={onSelect} />
+        ) : (
+          <MapContainer
           attributionControl
           center={[36.4, 127.8]}
           scrollWheelZoom={false}
           style={{ height: '100%', width: '100%' }}
           zoom={7}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {venues.map((concert) => (
-            <CircleMarker
-              center={[concert.venue.latitude, concert.venue.longitude]}
-              eventHandlers={{ click: () => onSelect(concert.id) }}
-              key={concert.id}
-              pathOptions={{ color: colors.white, fillColor: colors.primary, fillOpacity: 1, weight: 3 }}
-              radius={9}
-            >
-              <Tooltip direction="top" offset={[0, -8]}>
-                {concert.venue.name}
-              </Tooltip>
-            </CircleMarker>
-          ))}
-        </MapContainer>
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {venues.map((concert) => (
+              <CircleMarker
+                center={[concert.venue.latitude, concert.venue.longitude]}
+                eventHandlers={{ click: () => onSelect(concert.id) }}
+                key={concert.id}
+                pathOptions={{ color: colors.white, fillColor: colors.primary, fillOpacity: 1, weight: 3 }}
+                radius={9}
+              >
+                <Tooltip direction="top" offset={[0, -8]}>
+                  {concert.venue.name}
+                </Tooltip>
+              </CircleMarker>
+            ))}
+          </MapContainer>
+        )
       ) : (
         <>
           <View style={[styles.land, styles.landLeft]} />
