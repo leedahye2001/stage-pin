@@ -1,9 +1,11 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getConcert, type ConcertGenre, type FanCategory, type ScheduleType } from '@/api/concerts';
+import { VenueMap } from '@/components/VenueMap';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const scheduleLabels: Record<ScheduleType, string> = {
@@ -40,6 +42,15 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
   minute: '2-digit',
 });
 
+const ticketVendor = (url: string) => {
+  const normalized = url.toLowerCase();
+  if (normalized.includes('yes24')) return 'YES24';
+  if (normalized.includes('nol.yanolja') || normalized.includes('interpark')) return 'NOL 티켓';
+  if (normalized.includes('ticketlink')) return '티켓링크';
+  if (normalized.includes('melon')) return '멜론티켓';
+  return '공식 예매처';
+};
+
 export default function ConcertDetailScreen() {
   const { id, genre = 'POPULAR_MUSIC' } = useLocalSearchParams<{ id: string; genre: ConcertGenre }>();
   const concertQuery = useQuery({
@@ -67,6 +78,12 @@ export default function ConcertDetailScreen() {
   const concert = concertQuery.data;
   const artistNames = concert.artists.map((artist) => artist.name).join(', ') || '출연진 미등록';
   const isKopis = concert.source === 'KOPIS';
+  const ticketLinks = concert.ticketLinks?.length
+    ? concert.ticketLinks
+    : concert.schedules.map((schedule) => ({
+        name: ticketVendor(schedule.sourceUrl),
+        url: schedule.sourceUrl,
+      }));
   const concertDate = isKopis
     ? new Intl.DateTimeFormat('ko-KR', {
         year: 'numeric',
@@ -103,7 +120,13 @@ export default function ConcertDetailScreen() {
           {concert.venue.city}
           {concert.venue.countryCode ? `, ${concert.venue.countryCode}` : ''}
         </Text>
-        {concert.venue.address ? <Text style={styles.meta}>{concert.venue.address}</Text> : null}
+        {concert.venue.address ? (
+          <View style={styles.addressRow}>
+            <Ionicons color={colors.primary} name="location" size={16} />
+            <Text style={styles.address}>{concert.venue.address}</Text>
+          </View>
+        ) : null}
+        <VenueMap venue={concert.venue} />
       </View>
 
       <Text style={styles.sectionTitle}>티켓팅 타임라인</Text>
@@ -132,13 +155,31 @@ export default function ConcertDetailScreen() {
         </View>
       )}
 
-      <Pressable
-        accessibilityRole="link"
-        onPress={() => Linking.openURL(concert.officialUrl)}
-        style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-      >
-        <Text style={styles.primaryButtonLabel}>{isKopis ? 'KOPIS 공연 상세' : '공식 공지 확인'}</Text>
-      </Pressable>
+      <Text style={styles.sectionTitle}>예매처</Text>
+      {ticketLinks.length ? (
+        <View style={styles.ticketLinks}>
+          {ticketLinks.map((link) => (
+            <Pressable
+              accessibilityLabel={`${link.name} 예매 페이지 열기`}
+              accessibilityRole="link"
+              key={link.url}
+              onPress={() => Linking.openURL(link.url)}
+              style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
+            >
+              <Ionicons color={colors.white} name="ticket" size={18} />
+              <Text style={styles.primaryButtonLabel}>{link.name}에서 예매하기</Text>
+              <Ionicons color={colors.white} name="arrow-forward" size={17} />
+            </Pressable>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.emptySchedule}>
+          <Text style={styles.emptyScheduleTitle}>등록된 공식 예매처가 없어요.</Text>
+          <Text style={styles.emptyScheduleDescription}>
+            KOPIS에 공식 예매 링크가 등록되면 이곳에 바로 표시할게요.
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -211,6 +252,19 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: spacing.xs,
   },
+  addressRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: spacing.sm,
+  },
+  address: {
+    color: colors.text,
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 19,
+  },
   sectionTitle: {
     color: colors.text,
     fontSize: typography.title,
@@ -281,8 +335,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
-    marginTop: spacing.lg,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
     padding: spacing.md,
+  },
+  ticketLinks: {
+    gap: spacing.sm,
   },
   pressed: {
     opacity: 0.76,
