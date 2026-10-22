@@ -51,25 +51,37 @@ export default function ConcertDetailScreen() {
   }
 
   const concert = concertQuery.data;
+  const isMusicBrainz = concert.source === 'MUSICBRAINZ_CC0';
+  const concertDate = isMusicBrainz
+    ? new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+      }).format(new Date(concert.startsAt))
+    : dateFormatter.format(new Date(concert.startsAt));
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.artist}>{concert.artists.map((artist) => artist.name).join(', ')}</Text>
       <Text style={styles.title}>{concert.title}</Text>
-      <Text style={styles.date}>{dateFormatter.format(new Date(concert.startsAt))}</Text>
+      <Text style={styles.date}>{concertDate}</Text>
+      {isMusicBrainz ? <Text style={styles.sourceBadge}>MUSICBRAINZ · CC0</Text> : null}
 
       <View style={styles.venueCard}>
         <Text style={styles.cardLabel}>VENUE</Text>
         <Text style={styles.venueName}>{concert.venue.name}</Text>
         <Text style={styles.meta}>
-          {concert.venue.city}, {concert.venue.countryCode}
+          {concert.venue.city}
+          {concert.venue.countryCode ? `, ${concert.venue.countryCode}` : ''}
         </Text>
         {concert.venue.address ? <Text style={styles.meta}>{concert.venue.address}</Text> : null}
       </View>
 
       <Text style={styles.sectionTitle}>티켓팅 타임라인</Text>
-      <View style={styles.timeline}>
-        {concert.schedules.map((schedule, index) => (
+      {concert.schedules.length ? (
+        <View style={styles.timeline}>
+          {concert.schedules.map((schedule, index) => (
           <View key={schedule.id} style={styles.timelineRow}>
             <View style={styles.timelineRail}>
               <View style={styles.timelineDot} />
@@ -81,8 +93,16 @@ export default function ConcertDetailScreen() {
               <Text style={styles.timezone}>{schedule.timezone}</Text>
             </View>
           </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.emptySchedule}>
+          <Text style={styles.emptyScheduleTitle}>예매 일정은 공식 공지에서 확인해 주세요.</Text>
+          <Text style={styles.emptyScheduleDescription}>
+            MusicBrainz는 공연 메타데이터만 제공하며 티켓 판매 일정은 제공하지 않아요.
+          </Text>
+        </View>
+      )}
 
       <Pressable
         accessibilityRole="link"
@@ -120,6 +140,18 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     marginTop: spacing.sm,
   },
+  sourceBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: '900',
+    marginTop: spacing.sm,
+    overflow: 'hidden',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
   venueCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
@@ -155,6 +187,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
+  },
+  emptySchedule: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  emptyScheduleTitle: {
+    color: colors.text,
+    fontSize: typography.body,
+    fontWeight: '800',
+  },
+  emptyScheduleDescription: {
+    color: colors.textMuted,
+    lineHeight: 20,
+    marginTop: spacing.xs,
   },
   timelineRow: {
     flexDirection: 'row',
@@ -223,4 +270,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

@@ -1,6 +1,8 @@
 package com.leedahye.stagepin.concert;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -17,17 +19,19 @@ import com.leedahye.stagepin.common.error.NotFoundException;
 class ConcertServiceTest {
     @Mock
     private ConcertRepository concertRepository;
+    @Mock
+    private MusicBrainzConcertClient musicBrainzConcertClient;
 
     @Test
     void throwsNotFoundWhenConcertDoesNotExist() {
         UUID id = UUID.randomUUID();
         when(concertRepository.findById(id)).thenReturn(Optional.empty());
 
-        ConcertService service = new ConcertService(concertRepository);
+        when(musicBrainzConcertClient.findById(eq(id), any())).thenReturn(null);
+        ConcertService service = new ConcertService(concertRepository, musicBrainzConcertClient);
 
         assertThatThrownBy(() -> service.findById(id))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("Concert not found: " + id);
     }
 }
-

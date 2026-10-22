@@ -46,6 +46,11 @@ export default function HomeScreen() {
         data={concertsQuery.data}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         keyExtractor={(concert) => concert.id}
+        ListFooterComponent={
+          concertsQuery.data.some((concert) => concert.source === 'MUSICBRAINZ_CC0') ? (
+            <Text style={styles.attribution}>공연 데이터: MusicBrainz · CC0 핵심 메타데이터</Text>
+          ) : undefined
+        }
         ListHeaderComponent={
           <View style={styles.header}>
             <View>
@@ -156,6 +161,10 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '800',
   },
+  attribution: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
 });
-
-

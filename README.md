@@ -54,3 +54,16 @@ Google Stitch is used to explore screens and themes. Stitch output is treated
 as a design reference, not copied into React Native as HTML/CSS. Production
 tokens live in `mobile/src/theme/tokens.ts`, and reusable native components are
 the source of truth for the app's design system.
+
+## Live concert data
+
+The API reads upcoming concert, artist, and venue metadata from the official
+MusicBrainz web service. StagePin uses only core metadata published under CC0,
+shows source attribution in the app, sends an identifiable User-Agent, limits
+requests to MusicBrainz's published rate, and caches results for 30 minutes.
+Demo records in PostgreSQL are returned when MusicBrainz is unavailable.
+
+The free MusicBrainz web service is intended for non-commercial use. Before a
+commercial launch, arrange commercial API access with MetaBrainz or replace the
+provider with another licensed event API. Event artwork is intentionally not
+imported because it has separate licensing.

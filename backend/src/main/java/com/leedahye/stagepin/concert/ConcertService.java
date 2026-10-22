@@ -5,6 +5,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,13 +18,27 @@ import com.leedahye.stagepin.concert.ConcertResponse.VenueSummary;
 @Service
 @Transactional(readOnly = true)
 public class ConcertService {
-    private final ConcertRepository concertRepository;
+    private static final Logger log = LoggerFactory.getLogger(ConcertService.class);
 
-    public ConcertService(ConcertRepository concertRepository) {
+    private final ConcertRepository concertRepository;
+    private final MusicBrainzConcertClient musicBrainzConcertClient;
+
+    public ConcertService(
+            ConcertRepository concertRepository,
+            MusicBrainzConcertClient musicBrainzConcertClient) {
         this.concertRepository = concertRepository;
+        this.musicBrainzConcertClient = musicBrainzConcertClient;
     }
 
     public List<ConcertResponse> findUpcoming(Instant from) {
+        try {
+            List<ConcertResponse> liveConcerts = musicBrainzConcertClient.findUpcoming(from);
+            if (!liveConcerts.isEmpty()) {
+                return liveConcerts;
+            }
+        } catch (RuntimeException exception) {
+            log.warn("MusicBrainz unavailable; returning demo concerts", exception);
+        }
         return concertRepository.findDistinctByStartsAtGreaterThanEqualOrderByStartsAtAsc(from).stream()
                 .map(this::toResponse)
                 .toList();
@@ -31,7 +47,13 @@ public class ConcertService {
     public ConcertResponse findById(UUID id) {
         return concertRepository.findById(id)
                 .map(this::toResponse)
-                .orElseThrow(() -> new NotFoundException("Concert not found: " + id));
+                .orElseGet(() -> {
+                    ConcertResponse liveConcert = musicBrainzConcertClient.findById(id, Instant.now());
+                    if (liveConcert == null) {
+                        throw new NotFoundException("Concert not found: " + id);
+                    }
+                    return liveConcert;
+                });
     }
 
     private ConcertResponse toResponse(Concert concert) {

@@ -18,6 +18,7 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 
 export function ConcertCard({ concert, onPress }: ConcertCardProps) {
   const artistNames = concert.artists.map((artist) => artist.name).join(', ');
+  const isMusicBrainz = concert.source === 'MUSICBRAINZ_CC0';
 
   return (
     <Pressable
@@ -36,11 +37,23 @@ export function ConcertCard({ concert, onPress }: ConcertCardProps) {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.artist}>{artistNames}</Text>
+        <View style={styles.artistRow}>
+          <Text style={styles.artist}>{artistNames}</Text>
+          {isMusicBrainz ? <Text style={styles.liveBadge}>LIVE DATA</Text> : null}
+        </View>
         <Text numberOfLines={2} style={styles.title}>
           {concert.title}
         </Text>
-        <Text style={styles.meta}>{dateFormatter.format(new Date(concert.startsAt))}</Text>
+        <Text style={styles.meta}>
+          {isMusicBrainz
+            ? new Intl.DateTimeFormat('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'short',
+              }).format(new Date(concert.startsAt))
+            : dateFormatter.format(new Date(concert.startsAt))}
+        </Text>
         <Text style={styles.meta}>
           {concert.venue.name} · {concert.venue.city}
         </Text>
@@ -92,6 +105,21 @@ const styles = StyleSheet.create({
     fontSize: typography.caption,
     fontWeight: '700',
   },
+  artistRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  liveBadge: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    color: colors.primary,
+    fontSize: 9,
+    fontWeight: '900',
+    overflow: 'hidden',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
   title: {
     color: colors.text,
     fontSize: typography.body,
@@ -106,4 +134,3 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
 });
-
