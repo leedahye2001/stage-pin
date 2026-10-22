@@ -22,7 +22,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/concerts/**", "/actuator/health").permitAll()
+                        .requestMatchers("/api/v1/concerts/**", "/api/v1/search/**", "/actuator/health").permitAll()
                         .anyRequest().denyAll())
                 .build();
     }

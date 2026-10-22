@@ -21,6 +21,7 @@ Docker Desktop or another Docker-compatible runtime is required.
 cd infra
 cp .env.example .env
 # .env의 KOPIS_API_KEY에 발급받은 서비스 키를 입력하세요.
+# 네이버 관련 검색도 사용하려면 NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET을 입력하세요.
 docker compose up --build
 ```
 
@@ -69,3 +70,14 @@ KOPIS does not provide fan-presale or general-sale start times. Those schedules
 remain empty until official artist notices and ticket vendors are integrated.
 Poster images are intentionally not imported until their reuse terms are
 confirmed.
+
+Artist search first shows a KOPIS-backed suggestion. Selecting it loads every
+matching KOPIS performance record and plots the distinct venues on the map.
+Historical list results only include a region, so those pins use approximate
+regional coordinates until a venue-detail lookup can supply exact coordinates.
+
+Optional related links come from the official NAVER API HUB web-search API.
+Set `NAVER_CLIENT_ID` and `NAVER_CLIENT_SECRET` in the ignored `infra/.env`
+file to enable them. Because web-search results are not structured performance
+records, StagePin keeps them in a separately attributed section and links to
+the original pages instead of silently mixing them into KOPIS data.

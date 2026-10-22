@@ -8,38 +8,37 @@ type ConcertMapProps = {
   onSelect: (concertId: string) => void;
 };
 
-const markerPositions = [
-  { left: '67%', top: '35%' },
-  { left: '79%', top: '29%' },
-  { left: '18%', top: '52%' },
-] as const;
-
 export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
+  const venues = Array.from(
+    new Map(concerts.map((concert) => [concert.venue.name, concert])).values(),
+  ).slice(0, 12);
+
   return (
     <View style={styles.map}>
       <View style={[styles.land, styles.landLeft]} />
       <View style={[styles.land, styles.landRight]} />
       <Text style={styles.mapLabel}>KOREA STAGES</Text>
 
-      {concerts.map((concert, index) => {
-        const position = markerPositions[index % markerPositions.length];
+      {venues.map((concert, index) => {
+        const left = 10 + ((concert.venue.longitude - 126) / 3.5) * 78 + (index % 3) * 1.5;
+        const top = 12 + ((38.6 - concert.venue.latitude) / 5.3) * 72 + (index % 2) * 2;
 
         return (
           <Pressable
             accessibilityLabel={`${concert.venue.city} 공연 보기`}
             key={concert.id}
             onPress={() => onSelect(concert.id)}
-            style={[styles.marker, position]}
+            style={[styles.marker, { left: `${left}%`, top: `${top}%` }]}
           >
             <View style={styles.pin} />
-            <Text style={styles.city}>{concert.venue.city.toUpperCase()}</Text>
+            <Text numberOfLines={1} style={styles.city}>{concert.venue.name}</Text>
           </Pressable>
         );
       })}
 
       <View style={styles.legend}>
         <View style={styles.legendDot} />
-        <Text style={styles.legendText}>예정 공연</Text>
+        <Text style={styles.legendText}>공연장 {venues.length}곳</Text>
       </View>
     </View>
   );
@@ -101,6 +100,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
     marginTop: 4,
+    maxWidth: 120,
     overflow: 'hidden',
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,

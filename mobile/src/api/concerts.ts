@@ -64,6 +64,15 @@ export type Concert = {
   schedules: ConcertSchedule[];
 };
 
+export type NaverSearchResponse = {
+  enabled: boolean;
+  items: {
+    title: string;
+    link: string;
+    description: string;
+  }[];
+};
+
 const localApiUrl = Platform.select({
   android: 'http://10.0.2.2:8080',
   default: 'http://localhost:8080',
@@ -86,4 +95,8 @@ export function getConcerts(genre: ConcertGenre, query?: string): Promise<Concer
 
 export function getConcert(id: string, genre: ConcertGenre): Promise<Concert> {
   return request(`/api/v1/concerts/${id}?genre=${genre}`);
+}
+
+export function getNaverSearch(query: string): Promise<NaverSearchResponse> {
+  return request(`/api/v1/search/naver?query=${encodeURIComponent(query)}`);
 }

@@ -15,14 +15,17 @@ const cameraPosition = {
 };
 
 export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
-  const markers = concerts.map((concert) => ({
+  const venues = Array.from(
+    new Map(concerts.map((concert) => [concert.venue.name, concert])).values(),
+  );
+  const markers = venues.map((concert) => ({
     id: concert.id,
     coordinates: {
       latitude: concert.venue.latitude,
       longitude: concert.venue.longitude,
     },
-    title: concert.artists.map((artist) => artist.name).join(', '),
-    snippet: `${concert.venue.name} · ${concert.venue.city}`,
+    title: concert.venue.name,
+    snippet: concert.venue.city,
     showCallout: true,
   }));
 
@@ -57,4 +60,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-

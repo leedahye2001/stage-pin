@@ -133,6 +133,8 @@ public class KopisConcertClient {
             String kopisId = requiredText(item, "mt20id");
             String title = requiredText(item, "prfnm");
             String venueName = requiredText(item, "fcltynm");
+            String area = requiredText(item, "area");
+            double[] coordinates = regionCoordinates(area);
             concerts.add(new ConcertResponse(
                     stableId("concert", kopisId),
                     title,
@@ -140,12 +142,12 @@ public class KopisConcertClient {
                     new VenueSummary(
                             stableId("venue", venueName),
                             venueName,
-                            requiredText(item, "area"),
+                            area,
                             "KR",
                             null,
                             SEOUL.getId(),
-                            0,
-                            0),
+                            coordinates[0],
+                            coordinates[1]),
                     date(item, "prfpdfrom"),
                     date(item, "prfpdto"),
                     status(text(item, "prfstate")),
@@ -158,6 +160,27 @@ public class KopisConcertClient {
                     List.of()));
         }
         return concerts;
+    }
+
+    private double[] regionCoordinates(String area) {
+        if (area.contains("서울")) return new double[] { 37.5665, 126.9780 };
+        if (area.contains("부산")) return new double[] { 35.1796, 129.0756 };
+        if (area.contains("대구")) return new double[] { 35.8714, 128.6014 };
+        if (area.contains("인천")) return new double[] { 37.4563, 126.7052 };
+        if (area.contains("광주")) return new double[] { 35.1595, 126.8526 };
+        if (area.contains("대전")) return new double[] { 36.3504, 127.3845 };
+        if (area.contains("울산")) return new double[] { 35.5384, 129.3114 };
+        if (area.contains("세종")) return new double[] { 36.4800, 127.2890 };
+        if (area.contains("경기")) return new double[] { 37.4138, 127.5183 };
+        if (area.contains("강원")) return new double[] { 37.8228, 128.1555 };
+        if (area.contains("충북")) return new double[] { 36.6357, 127.4917 };
+        if (area.contains("충남")) return new double[] { 36.5184, 126.8000 };
+        if (area.contains("전북")) return new double[] { 35.7175, 127.1530 };
+        if (area.contains("전남")) return new double[] { 34.8679, 126.9910 };
+        if (area.contains("경북")) return new double[] { 36.4919, 128.8889 };
+        if (area.contains("경남")) return new double[] { 35.4606, 128.2132 };
+        if (area.contains("제주")) return new double[] { 33.4996, 126.5312 };
+        return new double[] { 36.5, 127.8 };
     }
 
     public ConcertResponse findById(UUID id, Instant from, ConcertGenre genre) {

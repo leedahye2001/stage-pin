@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getConcerts, type FanCategory } from '@/api/concerts';
+import { getConcerts, getNaverSearch, type FanCategory } from '@/api/concerts';
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -28,27 +29,39 @@ const fanFilters: { value: FanFilter; label: string }[] = [
   { value: 'BAND', label: '밴드' },
 ];
 
+const cleanNaverText = (value: string) => value.replaceAll('<b>', '').replaceAll('</b>', '');
+
 export default function HomeScreen() {
   const [fanFilter, setFanFilter] = useState<FanFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 500);
     return () => clearTimeout(timeout);
   }, [searchQuery]);
 
   const serverQuery = debouncedQuery.length >= 2 ? debouncedQuery : '';
-  const concertsQuery = useQuery({
-    queryKey: ['concerts', 'POPULAR_MUSIC', serverQuery],
-    queryFn: () => getConcerts('POPULAR_MUSIC', serverQuery || undefined),
-    placeholderData: (previousData) => previousData,
+  const upcomingQuery = useQuery({
+    queryKey: ['concerts', 'POPULAR_MUSIC', 'upcoming'],
+    queryFn: () => getConcerts('POPULAR_MUSIC'),
+  });
+  const artistSearchQuery = useQuery({
+    queryKey: ['concerts', 'POPULAR_MUSIC', 'artist', serverQuery],
+    queryFn: () => getConcerts('POPULAR_MUSIC', serverQuery),
+    enabled: Boolean(serverQuery),
+  });
+  const naverSearchQuery = useQuery({
+    queryKey: ['naver-search', selectedArtist],
+    queryFn: () => getNaverSearch(selectedArtist ?? ''),
+    enabled: Boolean(selectedArtist),
   });
 
   const openConcert = (id: string) => {
     router.push({ pathname: '/concerts/[id]', params: { id, genre: 'POPULAR_MUSIC' } });
   };
 
-  if (concertsQuery.isPending) {
+  if (upcomingQuery.isPending) {
     return (
       <SafeAreaView style={styles.centered}>
         <ActivityIndicator color={colors.primary} size="large" />
@@ -57,32 +70,35 @@ export default function HomeScreen() {
     );
   }
 
-  if (concertsQuery.isError) {
+  if (upcomingQuery.isError) {
     return (
       <SafeAreaView style={styles.centered}>
         <Text style={styles.errorTitle}>공연 정보를 불러오지 못했어요.</Text>
         <Text style={styles.errorMessage}>백엔드 연결과 EXPO_PUBLIC_API_URL을 확인해 주세요.</Text>
-        <Pressable onPress={() => concertsQuery.refetch()} style={styles.retryButton}>
+        <Pressable onPress={() => upcomingQuery.refetch()} style={styles.retryButton}>
           <Text style={styles.retryLabel}>다시 시도</Text>
         </Pressable>
       </SafeAreaView>
     );
   }
 
-  const categorizedConcerts = fanFilter === 'ALL'
-    ? concertsQuery.data
-    : concertsQuery.data.filter((concert) => concert.fanCategory === fanFilter);
-  const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ko-KR');
-  const concerts = normalizedQuery
-    ? categorizedConcerts.filter((concert) =>
-        [
-          concert.title,
-          concert.venue.name,
-          concert.venue.city,
-          ...concert.artists.map((artist) => artist.name),
-        ].some((value) => value.toLocaleLowerCase('ko-KR').includes(normalizedQuery)),
-      )
-    : categorizedConcerts;
+  const sourceConcerts = selectedArtist ? (artistSearchQuery.data ?? []) : upcomingQuery.data;
+  const concerts = fanFilter === 'ALL'
+    ? sourceConcerts
+    : sourceConcerts.filter((concert) => concert.fanCategory === fanFilter);
+  const showSearchDropdown = searchQuery.trim().length >= 2 && !selectedArtist;
+  const searchIsLoading = debouncedQuery !== searchQuery.trim() || artistSearchQuery.isFetching;
+
+  const changeSearchQuery = (value: string) => {
+    setSearchQuery(value);
+    setSelectedArtist(null);
+  };
+
+  const selectArtist = () => {
+    if (!serverQuery || searchIsLoading) return;
+    setSelectedArtist(searchQuery.trim());
+    setFanFilter('ALL');
+  };
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -92,9 +108,43 @@ export default function HomeScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         keyExtractor={(concert) => concert.id}
         ListFooterComponent={
-          concertsQuery.data.some((concert) => concert.source === 'KOPIS') ? (
-            <Text style={styles.attribution}>공연 데이터: 공연예술통합전산망(KOPIS)</Text>
-          ) : undefined
+          <View>
+            {sourceConcerts.some((concert) => concert.source === 'KOPIS') ? (
+              <Text style={styles.attribution}>공연 데이터: 공연예술통합전산망(KOPIS)</Text>
+            ) : null}
+            {selectedArtist ? (
+              <View style={styles.naverSection}>
+                <Text style={styles.sectionTitle}>네이버 관련 정보</Text>
+                <Text style={styles.naverCaption}>네이버 검색 결과 · 원문에서 내용을 확인해 주세요.</Text>
+                {naverSearchQuery.isPending ? (
+                  <ActivityIndicator color={colors.primary} style={styles.naverLoading} />
+                ) : naverSearchQuery.data?.enabled === false ? (
+                  <Text style={styles.naverEmpty}>
+                    NAVER API HUB 키를 설정하면 관련 공식 공지와 예매 페이지가 표시돼요.
+                  </Text>
+                ) : naverSearchQuery.data?.items.length ? (
+                  naverSearchQuery.data.items.map((item) => (
+                    <Pressable
+                      accessibilityRole="link"
+                      key={item.link}
+                      onPress={() => Linking.openURL(item.link)}
+                      style={styles.naverResult}
+                    >
+                      <Text numberOfLines={1} style={styles.naverTitle}>
+                        {cleanNaverText(item.title)}
+                      </Text>
+                      <Text numberOfLines={2} style={styles.naverDescription}>
+                        {cleanNaverText(item.description)}
+                      </Text>
+                      <Text style={styles.naverLink}>네이버 검색 결과 열기 ›</Text>
+                    </Pressable>
+                  ))
+                ) : (
+                  <Text style={styles.naverEmpty}>관련 네이버 검색 결과가 없어요.</Text>
+                )}
+              </View>
+            ) : null}
+          </View>
         }
         ListHeaderComponent={
           <View style={styles.header}>
@@ -110,8 +160,9 @@ export default function HomeScreen() {
                 accessibilityLabel="공연 검색"
                 autoCapitalize="none"
                 autoCorrect={false}
-                onChangeText={setSearchQuery}
-                placeholder="아티스트, 공연명, 공연장을 검색해보세요"
+                onChangeText={changeSearchQuery}
+                onSubmitEditing={selectArtist}
+                placeholder="아티스트를 검색해보세요"
                 placeholderTextColor={colors.textMuted}
                 returnKeyType="search"
                 style={styles.searchInput}
@@ -121,12 +172,36 @@ export default function HomeScreen() {
                 <Pressable
                   accessibilityLabel="검색어 지우기"
                   hitSlop={10}
-                  onPress={() => setSearchQuery('')}
+                  onPress={() => changeSearchQuery('')}
                 >
                   <Ionicons color={colors.textMuted} name="close-circle" size={20} />
                 </Pressable>
               )}
             </View>
+
+            {showSearchDropdown ? (
+              <View style={styles.searchDropdown}>
+                {searchIsLoading ? (
+                  <View style={styles.searchDropdownRow}>
+                    <ActivityIndicator color={colors.primary} size="small" />
+                    <Text style={styles.searchDropdownDescription}>KOPIS 공연 기록을 찾는 중이에요.</Text>
+                  </View>
+                ) : (
+                  <Pressable onPress={selectArtist} style={styles.searchDropdownRow}>
+                    <View style={styles.searchIcon}>
+                      <Ionicons color={colors.primary} name="musical-notes" size={18} />
+                    </View>
+                    <View style={styles.searchDropdownContent}>
+                      <Text style={styles.searchDropdownTitle}>{searchQuery.trim()}</Text>
+                      <Text style={styles.searchDropdownDescription}>
+                        KOPIS 공연 {artistSearchQuery.data?.length ?? 0}개 · 공연장 지도 보기
+                      </Text>
+                    </View>
+                    <Ionicons color={colors.textMuted} name="chevron-forward" size={18} />
+                  </Pressable>
+                )}
+              </View>
+            ) : null}
 
             <ScrollView
               contentContainerStyle={styles.genreList}
@@ -151,22 +226,24 @@ export default function HomeScreen() {
               })}
             </ScrollView>
 
-            <Text style={styles.classificationNote}>KOPIS 공연명·출연진 기준 자동 분류</Text>
+            <Text style={styles.classificationNote}>
+              {selectedArtist ? 'KOPIS 공연명 기준 검색' : 'KOPIS 공연명·출연진 기준 자동 분류'}
+            </Text>
 
-            {!normalizedQuery && <ConcertMap concerts={concerts} onSelect={openConcert} />}
+            {concerts.length ? <ConcertMap concerts={concerts} onSelect={openConcert} /> : null}
 
             <View style={styles.sectionHeading}>
-              <Text style={styles.sectionTitle}>{normalizedQuery ? '검색 결과' : '예정 공연'}</Text>
+              <Text style={styles.sectionTitle}>
+                {selectedArtist ? `${selectedArtist} 공연 기록` : '예정 공연'}
+              </Text>
               <Text style={styles.count}>{concerts.length}</Text>
             </View>
           </View>
         }
         ListEmptyComponent={
           <Text style={styles.empty}>
-            {concertsQuery.isFetching && serverQuery
-              ? 'KOPIS 공연 기록을 찾는 중이에요.'
-              : normalizedQuery
-              ? `‘${searchQuery.trim()}’ 검색 결과가 없어요.`
+            {selectedArtist
+              ? `KOPIS에 등록된 ‘${selectedArtist}’ 공연 기록이 없어요.`
               : '해당 분류의 예정 공연이 아직 없어요.'}
           </Text>
         }
@@ -223,6 +300,42 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.body,
     paddingVertical: 14,
+  },
+  searchDropdown: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: -spacing.md,
+    overflow: 'hidden',
+  },
+  searchDropdownRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    minHeight: 66,
+    paddingHorizontal: spacing.md,
+  },
+  searchDropdownContent: {
+    flex: 1,
+  },
+  searchDropdownTitle: {
+    color: colors.text,
+    fontSize: typography.body,
+    fontWeight: '800',
+  },
+  searchDropdownDescription: {
+    color: colors.textMuted,
+    fontSize: typography.caption,
+    marginTop: 2,
+  },
+  searchIcon: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
   },
   genreList: {
     gap: spacing.sm,
@@ -317,5 +430,48 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: spacing.md,
     textAlign: 'center',
+  },
+  naverSection: {
+    gap: spacing.sm,
+    marginTop: spacing.xl,
+  },
+  naverCaption: {
+    color: colors.textMuted,
+    fontSize: typography.caption,
+    marginTop: -spacing.xs,
+  },
+  naverLoading: {
+    marginVertical: spacing.lg,
+  },
+  naverResult: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    padding: spacing.md,
+  },
+  naverTitle: {
+    color: colors.text,
+    fontSize: typography.body,
+    fontWeight: '800',
+  },
+  naverDescription: {
+    color: colors.textMuted,
+    fontSize: typography.caption,
+    lineHeight: 19,
+    marginTop: spacing.xs,
+  },
+  naverLink: {
+    color: colors.primary,
+    fontSize: typography.caption,
+    fontWeight: '800',
+    marginTop: spacing.sm,
+  },
+  naverEmpty: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    color: colors.textMuted,
+    lineHeight: 20,
+    padding: spacing.md,
   },
 });
