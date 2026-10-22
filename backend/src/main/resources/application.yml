@@ -21,3 +21,5 @@ management:
 server:
   port: ${SERVER_PORT:8080}
 
+kopis:
+  api-key: ${KOPIS_API_KEY:}

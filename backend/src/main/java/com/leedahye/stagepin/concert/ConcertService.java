@@ -21,25 +21,27 @@ public class ConcertService {
     private static final Logger log = LoggerFactory.getLogger(ConcertService.class);
 
     private final ConcertRepository concertRepository;
-    private final MusicBrainzConcertClient musicBrainzConcertClient;
+    private final KopisConcertClient kopisConcertClient;
 
     public ConcertService(
             ConcertRepository concertRepository,
-            MusicBrainzConcertClient musicBrainzConcertClient) {
+            KopisConcertClient kopisConcertClient) {
         this.concertRepository = concertRepository;
-        this.musicBrainzConcertClient = musicBrainzConcertClient;
+        this.kopisConcertClient = kopisConcertClient;
     }
 
     public List<ConcertResponse> findUpcoming(Instant from) {
         try {
-            List<ConcertResponse> liveConcerts = musicBrainzConcertClient.findUpcoming(from);
+            List<ConcertResponse> liveConcerts = kopisConcertClient.findUpcoming(from);
             if (!liveConcerts.isEmpty()) {
                 return liveConcerts;
             }
         } catch (RuntimeException exception) {
-            log.warn("MusicBrainz unavailable; returning demo concerts", exception);
+            log.warn("KOPIS unavailable; returning Korean demo concerts", exception);
         }
-        return concertRepository.findDistinctByStartsAtGreaterThanEqualOrderByStartsAtAsc(from).stream()
+        return concertRepository
+                .findDistinctByStartsAtGreaterThanEqualAndVenueCountryCodeOrderByStartsAtAsc(from, "KR")
+                .stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -48,7 +50,7 @@ public class ConcertService {
         return concertRepository.findById(id)
                 .map(this::toResponse)
                 .orElseGet(() -> {
-                    ConcertResponse liveConcert = musicBrainzConcertClient.findById(id, Instant.now());
+                    ConcertResponse liveConcert = kopisConcertClient.findById(id, Instant.now());
                     if (liveConcert == null) {
                         throw new NotFoundException("Concert not found: " + id);
                     }

@@ -18,7 +18,7 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 
 export function ConcertCard({ concert, onPress }: ConcertCardProps) {
   const artistNames = concert.artists.map((artist) => artist.name).join(', ');
-  const isMusicBrainz = concert.source === 'MUSICBRAINZ_CC0';
+  const isKopis = concert.source === 'KOPIS';
 
   return (
     <Pressable
@@ -39,13 +39,13 @@ export function ConcertCard({ concert, onPress }: ConcertCardProps) {
       <View style={styles.content}>
         <View style={styles.artistRow}>
           <Text style={styles.artist}>{artistNames}</Text>
-          {isMusicBrainz ? <Text style={styles.liveBadge}>LIVE DATA</Text> : null}
+          {isKopis ? <Text style={styles.liveBadge}>KOPIS</Text> : null}
         </View>
         <Text numberOfLines={2} style={styles.title}>
           {concert.title}
         </Text>
         <Text style={styles.meta}>
-          {isMusicBrainz
+          {isKopis
             ? new Intl.DateTimeFormat('ko-KR', {
                 year: 'numeric',
                 month: 'long',

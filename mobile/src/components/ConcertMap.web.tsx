@@ -19,7 +19,7 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
     <View style={styles.map}>
       <View style={[styles.land, styles.landLeft]} />
       <View style={[styles.land, styles.landRight]} />
-      <Text style={styles.mapLabel}>WORLD STAGES</Text>
+      <Text style={styles.mapLabel}>KOREA STAGES</Text>
 
       {concerts.map((concert, index) => {
         const position = markerPositions[index % markerPositions.length];

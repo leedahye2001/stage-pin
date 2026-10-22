@@ -51,8 +51,8 @@ export default function ConcertDetailScreen() {
   }
 
   const concert = concertQuery.data;
-  const isMusicBrainz = concert.source === 'MUSICBRAINZ_CC0';
-  const concertDate = isMusicBrainz
+  const isKopis = concert.source === 'KOPIS';
+  const concertDate = isKopis
     ? new Intl.DateTimeFormat('ko-KR', {
         year: 'numeric',
         month: 'long',
@@ -66,7 +66,7 @@ export default function ConcertDetailScreen() {
       <Text style={styles.artist}>{concert.artists.map((artist) => artist.name).join(', ')}</Text>
       <Text style={styles.title}>{concert.title}</Text>
       <Text style={styles.date}>{concertDate}</Text>
-      {isMusicBrainz ? <Text style={styles.sourceBadge}>MUSICBRAINZ · CC0</Text> : null}
+      {isKopis ? <Text style={styles.sourceBadge}>KOPIS · 대중음악</Text> : null}
 
       <View style={styles.venueCard}>
         <Text style={styles.cardLabel}>VENUE</Text>
@@ -99,7 +99,7 @@ export default function ConcertDetailScreen() {
         <View style={styles.emptySchedule}>
           <Text style={styles.emptyScheduleTitle}>예매 일정은 공식 공지에서 확인해 주세요.</Text>
           <Text style={styles.emptyScheduleDescription}>
-            MusicBrainz는 공연 메타데이터만 제공하며 티켓 판매 일정은 제공하지 않아요.
+            선예매·일반예매 일정은 추후 공식 공지와 예매처에서 연동할 예정이에요.
           </Text>
         </View>
       )}
@@ -109,7 +109,7 @@ export default function ConcertDetailScreen() {
         onPress={() => Linking.openURL(concert.officialUrl)}
         style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
       >
-        <Text style={styles.primaryButtonLabel}>공식 공지 확인</Text>
+        <Text style={styles.primaryButtonLabel}>{isKopis ? 'KOPIS 공연 상세' : '공식 공지 확인'}</Text>
       </Pressable>
     </ScrollView>
   );

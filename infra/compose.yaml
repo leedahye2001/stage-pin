@@ -20,6 +20,7 @@ services:
       DB_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-stagepin}
       DB_USERNAME: ${POSTGRES_USER:-stagepin}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-stagepin}
+      KOPIS_API_KEY: ${KOPIS_API_KEY:-}
     depends_on:
       database:
         condition: service_healthy

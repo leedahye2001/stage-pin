@@ -11,10 +11,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ConcertRepository extends JpaRepository<Concert, UUID> {
 
     @EntityGraph(attributePaths = {"venue", "artists", "schedules"})
-    List<Concert> findDistinctByStartsAtGreaterThanEqualOrderByStartsAtAsc(Instant from);
+    List<Concert> findDistinctByStartsAtGreaterThanEqualAndVenueCountryCodeOrderByStartsAtAsc(
+            Instant from,
+            String countryCode);
 
     @Override
     @EntityGraph(attributePaths = {"venue", "artists", "schedules"})
     Optional<Concert> findById(UUID id);
 }
-

@@ -19,6 +19,8 @@ Docker Desktop or another Docker-compatible runtime is required.
 
 ```bash
 cd infra
+cp .env.example .env
+# .env의 KOPIS_API_KEY에 발급받은 서비스 키를 입력하세요.
 docker compose up --build
 ```
 
@@ -57,13 +59,13 @@ the source of truth for the app's design system.
 
 ## Live concert data
 
-The API reads upcoming concert, artist, and venue metadata from the official
-MusicBrainz web service. StagePin uses only core metadata published under CC0,
-shows source attribution in the app, sends an identifiable User-Agent, limits
-requests to MusicBrainz's published rate, and caches results for 30 minutes.
-Demo records in PostgreSQL are returned when MusicBrainz is unavailable.
+The API reads the next 31 days of Korean popular-music performances from the
+official KOPIS Open API (`shcate=CCCD`). It combines performance details with
+facility coordinates, caches up to 12 results for 30 minutes, and falls back to
+the Korean PostgreSQL demo record when the key is missing or KOPIS is
+unavailable. Keep `KOPIS_API_KEY` only in the ignored `infra/.env` file.
 
-The free MusicBrainz web service is intended for non-commercial use. Before a
-commercial launch, arrange commercial API access with MetaBrainz or replace the
-provider with another licensed event API. Event artwork is intentionally not
-imported because it has separate licensing.
+KOPIS does not provide fan-presale or general-sale start times. Those schedules
+remain empty until official artist notices and ticket vendors are integrated.
+Poster images are intentionally not imported until their reuse terms are
+confirmed.

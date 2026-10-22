@@ -20,15 +20,15 @@ class ConcertServiceTest {
     @Mock
     private ConcertRepository concertRepository;
     @Mock
-    private MusicBrainzConcertClient musicBrainzConcertClient;
+    private KopisConcertClient kopisConcertClient;
 
     @Test
     void throwsNotFoundWhenConcertDoesNotExist() {
         UUID id = UUID.randomUUID();
         when(concertRepository.findById(id)).thenReturn(Optional.empty());
 
-        when(musicBrainzConcertClient.findById(eq(id), any())).thenReturn(null);
-        ConcertService service = new ConcertService(concertRepository, musicBrainzConcertClient);
+        when(kopisConcertClient.findById(eq(id), any())).thenReturn(null);
+        ConcertService service = new ConcertService(concertRepository, kopisConcertClient);
 
         assertThatThrownBy(() -> service.findById(id))
                 .isInstanceOf(NotFoundException.class)

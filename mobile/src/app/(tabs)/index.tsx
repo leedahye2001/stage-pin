@@ -47,8 +47,8 @@ export default function HomeScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         keyExtractor={(concert) => concert.id}
         ListFooterComponent={
-          concertsQuery.data.some((concert) => concert.source === 'MUSICBRAINZ_CC0') ? (
-            <Text style={styles.attribution}>공연 데이터: MusicBrainz · CC0 핵심 메타데이터</Text>
+          concertsQuery.data.some((concert) => concert.source === 'KOPIS') ? (
+            <Text style={styles.attribution}>공연 데이터: 공연예술통합전산망(KOPIS)</Text>
           ) : undefined
         }
         ListHeaderComponent={
