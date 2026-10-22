@@ -15,7 +15,7 @@ type ConcertMapProps = {
 };
 
 function KoreaSilhouette() {
-  // Simplified from Natural Earth 1:10m public-domain South Korea geometry.
+  // Rounded to keep the map playful while preserving the projected venue area.
   return createElement(
     'svg',
     {
@@ -24,11 +24,38 @@ function KoreaSilhouette() {
       viewBox: '0 0 180 230',
     },
     createElement('path', {
-      d: 'M115 3L127 22L147 41L163 66L165 79L161 107L164 109L169 106L170 108L164 129L161 128L160 135L144 147L142 144L131 145L126 141L128 147L121 145L116 149L121 147L119 156L114 151L102 152L102 146L94 151L86 150L80 153L84 157L89 155L87 160L82 161L83 165L79 163L77 154L70 156L77 166L70 166L74 168L69 172L60 168L64 164L63 166L65 166L66 161L70 161L65 159L54 165L49 173L45 171L44 166L42 172L32 178L30 171L33 167L22 166L22 159L30 166L26 161L37 164L25 159L39 157L35 156L35 153L32 158L26 158L29 150L23 152L26 149L20 144L24 143L28 149L29 145L23 140L30 135L31 128L40 128L30 123L39 117L44 119L41 115L47 113L37 113L32 110L48 106L40 109L36 104L31 104L36 102L32 96L35 95L31 92L37 90L31 91L31 79L28 84L24 79L22 85L21 80L17 82L19 80L15 81L15 78L19 77L18 73L21 74L23 70L22 77L25 77L24 75L28 72L25 69L29 68L31 75L32 71L35 73L32 66L37 69L37 72L40 69L45 70L47 79L48 74L56 69L50 71L46 68L50 68L49 65L43 67L48 61L40 63L41 60L39 58L48 58L37 53L38 48L33 38L39 38L39 41L43 43L40 41L39 31L58 17L101 16L109 12L112 5L115 3ZM52 211L47 217L36 220L21 222L16 218L23 211L31 209L45 207L52 211Z',
-      fill: '#C8C3D8',
-      stroke: '#B8B0D1',
+      d: 'M105 8C122 18 138 36 149 55C161 75 166 94 161 112C156 132 143 147 127 157C111 168 94 175 74 178C56 181 42 177 35 169C28 161 31 150 40 138C49 126 54 115 52 104C50 94 41 89 31 84C20 79 16 71 20 64C24 56 35 52 44 48C53 44 56 38 53 32C49 25 47 19 52 15C59 9 72 10 84 12C92 13 99 12 105 8Z',
+      fill: '#D1CBDF',
+      stroke: '#AAA1C2',
+      strokeLinecap: 'round',
       strokeLinejoin: 'round',
-      strokeWidth: 1,
+      strokeWidth: 3,
+    }),
+    createElement('ellipse', {
+      cx: 45,
+      cy: 213,
+      fill: '#D1CBDF',
+      rx: 12,
+      ry: 5,
+      stroke: '#AAA1C2',
+      strokeWidth: 3,
+    }),
+    createElement('ellipse', {
+      cx: 170,
+      cy: 61,
+      fill: '#D1CBDF',
+      rx: 4.5,
+      ry: 5.5,
+      stroke: '#AAA1C2',
+      strokeWidth: 2.5,
+    }),
+    createElement('circle', {
+      cx: 178,
+      cy: 69,
+      fill: '#D1CBDF',
+      r: 2.8,
+      stroke: '#AAA1C2',
+      strokeWidth: 2,
     }),
   );
 }
