@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -69,6 +70,18 @@ export default function LogbookScreen() {
           <Ionicons color={colors.primary} name="images-outline" size={18} />
           <Text style={styles.previewText}>사진과 감상 기록이 쌓이면 이런 로그북이 완성돼요.</Text>
         </View>
+
+        <Pressable onPress={() => router.push('/pinlog/create')} style={styles.createCard}>
+          <View style={styles.createIcon}>
+            <Ionicons color={colors.primary} name="camera" size={25} />
+          </View>
+          <View style={styles.createCopy}>
+            <Text style={styles.createEyebrow}>NEW · STAGEPIN 4-CUT</Text>
+            <Text style={styles.createTitle}>공연 가는 날 4컷 만들기</Text>
+            <Text style={styles.createDescription}>사진 네 장으로 공유용 핀로그를 만들어요.</Text>
+          </View>
+          <Ionicons color={colors.white} name="chevron-forward" size={21} />
+        </Pressable>
 
         <View style={styles.statsCard}>
           <Stat value="12" label="다녀온 공연" />
@@ -172,6 +185,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row', gap: spacing.sm, padding: spacing.md,
   },
   previewText: { color: colors.primary, flex: 1, fontSize: 12, fontWeight: '700' },
+  createCard: {
+    alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.lg,
+    flexDirection: 'row', gap: spacing.md, overflow: 'hidden', padding: spacing.md,
+  },
+  createIcon: {
+    alignItems: 'center', backgroundColor: colors.white, borderRadius: radius.md,
+    height: 50, justifyContent: 'center', width: 50,
+  },
+  createCopy: { flex: 1 },
+  createEyebrow: { color: '#D9D0FF', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  createTitle: { color: colors.white, fontSize: 16, fontWeight: '900', marginTop: 3 },
+  createDescription: { color: 'rgba(255,255,255,0.72)', fontSize: 11, marginTop: 3 },
   statsCard: {
     alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.lg,
     flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.lg,
