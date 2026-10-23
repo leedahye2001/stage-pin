@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getConcert, type ConcertGenre, type FanCategory, type ScheduleType } from '@/api/concerts';
 import { VenueMap } from '@/components/VenueMap';
+import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const scheduleLabels: Record<ScheduleType, string> = {
@@ -52,6 +53,7 @@ const ticketVendor = (url: string) => {
 };
 
 export default function ConcertDetailScreen() {
+  const { isConcertFavorite, toggleConcert } = useFavorites();
   const { id, genre = 'POPULAR_MUSIC' } = useLocalSearchParams<{ id: string; genre: ConcertGenre }>();
   const concertQuery = useQuery({
     queryKey: ['concert', id, genre],
@@ -104,7 +106,21 @@ export default function ConcertDetailScreen() {
           style={styles.poster}
         />
       ) : null}
-      <Text style={styles.artist}>{artistNames}</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.artist}>{artistNames}</Text>
+        <Pressable
+          accessibilityLabel={isConcertFavorite(concert.id) ? '공연 찜 해제' : '공연 찜하기'}
+          accessibilityRole="button"
+          onPress={() => toggleConcert(concert)}
+          style={styles.favoriteButton}
+        >
+          <Ionicons
+            color={colors.primary}
+            name={isConcertFavorite(concert.id) ? 'heart' : 'heart-outline'}
+            size={24}
+          />
+        </Pressable>
+      </View>
       <Text style={styles.title}>{concert.title}</Text>
       <Text style={styles.date}>{concertDate}</Text>
       {isKopis ? (
@@ -193,8 +209,22 @@ const styles = StyleSheet.create({
   },
   artist: {
     color: colors.primary,
+    flex: 1,
     fontSize: typography.body,
     fontWeight: '800',
+  },
+  titleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  favoriteButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
   },
   poster: {
     alignSelf: 'center',

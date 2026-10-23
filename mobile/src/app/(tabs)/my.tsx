@@ -1,11 +1,157 @@
-import { EmptyTab } from '@/components/EmptyTab';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { ConcertCard } from '@/components/ConcertCard';
+import { useFavorites } from '@/lib/favorites';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function MyScreen() {
+  const { artists, concerts, isConcertFavorite, toggleArtist, toggleConcert } = useFavorites();
+
   return (
-    <EmptyTab
-      description="관심 아티스트와 찜한 공연, 알림 설정을 이곳에서 관리해요."
-      icon="person-outline"
-      title="MY StagePin"
-    />
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View>
+          <Text style={styles.eyebrow}>MY STAGEPIN</Text>
+          <Text style={styles.title}>내가 찜한 무대</Text>
+          <Text style={styles.subtitle}>관심 아티스트와 놓치고 싶지 않은 공연을 모아봤어요.</Text>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeading}>
+            <Text style={styles.sectionTitle}>관심 아티스트</Text>
+            <Text style={styles.count}>{artists.length}</Text>
+          </View>
+          {artists.length ? (
+            <ScrollView contentContainerStyle={styles.artistList} horizontal showsHorizontalScrollIndicator={false}>
+              {artists.map((artist) => (
+                <View key={artist.id} style={styles.artistCard}>
+                  {artist.imageUrl ? (
+                    <Image accessibilityIgnoresInvertColors source={{ uri: artist.imageUrl }} style={styles.artistImage} />
+                  ) : (
+                    <View style={styles.artistFallback}>
+                      <Ionicons color={colors.primary} name="person" size={24} />
+                    </View>
+                  )}
+                  <Text numberOfLines={1} style={styles.artistName}>{artist.name}</Text>
+                  <Pressable
+                    accessibilityLabel={`${artist.name} 관심 해제`}
+                    onPress={() => toggleArtist(artist)}
+                    style={styles.removeButton}
+                  >
+                    <Ionicons color={colors.primary} name="heart" size={18} />
+                  </Pressable>
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <EmptyFavorite message="홈에서 아티스트를 검색한 뒤 하트를 눌러보세요." />
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeading}>
+            <Text style={styles.sectionTitle}>찜한 공연</Text>
+            <Text style={styles.count}>{concerts.length}</Text>
+          </View>
+          {concerts.length ? (
+            <ScrollView contentContainerStyle={styles.concertList} horizontal showsHorizontalScrollIndicator={false}>
+              {concerts.map((concert) => (
+                <ConcertCard
+                  concert={concert}
+                  favorite={isConcertFavorite(concert.id)}
+                  key={concert.id}
+                  onFavoriteToggle={() => toggleConcert(concert)}
+                  onPress={() => router.push({
+                    pathname: '/concerts/[id]',
+                    params: { id: concert.id, genre: concert.genre },
+                  })}
+                />
+              ))}
+            </ScrollView>
+          ) : (
+            <EmptyFavorite message="다가오는 무대에서 보고 싶은 공연을 찜해보세요." />
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
+
+function EmptyFavorite({ message }: { message: string }) {
+  return (
+    <View style={styles.emptyCard}>
+      <Ionicons color={colors.primary} name="heart-outline" size={24} />
+      <Text style={styles.emptyText}>{message}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: { backgroundColor: colors.background, flex: 1 },
+  content: { gap: spacing.xl, padding: spacing.md, paddingBottom: spacing.xl },
+  eyebrow: { color: colors.primary, fontSize: 11, fontWeight: '900', letterSpacing: 1.5 },
+  title: { color: colors.text, fontSize: 30, fontWeight: '900', marginTop: spacing.xs },
+  subtitle: { color: colors.textMuted, lineHeight: 20, marginTop: spacing.sm },
+  section: { gap: spacing.md },
+  sectionHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
+  sectionTitle: { color: colors.text, fontSize: typography.title, fontWeight: '800' },
+  count: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '800',
+    overflow: 'hidden',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  artistList: { gap: spacing.sm, paddingRight: spacing.md },
+  artistCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
+    position: 'relative',
+    width: 128,
+  },
+  artistImage: { borderRadius: radius.pill, height: 68, width: 68 },
+  artistFallback: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    height: 68,
+    justifyContent: 'center',
+    width: 68,
+  },
+  artistName: { color: colors.text, fontWeight: '800', maxWidth: '100%' },
+  removeButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    height: 32,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: spacing.sm,
+    top: spacing.sm,
+    width: 32,
+  },
+  concertList: { gap: spacing.md, paddingRight: spacing.md },
+  emptyCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  emptyText: { color: colors.textMuted, flex: 1, lineHeight: 20 },
+});

@@ -27,6 +27,7 @@ import {
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { TicketingCarousel } from '@/components/TicketingCarousel';
+import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 type FanFilter = FanCategory | 'ALL';
@@ -41,6 +42,13 @@ const fanFilters: { value: FanFilter; label: string }[] = [
 const cleanNaverText = (value: string) => value.replaceAll('<b>', '').replaceAll('</b>', '');
 
 export default function HomeScreen() {
+  const {
+    artists: favoriteArtists,
+    isArtistFavorite,
+    isConcertFavorite,
+    toggleArtist,
+    toggleConcert,
+  } = useFavorites();
   const [fanFilter, setFanFilter] = useState<FanFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -345,6 +353,19 @@ export default function HomeScreen() {
                     </Text>
                   ) : null}
                 </View>
+                <Pressable
+                  accessibilityLabel={isArtistFavorite(selectedArtist.id) ? '관심 아티스트 해제' : '관심 아티스트로 저장'}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => toggleArtist(selectedArtist)}
+                  style={styles.artistFavoriteButton}
+                >
+                  <Ionicons
+                    color={colors.primary}
+                    name={isArtistFavorite(selectedArtist.id) ? 'heart' : 'heart-outline'}
+                    size={24}
+                  />
+                </Pressable>
               </View>
             ) : null}
 
@@ -354,17 +375,47 @@ export default function HomeScreen() {
                   <Text style={styles.sectionTitle}>관심 아티스트 공연</Text>
                   <Ionicons color={colors.primary} name="heart" size={18} />
                 </View>
-                <View style={styles.interestCard}>
-                  <View style={styles.interestIcon}>
-                    <Ionicons color={colors.primary} name="sparkles" size={21} />
+                {favoriteArtists.length ? (
+                  <ScrollView
+                    contentContainerStyle={styles.favoriteArtistList}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    {favoriteArtists.map((artist) => (
+                      <Pressable
+                        accessibilityLabel={`${artist.name} 공연 보기`}
+                        key={artist.id}
+                        onPress={() => selectArtist(artist)}
+                        style={styles.favoriteArtistCard}
+                      >
+                        {artist.imageUrl ? (
+                          <Image
+                            accessibilityIgnoresInvertColors
+                            source={{ uri: artist.imageUrl }}
+                            style={styles.favoriteArtistImage}
+                          />
+                        ) : (
+                          <View style={styles.favoriteArtistFallback}>
+                            <Ionicons color={colors.primary} name="person" size={20} />
+                          </View>
+                        )}
+                        <Text numberOfLines={1} style={styles.favoriteArtistName}>{artist.name}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <View style={styles.interestCard}>
+                    <View style={styles.interestIcon}>
+                      <Ionicons color={colors.primary} name="sparkles" size={21} />
+                    </View>
+                    <View style={styles.interestContent}>
+                      <Text style={styles.interestTitle}>좋아하는 아티스트부터 찾아볼까요?</Text>
+                      <Text style={styles.interestDescription}>
+                        아티스트를 검색하고 하트를 누르면 이곳에서 바로 만날 수 있어요.
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.interestContent}>
-                    <Text style={styles.interestTitle}>좋아하는 아티스트부터 찾아볼까요?</Text>
-                    <Text style={styles.interestDescription}>
-                      검색창에서 아티스트를 선택하면 공연 기록과 장소를 먼저 보여드려요.
-                    </Text>
-                  </View>
-                </View>
+                )}
               </View>
             ) : null}
 
@@ -386,7 +437,12 @@ export default function HomeScreen() {
                     horizontal
                     keyExtractor={(concert) => concert.id}
                     renderItem={({ item }) => (
-                      <ConcertCard concert={item} onPress={() => openConcert(item.id)} />
+                      <ConcertCard
+                        concert={item}
+                        favorite={isConcertFavorite(item.id)}
+                        onFavoriteToggle={() => toggleConcert(item)}
+                        onPress={() => openConcert(item.id)}
+                      />
                     )}
                     showsHorizontalScrollIndicator={false}
                     snapToInterval={196 + spacing.md}
@@ -446,7 +502,12 @@ export default function HomeScreen() {
                       horizontal
                       keyExtractor={(concert) => concert.id}
                       renderItem={({ item }) => (
-                        <ConcertCard concert={item} onPress={() => openConcert(item.id)} />
+                        <ConcertCard
+                          concert={item}
+                          favorite={isConcertFavorite(item.id)}
+                          onFavoriteToggle={() => toggleConcert(item)}
+                          onPress={() => openConcert(item.id)}
+                        />
                       )}
                       showsHorizontalScrollIndicator={false}
                       snapToInterval={196 + spacing.md}
@@ -482,7 +543,12 @@ export default function HomeScreen() {
                   horizontal
                   keyExtractor={(concert) => concert.id}
                   renderItem={({ item }) => (
-                    <ConcertCard concert={item} onPress={() => openConcert(item.id)} />
+                    <ConcertCard
+                      concert={item}
+                      favorite={isConcertFavorite(item.id)}
+                      onFavoriteToggle={() => toggleConcert(item)}
+                      onPress={() => openConcert(item.id)}
+                    />
                   )}
                   showsHorizontalScrollIndicator={false}
                 />
@@ -682,6 +748,14 @@ const styles = StyleSheet.create({
   selectedArtistContent: {
     flex: 1,
   },
+  artistFavoriteButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    height: 42,
+    justifyContent: 'center',
+    width: 42,
+  },
   selectedArtistName: {
     color: colors.text,
     fontSize: typography.title,
@@ -732,6 +806,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginTop: 3,
+  },
+  favoriteArtistList: {
+    gap: spacing.sm,
+    paddingRight: spacing.md,
+  },
+  favoriteArtistCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.sm,
+    width: 92,
+  },
+  favoriteArtistImage: {
+    borderRadius: radius.pill,
+    height: 52,
+    width: 52,
+  },
+  favoriteArtistFallback: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    height: 52,
+    justifyContent: 'center',
+    width: 52,
+  },
+  favoriteArtistName: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '800',
+    maxWidth: '100%',
   },
   genreList: {
     gap: spacing.sm,
