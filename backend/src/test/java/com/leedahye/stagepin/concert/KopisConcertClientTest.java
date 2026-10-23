@@ -36,6 +36,17 @@ class KopisConcertClientTest {
     }
 
     @Test
+    void ordersUpcomingConcertIdsByPerformanceStartDate() {
+        assertThat(client.parseConcertIds("""
+                <dbs>
+                  <db><mt20id>PF300002</mt20id><prfpdfrom>2026.11.20</prfpdfrom></db>
+                  <db><mt20id>PF300001</mt20id><prfpdfrom>2026.10.30</prfpdfrom></db>
+                </dbs>
+                """))
+                .containsExactly("PF300001", "PF300002");
+    }
+
+    @Test
     void mapsKopisDetailAndFacilityToConcert() {
         String detail = """
                 <dbs><db>
