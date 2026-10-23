@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   getArtists,
   getConcerts,
-  getNaverSearch,
   getTicketOpenings,
   type ArtistSearchResult,
   type FanCategory,
@@ -39,20 +37,15 @@ const fanFilters: { value: FanFilter; label: string }[] = [
   { value: 'BAND', label: '밴드' },
 ];
 
-const cleanNaverText = (value: string) => value.replaceAll('<b>', '').replaceAll('</b>', '');
-
 export default function HomeScreen() {
   const {
     artists: favoriteArtists,
-    isArtistFavorite,
     isConcertFavorite,
-    toggleArtist,
     toggleConcert,
   } = useFavorites();
   const [fanFilter, setFanFilter] = useState<FanFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [selectedArtist, setSelectedArtist] = useState<ArtistSearchResult | null>(null);
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 500);
     return () => clearTimeout(timeout);
@@ -77,16 +70,6 @@ export default function HomeScreen() {
     queryKey: ['concerts', 'POPULAR_MUSIC', 'search', serverQuery],
     queryFn: () => getConcerts('POPULAR_MUSIC', serverQuery),
     enabled: Boolean(serverQuery),
-  });
-  const artistConcertQuery = useQuery({
-    queryKey: ['concerts', 'POPULAR_MUSIC', 'search', selectedArtist?.searchName],
-    queryFn: () => getConcerts('POPULAR_MUSIC', selectedArtist?.searchName),
-    enabled: Boolean(selectedArtist),
-  });
-  const naverSearchQuery = useQuery({
-    queryKey: ['naver-search', selectedArtist?.searchName],
-    queryFn: () => getNaverSearch(selectedArtist?.searchName ?? ''),
-    enabled: Boolean(selectedArtist),
   });
 
   const openConcert = (id: string) => {
@@ -115,26 +98,17 @@ export default function HomeScreen() {
   }
 
   const upcomingConcerts = upcomingQuery.data;
-  const artistConcerts = artistConcertQuery.data ?? [];
   const targetedConcerts = upcomingConcerts.filter((concert) => concert.fanCategory !== 'OTHER');
   const otherConcerts = upcomingConcerts.filter((concert) => concert.fanCategory === 'OTHER');
-  const concerts = selectedArtist
-    ? artistConcerts
-    : fanFilter === 'ALL'
-      ? targetedConcerts
-      : targetedConcerts.filter((concert) => concert.fanCategory === fanFilter);
-  const mapConcerts = selectedArtist ? artistConcerts : upcomingConcerts;
+  const concerts = fanFilter === 'ALL'
+    ? targetedConcerts
+    : targetedConcerts.filter((concert) => concert.fanCategory === fanFilter);
   const ticketOpenings = ticketOpeningsQuery.data ?? [];
-  const showSearchDropdown = searchQuery.trim().length >= 2 && !selectedArtist;
+  const showSearchDropdown = searchQuery.trim().length >= 2;
   const searchIsLoading = debouncedQuery !== searchQuery.trim()
     || artistSuggestionsQuery.isFetching
     || performanceSuggestionsQuery.isFetching;
-  const selectedIsPerformance = selectedArtist?.id.startsWith('performance:') ?? false;
-
-  const changeSearchQuery = (value: string) => {
-    setSearchQuery(value);
-    setSelectedArtist(null);
-  };
+  const changeSearchQuery = (value: string) => setSearchQuery(value);
 
   const selectArtist = (artist?: ArtistSearchResult) => {
     const nextArtist = artist ?? artistSuggestionsQuery.data?.[0];
@@ -143,25 +117,17 @@ export default function HomeScreen() {
       return;
     }
     if (searchIsLoading) return;
-    setSelectedArtist(nextArtist);
-    setSearchQuery(nextArtist.name);
-    setFanFilter('ALL');
+    setSearchQuery('');
+    router.push({
+      pathname: '/artists/[id]',
+      params: { id: nextArtist.id, query: nextArtist.searchName },
+    });
   };
 
   const selectPerformance = () => {
     if (!serverQuery || searchIsLoading) return;
-    setSelectedArtist({
-      id: `performance:${serverQuery}`,
-      name: serverQuery,
-      searchName: serverQuery,
-      description: 'KOPIS 공연명 검색',
-      aliases: [],
-      imageUrl: null,
-      imagePageUrl: null,
-      imageAttribution: null,
-      imageLicense: null,
-    });
-    setFanFilter('ALL');
+    setSearchQuery('');
+    router.push({ pathname: '/search', params: { query: serverQuery } });
   };
 
   return (
@@ -172,40 +138,8 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
         ListFooterComponent={
           <View>
-            {mapConcerts.some((concert) => concert.source === 'KOPIS') ? (
+            {upcomingConcerts.some((concert) => concert.source === 'KOPIS') ? (
               <Text style={styles.attribution}>공연 데이터: 공연예술통합전산망(KOPIS)</Text>
-            ) : null}
-            {selectedArtist ? (
-              <View style={styles.naverSection}>
-                <Text style={styles.sectionTitle}>네이버 관련 정보</Text>
-                <Text style={styles.naverCaption}>네이버 검색 결과 · 원문에서 내용을 확인해 주세요.</Text>
-                {naverSearchQuery.isPending ? (
-                  <ActivityIndicator color={colors.primary} style={styles.naverLoading} />
-                ) : naverSearchQuery.data?.enabled === false ? (
-                  <Text style={styles.naverEmpty}>
-                    NAVER API HUB 키를 설정하면 관련 공식 공지와 예매 페이지가 표시돼요.
-                  </Text>
-                ) : naverSearchQuery.data?.items.length ? (
-                  naverSearchQuery.data.items.map((item) => (
-                    <Pressable
-                      accessibilityRole="link"
-                      key={item.link}
-                      onPress={() => Linking.openURL(item.link)}
-                      style={styles.naverResult}
-                    >
-                      <Text numberOfLines={1} style={styles.naverTitle}>
-                        {cleanNaverText(item.title)}
-                      </Text>
-                      <Text numberOfLines={2} style={styles.naverDescription}>
-                        {cleanNaverText(item.description)}
-                      </Text>
-                      <Text style={styles.naverLink}>네이버 검색 결과 열기 ›</Text>
-                    </Pressable>
-                  ))
-                ) : (
-                  <Text style={styles.naverEmpty}>관련 네이버 검색 결과가 없어요.</Text>
-                )}
-              </View>
             ) : null}
           </View>
         }
@@ -328,49 +262,7 @@ export default function HomeScreen() {
               </View>
             ) : null}
 
-            {selectedArtist && !selectedIsPerformance ? (
-              <View style={styles.selectedArtistCard}>
-                {selectedArtist.imageUrl ? (
-                  <Image
-                    accessibilityIgnoresInvertColors
-                    source={{ uri: selectedArtist.imageUrl }}
-                    style={styles.selectedArtistImage}
-                  />
-                ) : null}
-                <View style={styles.selectedArtistContent}>
-                  <Text style={styles.selectedArtistName}>{selectedArtist.name}</Text>
-                  {selectedArtist.description ? (
-                    <Text style={styles.selectedArtistDescription}>{selectedArtist.description}</Text>
-                  ) : null}
-                  {selectedArtist.imagePageUrl ? (
-                    <Text
-                      accessibilityRole="link"
-                      onPress={() => Linking.openURL(selectedArtist.imagePageUrl!)}
-                      style={styles.imageCredit}
-                    >
-                      사진: {selectedArtist.imageAttribution || 'Wikimedia Commons'}
-                      {selectedArtist.imageLicense ? ` · ${selectedArtist.imageLicense}` : ''}
-                    </Text>
-                  ) : null}
-                </View>
-                <Pressable
-                  accessibilityLabel={isArtistFavorite(selectedArtist.id) ? '관심 아티스트 해제' : '관심 아티스트로 저장'}
-                  accessibilityRole="button"
-                  hitSlop={8}
-                  onPress={() => toggleArtist(selectedArtist)}
-                  style={styles.artistFavoriteButton}
-                >
-                  <Ionicons
-                    color={colors.primary}
-                    name={isArtistFavorite(selectedArtist.id) ? 'heart' : 'heart-outline'}
-                    size={24}
-                  />
-                </Pressable>
-              </View>
-            ) : null}
-
-            {!selectedArtist ? (
-              <View style={styles.section}>
+            <View style={styles.section}>
                 <View style={styles.sectionHeading}>
                   <Text style={styles.sectionTitle}>관심 아티스트 공연</Text>
                   <Ionicons color={colors.primary} name="heart" size={18} />
@@ -416,45 +308,9 @@ export default function HomeScreen() {
                     </View>
                   </View>
                 )}
-              </View>
-            ) : null}
+            </View>
 
-            {selectedArtist ? (
-              <View style={styles.section}>
-                <View style={styles.sectionHeading}>
-                  <Text style={styles.sectionTitle}>
-                    {selectedIsPerformance
-                      ? `${selectedArtist.name} 검색 결과`
-                      : `${selectedArtist.name} 공연 기록`}
-                  </Text>
-                  <Text style={styles.count}>{concerts.length}</Text>
-                </View>
-                {concerts.length ? (
-                  <FlatList
-                    contentContainerStyle={styles.concertList}
-                    data={concerts}
-                    decelerationRate="fast"
-                    horizontal
-                    keyExtractor={(concert) => concert.id}
-                    renderItem={({ item }) => (
-                      <ConcertCard
-                        concert={item}
-                        favorite={isConcertFavorite(item.id)}
-                        onFavoriteToggle={() => toggleConcert(item)}
-                        onPress={() => openConcert(item.id)}
-                      />
-                    )}
-                    showsHorizontalScrollIndicator={false}
-                    snapToInterval={196 + spacing.md}
-                  />
-                ) : (
-                  <Text style={styles.empty}>
-                    KOPIS에 등록된 ‘{selectedArtist.searchName}’ 공연 기록이 없어요.
-                  </Text>
-                )}
-              </View>
-            ) : (
-              <>
+            <>
                 <TicketingCarousel
                   openings={ticketOpenings}
                   scheduleType="FAN_PRESALE"
@@ -516,10 +372,9 @@ export default function HomeScreen() {
                     <Text style={styles.empty}>해당 분류의 예정 공연이 아직 없어요.</Text>
                   )}
                 </View>
-              </>
-            )}
+            </>
 
-            {mapConcerts.length ? (
+            {upcomingConcerts.length ? (
               <View style={styles.section}>
                 <View>
                   <Text style={styles.sectionTitle}>공연 장소 한눈에 보기</Text>
@@ -527,11 +382,11 @@ export default function HomeScreen() {
                     핀을 누르면 해당 공연의 상세 정보를 볼 수 있어요.
                   </Text>
                 </View>
-                <ConcertMap concerts={mapConcerts} onSelect={openConcert} />
+                <ConcertMap concerts={upcomingConcerts} onSelect={openConcert} />
               </View>
             ) : null}
 
-            {!selectedArtist && otherConcerts.length ? (
+            {otherConcerts.length ? (
               <View style={styles.section}>
                 <View style={styles.sectionHeading}>
                   <Text style={styles.sectionTitle}>그 외 KOPIS 공연</Text>
@@ -729,48 +584,6 @@ const styles = StyleSheet.create({
     height: 42,
     width: 42,
   },
-  selectedArtistCard: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  selectedArtistImage: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    height: 64,
-    width: 64,
-  },
-  selectedArtistContent: {
-    flex: 1,
-  },
-  artistFavoriteButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
-  selectedArtistName: {
-    color: colors.text,
-    fontSize: typography.title,
-    fontWeight: '900',
-  },
-  selectedArtistDescription: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    marginTop: 3,
-  },
-  imageCredit: {
-    color: colors.primary,
-    fontSize: 10,
-    marginTop: spacing.xs,
-  },
   section: {
     gap: spacing.md,
   },
@@ -939,48 +752,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: spacing.md,
     textAlign: 'center',
-  },
-  naverSection: {
-    gap: spacing.sm,
-    marginTop: spacing.xl,
-  },
-  naverCaption: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    marginTop: -spacing.xs,
-  },
-  naverLoading: {
-    marginVertical: spacing.lg,
-  },
-  naverResult: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  naverTitle: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '800',
-  },
-  naverDescription: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    lineHeight: 19,
-    marginTop: spacing.xs,
-  },
-  naverLink: {
-    color: colors.primary,
-    fontSize: typography.caption,
-    fontWeight: '800',
-    marginTop: spacing.sm,
-  },
-  naverEmpty: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    color: colors.textMuted,
-    lineHeight: 20,
-    padding: spacing.md,
   },
 });

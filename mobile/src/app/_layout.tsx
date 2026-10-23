@@ -23,6 +23,8 @@ export default function RootLayout() {
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="concerts/[id]" options={{ title: '공연 상세' }} />
+            <Stack.Screen name="artists/[id]" options={{ title: '아티스트' }} />
+            <Stack.Screen name="search" options={{ title: '공연 검색' }} />
           </Stack>
         </FavoritesProvider>
       </QueryClientProvider>
