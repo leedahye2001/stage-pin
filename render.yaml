@@ -31,7 +31,7 @@ services:
       - key: KOPIS_API_KEY
         sync: false
       - key: APP_CORS_ALLOWED_ORIGIN_PATTERNS
-        value: https://*.vercel.app
+        value: https://*.vercel.app,http://localhost:*
 
 databases:
   - name: stage-pin-db
