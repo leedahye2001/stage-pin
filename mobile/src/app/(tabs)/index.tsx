@@ -20,6 +20,7 @@ import {
   getArtists,
   getConcerts,
   getNaverSearch,
+  getTicketOpenings,
   type ArtistSearchResult,
   type FanCategory,
 } from '@/api/concerts';
@@ -59,6 +60,11 @@ export default function HomeScreen() {
     queryFn: () => getArtists(serverQuery),
     enabled: Boolean(serverQuery),
   });
+  const ticketOpeningsQuery = useQuery({
+    queryKey: ['ticket-openings'],
+    queryFn: getTicketOpenings,
+    retry: false,
+  });
   const performanceSuggestionsQuery = useQuery({
     queryKey: ['concerts', 'POPULAR_MUSIC', 'search', serverQuery],
     queryFn: () => getConcerts('POPULAR_MUSIC', serverQuery),
@@ -83,7 +89,7 @@ export default function HomeScreen() {
     return (
       <SafeAreaView style={styles.centered}>
         <ActivityIndicator color={colors.primary} size="large" />
-        <Text style={styles.loadingText}>공연 지도를 불러오는 중이에요.</Text>
+        <Text style={styles.loadingText}>예정 공연을 불러오는 중이에요.</Text>
       </SafeAreaView>
     );
   }
@@ -100,10 +106,17 @@ export default function HomeScreen() {
     );
   }
 
-  const sourceConcerts = selectedArtist ? (artistConcertQuery.data ?? []) : upcomingQuery.data;
-  const concerts = fanFilter === 'ALL'
-    ? sourceConcerts
-    : sourceConcerts.filter((concert) => concert.fanCategory === fanFilter);
+  const upcomingConcerts = upcomingQuery.data;
+  const artistConcerts = artistConcertQuery.data ?? [];
+  const targetedConcerts = upcomingConcerts.filter((concert) => concert.fanCategory !== 'OTHER');
+  const otherConcerts = upcomingConcerts.filter((concert) => concert.fanCategory === 'OTHER');
+  const concerts = selectedArtist
+    ? artistConcerts
+    : fanFilter === 'ALL'
+      ? targetedConcerts
+      : targetedConcerts.filter((concert) => concert.fanCategory === fanFilter);
+  const mapConcerts = selectedArtist ? artistConcerts : upcomingConcerts;
+  const ticketOpenings = ticketOpeningsQuery.data ?? [];
   const showSearchDropdown = searchQuery.trim().length >= 2 && !selectedArtist;
   const searchIsLoading = debouncedQuery !== searchQuery.trim()
     || artistSuggestionsQuery.isFetching
@@ -151,7 +164,7 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
         ListFooterComponent={
           <View>
-            {sourceConcerts.some((concert) => concert.source === 'KOPIS') ? (
+            {mapConcerts.some((concert) => concert.source === 'KOPIS') ? (
               <Text style={styles.attribution}>공연 데이터: 공연예술통합전산망(KOPIS)</Text>
             ) : null}
             {selectedArtist ? (
@@ -190,17 +203,33 @@ export default function HomeScreen() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <View>
+            <View style={styles.identityCard}>
+              <View style={styles.identityGlowLarge} />
+              <View style={styles.identityGlowSmall} />
               <View style={styles.brand}>
                 <Image
                   accessibilityIgnoresInvertColors
                   source={require('../../../assets/stagepin-mark.png')}
                   style={styles.brandMark}
                 />
-                <Text style={styles.eyebrow}>STAGEPIN</Text>
+                <Text style={styles.identityEyebrow}>STAGEPIN</Text>
               </View>
-              <Text style={styles.hero}>다음 무대를{`\n`}놓치지 마세요.</Text>
-              <Text style={styles.subtitle}>공연과 티켓팅 일정을 한 지도에서 확인해요.</Text>
+              <View style={styles.identityContent}>
+                <View style={styles.identityCopy}>
+                  <Text style={styles.hero}>흩어진 티켓팅 일정을{`\n`}한곳에 핀하세요.</Text>
+                  <Text style={styles.subtitle}>선예매부터 일반예매까지, 공식 공지를 확인한 일정만 모아드려요.</Text>
+                </View>
+                <View style={styles.radarPin}>
+                  <Ionicons color={colors.white} name="location" size={28} />
+                </View>
+              </View>
+              <View style={styles.vendorRow}>
+                {['NOL', 'YES24', '멜론티켓', '티켓링크'].map((vendor) => (
+                  <View key={vendor} style={styles.vendorPill}>
+                    <Text style={styles.vendorPillText}>{vendor}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
 
             <View style={styles.searchBox}>
@@ -319,84 +348,145 @@ export default function HomeScreen() {
               </View>
             ) : null}
 
-            <ScrollView
-              contentContainerStyle={styles.genreList}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-            >
-              {fanFilters.map((item) => {
-                const selected = item.value === fanFilter;
-                return (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    key={item.value}
-                    onPress={() => setFanFilter(item.value)}
-                    style={[styles.genreChip, selected && styles.genreChipSelected]}
-                  >
-                    <Text style={[styles.genreLabel, selected && styles.genreLabelSelected]}>
-                      {item.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <Text style={styles.classificationNote}>
-              {selectedArtist
-                ? selectedIsPerformance
-                  ? 'KOPIS 공연명 검색'
-                  : `‘${selectedArtist.searchName}’로 KOPIS 공연 검색`
-                : 'KOPIS 공연명·출연진 기준 자동 분류'}
-            </Text>
-
-            {concerts.length ? <ConcertMap concerts={concerts} onSelect={openConcert} /> : null}
-
-            <View style={styles.sectionHeading}>
-              <Text style={styles.sectionTitle}>
-                {selectedArtist
-                  ? selectedIsPerformance
-                    ? `${selectedArtist.name} 검색 결과`
-                    : `${selectedArtist.name} 공연 기록`
-                  : '예정 공연'}
-              </Text>
-              <Text style={styles.count}>{concerts.length}</Text>
-            </View>
-
-            {concerts.length ? (
-              <FlatList
-                contentContainerStyle={styles.concertList}
-                data={concerts}
-                decelerationRate="fast"
-                horizontal
-                keyExtractor={(concert) => concert.id}
-                renderItem={({ item }) => (
-                  <ConcertCard concert={item} onPress={() => openConcert(item.id)} />
-                )}
-                showsHorizontalScrollIndicator={false}
-                snapToInterval={196 + spacing.md}
-              />
-            ) : (
-              <Text style={styles.empty}>
-                {selectedArtist
-                  ? `KOPIS에 등록된 ‘${selectedArtist.searchName}’ 공연 기록이 없어요.`
-                  : '해당 분류의 예정 공연이 아직 없어요.'}
-              </Text>
-            )}
-
             {!selectedArtist ? (
+              <View style={styles.section}>
+                <View style={styles.sectionHeading}>
+                  <Text style={styles.sectionTitle}>관심 아티스트 공연</Text>
+                  <Ionicons color={colors.primary} name="heart" size={18} />
+                </View>
+                <View style={styles.interestCard}>
+                  <View style={styles.interestIcon}>
+                    <Ionicons color={colors.primary} name="sparkles" size={21} />
+                  </View>
+                  <View style={styles.interestContent}>
+                    <Text style={styles.interestTitle}>좋아하는 아티스트부터 찾아볼까요?</Text>
+                    <Text style={styles.interestDescription}>
+                      검색창에서 아티스트를 선택하면 공연 기록과 장소를 먼저 보여드려요.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ) : null}
+
+            {selectedArtist ? (
+              <View style={styles.section}>
+                <View style={styles.sectionHeading}>
+                  <Text style={styles.sectionTitle}>
+                    {selectedIsPerformance
+                      ? `${selectedArtist.name} 검색 결과`
+                      : `${selectedArtist.name} 공연 기록`}
+                  </Text>
+                  <Text style={styles.count}>{concerts.length}</Text>
+                </View>
+                {concerts.length ? (
+                  <FlatList
+                    contentContainerStyle={styles.concertList}
+                    data={concerts}
+                    decelerationRate="fast"
+                    horizontal
+                    keyExtractor={(concert) => concert.id}
+                    renderItem={({ item }) => (
+                      <ConcertCard concert={item} onPress={() => openConcert(item.id)} />
+                    )}
+                    showsHorizontalScrollIndicator={false}
+                    snapToInterval={196 + spacing.md}
+                  />
+                ) : (
+                  <Text style={styles.empty}>
+                    KOPIS에 등록된 ‘{selectedArtist.searchName}’ 공연 기록이 없어요.
+                  </Text>
+                )}
+              </View>
+            ) : (
               <>
                 <TicketingCarousel
-                  concerts={upcomingQuery.data}
+                  openings={ticketOpenings}
                   scheduleType="FAN_PRESALE"
                   title="곧 열리는 선예매"
                 />
                 <TicketingCarousel
-                  concerts={upcomingQuery.data}
+                  openings={ticketOpenings}
                   scheduleType="GENERAL_SALE"
                   title="곧 열리는 일반예매"
                 />
+
+                <View style={styles.section}>
+                  <View style={styles.sectionHeading}>
+                    <Text style={styles.sectionTitle}>아이돌·솔로·밴드 공연</Text>
+                    <Text style={styles.count}>{concerts.length}</Text>
+                  </View>
+                  <ScrollView
+                    contentContainerStyle={styles.genreList}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    {fanFilters.map((item) => {
+                      const selected = item.value === fanFilter;
+                      return (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityState={{ selected }}
+                          key={item.value}
+                          onPress={() => setFanFilter(item.value)}
+                          style={[styles.genreChip, selected && styles.genreChipSelected]}
+                        >
+                          <Text style={[styles.genreLabel, selected && styles.genreLabelSelected]}>
+                            {item.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                  <Text style={styles.classificationNote}>KOPIS 공연명·출연진 기준 자동 분류</Text>
+                  {concerts.length ? (
+                    <FlatList
+                      contentContainerStyle={styles.concertList}
+                      data={concerts}
+                      decelerationRate="fast"
+                      horizontal
+                      keyExtractor={(concert) => concert.id}
+                      renderItem={({ item }) => (
+                        <ConcertCard concert={item} onPress={() => openConcert(item.id)} />
+                      )}
+                      showsHorizontalScrollIndicator={false}
+                      snapToInterval={196 + spacing.md}
+                    />
+                  ) : (
+                    <Text style={styles.empty}>해당 분류의 예정 공연이 아직 없어요.</Text>
+                  )}
+                </View>
               </>
+            )}
+
+            {mapConcerts.length ? (
+              <View style={styles.section}>
+                <View>
+                  <Text style={styles.sectionTitle}>공연 장소 한눈에 보기</Text>
+                  <Text style={styles.sectionCaption}>
+                    핀을 누르면 해당 공연의 상세 정보를 볼 수 있어요.
+                  </Text>
+                </View>
+                <ConcertMap concerts={mapConcerts} onSelect={openConcert} />
+              </View>
+            ) : null}
+
+            {!selectedArtist && otherConcerts.length ? (
+              <View style={styles.section}>
+                <View style={styles.sectionHeading}>
+                  <Text style={styles.sectionTitle}>그 외 KOPIS 공연</Text>
+                  <Text style={styles.count}>{otherConcerts.length}</Text>
+                </View>
+                <FlatList
+                  contentContainerStyle={styles.concertList}
+                  data={otherConcerts}
+                  horizontal
+                  keyExtractor={(concert) => concert.id}
+                  renderItem={({ item }) => (
+                    <ConcertCard concert={item} onPress={() => openConcert(item.id)} />
+                  )}
+                  showsHorizontalScrollIndicator={false}
+                />
+              </View>
             ) : null}
           </View>
         }
@@ -428,24 +518,84 @@ const styles = StyleSheet.create({
     height: 28,
     width: 28,
   },
-  eyebrow: {
-    color: colors.primary,
+  identityCard: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
+    gap: spacing.md,
+    overflow: 'hidden',
+    padding: spacing.lg,
+    position: 'relative',
+  },
+  identityGlowLarge: {
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderRadius: radius.pill,
+    height: 190,
+    position: 'absolute',
+    right: -70,
+    top: -90,
+    width: 190,
+  },
+  identityGlowSmall: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: radius.pill,
+    bottom: -45,
+    height: 110,
+    left: -25,
+    position: 'absolute',
+    width: 110,
+  },
+  identityEyebrow: {
+    color: colors.white,
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 1.8,
   },
+  identityContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  identityCopy: {
+    flex: 1,
+  },
   hero: {
-    color: colors.text,
+    color: colors.white,
     fontSize: typography.hero,
     fontWeight: '900',
     letterSpacing: -1,
     lineHeight: 38,
-    marginTop: spacing.xs,
   },
   subtitle: {
-    color: colors.textMuted,
-    fontSize: typography.body,
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: typography.caption,
+    lineHeight: 19,
     marginTop: spacing.sm,
+  },
+  radarPin: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.32)',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    height: 58,
+    justifyContent: 'center',
+    width: 58,
+  },
+  vendorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  vendorPill: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  vendorPillText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: '800',
   },
   searchBox: {
     alignItems: 'center',
@@ -547,6 +697,42 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: spacing.xs,
   },
+  section: {
+    gap: spacing.md,
+  },
+  interestCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  interestIcon: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  interestContent: {
+    flex: 1,
+  },
+  interestTitle: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  interestDescription: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 3,
+  },
   genreList: {
     gap: spacing.sm,
   },
@@ -588,6 +774,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.title,
     fontWeight: '800',
+  },
+  sectionCaption: {
+    color: colors.textMuted,
+    fontSize: typography.caption,
+    marginTop: spacing.xs,
   },
   count: {
     backgroundColor: colors.primarySoft,
