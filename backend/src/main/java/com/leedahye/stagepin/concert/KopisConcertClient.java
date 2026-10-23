@@ -37,6 +37,8 @@ import com.leedahye.stagepin.concert.ConcertResponse.VenueSummary;
 @Component
 public class KopisConcertClient {
     private static final Logger log = LoggerFactory.getLogger(KopisConcertClient.class);
+    // KOPIS documents and serves the Open API over HTTP; its HTTPS endpoint rejects API requests.
+    static final String KOPIS_API_BASE_URL = "http://www.kopis.or.kr/openApi/restful";
     private static final DateTimeFormatter KOPIS_DATE = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final DateTimeFormatter REQUEST_DATE = DateTimeFormatter.BASIC_ISO_DATE;
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
@@ -55,7 +57,7 @@ public class KopisConcertClient {
     public KopisConcertClient(@Value("${kopis.api-key:}") String apiKey) {
         this.apiKey = apiKey;
         this.restClient = RestClient.builder()
-                .baseUrl("https://kopis.or.kr/openApi/restful")
+                .baseUrl(KOPIS_API_BASE_URL)
                 .build();
     }
 

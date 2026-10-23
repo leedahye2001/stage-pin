@@ -9,6 +9,12 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class KopisConcertClientTest {
+    @Test
+    void usesTheOfficialHttpApiEndpoint() {
+        assertThat(KopisConcertClient.KOPIS_API_BASE_URL)
+                .isEqualTo("http://www.kopis.or.kr/openApi/restful");
+    }
+
     private final KopisConcertClient client = new KopisConcertClient("test-key");
 
     @Test
