@@ -70,10 +70,7 @@ export function TicketingCarousel({ openings, scheduleType, title }: TicketingCa
   return (
     <View style={styles.section}>
       <View style={styles.heading}>
-        <View>
-          <Text style={styles.eyebrow}>{scheduleType === 'FAN_PRESALE' ? 'PRESALE' : 'GENERAL SALE'}</Text>
-          <Text style={styles.title}>{title}</Text>
-        </View>
+        <Text style={styles.title}>{title}</Text>
         {items.length ? <Text style={styles.count}>{items.length}</Text> : null}
       </View>
 
@@ -180,18 +177,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  eyebrow: {
-    color: colors.primary,
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.2,
-  },
   title: {
     color: colors.text,
     fontSize: 20,
     fontWeight: '900',
     letterSpacing: -0.5,
-    marginTop: 3,
   },
   count: {
     color: colors.primary,
