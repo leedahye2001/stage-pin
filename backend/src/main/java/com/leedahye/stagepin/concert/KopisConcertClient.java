@@ -235,14 +235,27 @@ public class KopisConcertClient {
     List<String> parseConcertIds(String xml) {
         Document document = parse(xml);
         var dbs = document.getElementsByTagName("db");
-        List<String> ids = new ArrayList<>();
+        List<ConcertListItem> items = new ArrayList<>();
         for (int index = 0; index < dbs.getLength(); index++) {
-            String id = text((Element) dbs.item(index), "mt20id");
+            Element item = (Element) dbs.item(index);
+            String id = text(item, "mt20id");
             if (!id.isBlank()) {
-                ids.add(id);
+                String startsOn = text(item, "prfpdfrom");
+                items.add(new ConcertListItem(
+                        id,
+                        startsOn.isBlank() ? null : LocalDate.parse(startsOn, KOPIS_DATE),
+                        index));
             }
         }
-        return ids;
+        return items.stream()
+                .sorted(Comparator
+                        .comparing(ConcertListItem::startsOn, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparingInt(ConcertListItem::position))
+                .map(ConcertListItem::id)
+                .toList();
+    }
+
+    private record ConcertListItem(String id, LocalDate startsOn, int position) {
     }
 
     ConcertResponse toConcert(

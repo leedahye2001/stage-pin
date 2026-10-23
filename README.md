@@ -93,7 +93,12 @@ the Korean PostgreSQL demo record when the key is missing or KOPIS is
 unavailable. Keep `KOPIS_API_KEY` only in the ignored `infra/.env` file.
 
 KOPIS does not provide fan-presale or general-sale start times. Those schedules
-remain empty until official artist notices and ticket vendors are integrated.
+are stored separately as StagePin-verified ticket openings. Set
+`STAGEPIN_ADMIN_KEY` and use `POST /api/v1/admin/ticket-openings` with the
+`X-StagePin-Admin-Key` header to register a date only after checking an official
+artist, agency, or organizer notice. The public mobile feed reads upcoming
+verified entries from `GET /api/v1/ticket-openings`; ticket-vendor pages are not
+scraped or copied.
 Poster images are intentionally not imported until their reuse terms are
 confirmed.
 

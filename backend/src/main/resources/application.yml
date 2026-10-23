@@ -27,3 +27,6 @@ kopis:
 naver:
   client-id: ${NAVER_CLIENT_ID:}
   client-secret: ${NAVER_CLIENT_SECRET:}
+
+stagepin:
+  admin-key: ${STAGEPIN_ADMIN_KEY:}

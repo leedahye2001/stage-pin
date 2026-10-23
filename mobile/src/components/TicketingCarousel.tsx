@@ -2,23 +2,18 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo, useState } from 'react';
 import { FlatList, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import type { Concert, ConcertSchedule, ScheduleType } from '@/api/concerts';
+import type { ScheduleType, TicketOpening, TicketVendor } from '@/api/concerts';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 type TicketingCarouselProps = {
-  concerts: Concert[];
+  openings: TicketOpening[];
   scheduleType: Extract<ScheduleType, 'FAN_PRESALE' | 'GENERAL_SALE'>;
   title: string;
 };
 
-type TicketingItem = {
-  concert: Concert;
-  schedule: ConcertSchedule;
-};
+type TicketVendorFilter = TicketVendor | 'ALL';
 
-type TicketVendor = 'ALL' | 'NOL' | 'YES24' | 'MELON' | 'TICKETLINK' | 'OTHER';
-
-const vendorOptions: { id: TicketVendor; label: string }[] = [
+const vendorOptions: { id: TicketVendorFilter; label: string }[] = [
   { id: 'ALL', label: '전체' },
   { id: 'NOL', label: 'NOL' },
   { id: 'YES24', label: 'YES24' },
@@ -27,20 +22,12 @@ const vendorOptions: { id: TicketVendor; label: string }[] = [
   { id: 'OTHER', label: '기타' },
 ];
 
-const ticketVendor = (url: string): { id: Exclude<TicketVendor, 'ALL'>; label: string } => {
-  let hostname = '';
-  try {
-    hostname = new URL(url).hostname.toLowerCase();
-  } catch {
-    return { id: 'OTHER', label: '공식 예매처' };
-  }
-  if (hostname.includes('nol.yanolja') || hostname.includes('interpark')) {
-    return { id: 'NOL', label: 'NOL' };
-  }
-  if (hostname.includes('yes24')) return { id: 'YES24', label: 'YES24' };
-  if (hostname.includes('melon')) return { id: 'MELON', label: '멜론티켓' };
-  if (hostname.includes('ticketlink')) return { id: 'TICKETLINK', label: '티켓링크' };
-  return { id: 'OTHER', label: '공식 예매처' };
+const vendorLabel: Record<TicketVendor, string> = {
+  NOL: 'NOL',
+  YES24: 'YES24',
+  MELON: '멜론티켓',
+  TICKETLINK: '티켓링크',
+  OTHER: '공식 예매처',
 };
 
 const countdownLabel = (startsAt: string) => {
@@ -50,35 +37,33 @@ const countdownLabel = (startsAt: string) => {
   return `D-${days}`;
 };
 
-const scheduleLabel = (schedule: ConcertSchedule) => {
-  const date = new Date(schedule.startsAt);
+const scheduleLabel = (opening: TicketOpening) => {
+  const date = new Date(opening.opensAt);
   const dateLabel = new Intl.DateTimeFormat('ko-KR', {
     month: 'long',
     day: 'numeric',
     weekday: 'short',
-    timeZone: schedule.timezone,
+    timeZone: opening.timezone,
   }).format(date);
   const timeLabel = new Intl.DateTimeFormat('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-    timeZone: schedule.timezone,
+    timeZone: opening.timezone,
   }).format(date);
   return `${dateLabel} ${timeLabel}`;
 };
 
-export function TicketingCarousel({ concerts, scheduleType, title }: TicketingCarouselProps) {
-  const [selectedVendor, setSelectedVendor] = useState<TicketVendor>('ALL');
+export function TicketingCarousel({ openings, scheduleType, title }: TicketingCarouselProps) {
+  const [selectedVendor, setSelectedVendor] = useState<TicketVendorFilter>('ALL');
   const [renderedAt] = useState(Date.now);
   const items = useMemo(() => {
-    return concerts
-      .flatMap((concert) => concert.schedules
-        .filter((schedule) => schedule.type === scheduleType && new Date(schedule.startsAt).getTime() >= renderedAt)
-        .map((schedule) => ({ concert, schedule })))
-      .sort((left, right) => new Date(left.schedule.startsAt).getTime() - new Date(right.schedule.startsAt).getTime());
-  }, [concerts, renderedAt, scheduleType]);
+    return openings
+      .filter((opening) => opening.type === scheduleType && new Date(opening.opensAt).getTime() >= renderedAt)
+      .sort((left, right) => new Date(left.opensAt).getTime() - new Date(right.opensAt).getTime());
+  }, [openings, renderedAt, scheduleType]);
   const filteredItems = items
-    .filter((item) => selectedVendor === 'ALL' || ticketVendor(item.schedule.sourceUrl).id === selectedVendor)
+    .filter((item) => selectedVendor === 'ALL' || item.vendor === selectedVendor)
     .slice(0, 10);
   const selectedVendorLabel = vendorOptions.find((option) => option.id === selectedVendor)?.label;
 
@@ -101,7 +86,7 @@ export function TicketingCarousel({ concerts, scheduleType, title }: TicketingCa
           const selected = option.id === selectedVendor;
           const count = option.id === 'ALL'
             ? items.length
-            : items.filter((item) => ticketVendor(item.schedule.sourceUrl).id === option.id).length;
+            : items.filter((item) => item.vendor === option.id).length;
 
           return (
             <Pressable
@@ -124,7 +109,7 @@ export function TicketingCarousel({ concerts, scheduleType, title }: TicketingCa
           contentContainerStyle={styles.list}
           data={filteredItems}
           horizontal
-          keyExtractor={(item) => item.schedule.id}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => <TicketingCard item={item} />}
           showsHorizontalScrollIndicator={false}
         />
@@ -147,21 +132,21 @@ export function TicketingCarousel({ concerts, scheduleType, title }: TicketingCa
   );
 }
 
-function TicketingCard({ item }: { item: TicketingItem }) {
-  const vendor = ticketVendor(item.schedule.sourceUrl).label;
+function TicketingCard({ item }: { item: TicketOpening }) {
+  const vendor = vendorLabel[item.vendor];
 
   return (
     <Pressable
-      accessibilityLabel={`${item.concert.title} ${vendor} 예매 페이지 열기`}
+      accessibilityLabel={`${item.concertTitle} ${vendor} 예매 페이지 열기`}
       accessibilityRole="link"
-      onPress={() => Linking.openURL(item.schedule.sourceUrl)}
+      onPress={() => Linking.openURL(item.ticketUrl)}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
       <View style={styles.cardTop}>
-        {item.concert.posterUrl ? (
+        {item.posterUrl ? (
           <Image
             accessibilityIgnoresInvertColors
-            source={{ uri: item.concert.posterUrl }}
+            source={{ uri: item.posterUrl }}
             style={styles.poster}
           />
         ) : (
@@ -171,10 +156,11 @@ function TicketingCard({ item }: { item: TicketingItem }) {
         )}
         <View style={styles.cardContent}>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{countdownLabel(item.schedule.startsAt)}</Text>
+            <Text style={styles.badgeText}>{countdownLabel(item.opensAt)}</Text>
           </View>
-          <Text numberOfLines={2} style={styles.concertTitle}>{item.concert.title}</Text>
-          <Text style={styles.date}>{scheduleLabel(item.schedule)}</Text>
+          <Text numberOfLines={1} style={styles.artist}>{item.artistName}</Text>
+          <Text numberOfLines={2} style={styles.concertTitle}>{item.concertTitle}</Text>
+          <Text style={styles.date}>{scheduleLabel(item)}</Text>
         </View>
       </View>
       <View style={styles.vendorRow}>
@@ -282,12 +268,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '900',
   },
+  artist: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: '800',
+    marginTop: spacing.sm,
+  },
   concertTitle: {
     color: colors.text,
     fontSize: 14,
     fontWeight: '900',
     lineHeight: 19,
-    marginTop: spacing.sm,
+    marginTop: 2,
   },
   date: {
     color: colors.textMuted,

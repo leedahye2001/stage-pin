@@ -64,6 +64,23 @@ export type TicketLink = {
   url: string;
 };
 
+export type TicketVendor = 'NOL' | 'YES24' | 'MELON' | 'TICKETLINK' | 'OTHER';
+
+export type TicketOpening = {
+  id: string;
+  concertId: string | null;
+  concertTitle: string;
+  artistName: string;
+  posterUrl: string | null;
+  type: ScheduleType;
+  opensAt: string;
+  timezone: string;
+  vendor: TicketVendor;
+  ticketUrl: string;
+  sourceUrl: string;
+  verifiedAt: string;
+};
+
 export type Concert = {
   id: string;
   title: string;
@@ -121,4 +138,8 @@ export function getConcert(id: string, genre: ConcertGenre): Promise<Concert> {
 
 export function getNaverSearch(query: string): Promise<NaverSearchResponse> {
   return request(`/api/v1/search/naver?query=${encodeURIComponent(query)}`);
+}
+
+export function getTicketOpenings(): Promise<TicketOpening[]> {
+  return request('/api/v1/ticket-openings');
 }
