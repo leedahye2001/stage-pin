@@ -468,7 +468,7 @@ export default function HomeScreen() {
 
                 <View style={styles.section}>
                   <View style={styles.sectionHeading}>
-                    <Text style={styles.sectionTitle}>아이돌·솔로·밴드 공연</Text>
+                    <Text style={styles.sectionTitle}>다가오는 무대</Text>
                     <Text style={styles.count}>{concerts.length}</Text>
                   </View>
                   <ScrollView
