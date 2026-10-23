@@ -26,6 +26,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/artists/**",
                                 "/api/v1/concerts/**",
+                                "/api/v1/ticket-openings",
+                                "/api/v1/admin/ticket-openings",
                                 "/api/v1/search/**",
                                 "/actuator/health").permitAll()
                         .anyRequest().denyAll())
@@ -37,7 +39,7 @@ public class SecurityConfig {
             @Value("${APP_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*}") String allowedOriginPatterns) {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of(allowedOriginPatterns.split(",")));
-        configuration.setAllowedMethods(List.of("GET"));
+        configuration.setAllowedMethods(List.of("GET", "POST"));
         configuration.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

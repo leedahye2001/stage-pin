@@ -30,6 +30,8 @@ services:
           property: password
       - key: KOPIS_API_KEY
         sync: false
+      - key: STAGEPIN_ADMIN_KEY
+        sync: false
       - key: APP_CORS_ALLOWED_ORIGIN_PATTERNS
         value: https://*.vercel.app,http://localhost:*
 
