@@ -27,6 +27,7 @@ export default function RootLayout() {
             <Stack.Screen name="search" options={{ title: '공연 검색' }} />
             <Stack.Screen name="pinlog/create" options={{ title: '핀로그 만들기' }} />
             <Stack.Screen name="admin/notices" options={{ title: 'AI 공연 공지 분석' }} />
+            <Stack.Screen name="practice/ticketing" options={{ title: '모의 티켓팅' }} />
           </Stack>
         </FavoritesProvider>
       </QueryClientProvider>

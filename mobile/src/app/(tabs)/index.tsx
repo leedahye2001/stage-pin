@@ -25,6 +25,7 @@ import {
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { TicketingCarousel } from '@/components/TicketingCarousel';
+import { TicketingFab } from '@/components/TicketingFab';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -81,6 +82,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.centered}>
         <ActivityIndicator color={colors.primary} size="large" />
         <Text style={styles.loadingText}>예정 공연을 불러오는 중이에요.</Text>
+        <TicketingFab />
       </SafeAreaView>
     );
   }
@@ -93,6 +95,7 @@ export default function HomeScreen() {
         <Pressable onPress={() => upcomingQuery.refetch()} style={styles.retryButton}>
           <Text style={styles.retryLabel}>다시 시도</Text>
         </Pressable>
+        <TicketingFab />
       </SafeAreaView>
     );
   }
@@ -413,6 +416,7 @@ export default function HomeScreen() {
         }
         renderItem={() => null}
       />
+      <TicketingFab />
     </SafeAreaView>
   );
 }
@@ -424,7 +428,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: 100,
   },
   header: {
     gap: spacing.lg,
