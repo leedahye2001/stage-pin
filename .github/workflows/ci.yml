@@ -35,4 +35,5 @@ jobs:
       - run: npm ci
       - run: npm run lint -- --no-cache
       - run: npx tsc --noEmit
+      - run: node --test tests/ticketing-practice.test.mjs
       - run: npx expo-doctor
