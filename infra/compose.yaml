@@ -25,6 +25,9 @@ services:
       KOPIS_API_KEY: ${KOPIS_API_KEY:-}
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      STAGEPIN_ADMIN_KEY: ${STAGEPIN_ADMIN_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-not-configured}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       APP_CORS_ALLOWED_ORIGIN_PATTERNS: http://localhost:*,https://*.vercel.app
     depends_on:
       database:
