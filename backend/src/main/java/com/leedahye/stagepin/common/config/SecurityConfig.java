@@ -28,6 +28,7 @@ public class SecurityConfig {
                                 "/api/v1/concerts/**",
                                 "/api/v1/ticket-openings",
                                 "/api/v1/admin/ticket-openings",
+                                "/api/v1/admin/notices/**",
                                 "/api/v1/search/**",
                                 "/actuator/health").permitAll()
                         .anyRequest().denyAll())

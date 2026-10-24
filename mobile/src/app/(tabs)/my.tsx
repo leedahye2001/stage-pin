@@ -20,6 +20,17 @@ export default function MyScreen() {
         </View>
 
         <View style={styles.section}>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/admin/notices')} style={styles.emptyCard}>
+            <Ionicons color={colors.primary} name="sparkles" size={24} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>AI 공연 공지 분석</Text>
+              <Text style={styles.emptyText}>공지를 일정으로 정리하고 검수해요 · 관리자</Text>
+            </View>
+            <Ionicons color={colors.primary} name="chevron-forward" size={18} />
+          </Pressable>
+        </View>
+
+        <View style={styles.section}>
           <View style={styles.sectionHeading}>
             <Text style={styles.sectionTitle}>관심 아티스트</Text>
             <Text style={styles.count}>{artists.length}</Text>

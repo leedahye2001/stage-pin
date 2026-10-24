@@ -115,6 +115,39 @@ const localApiUrl = Platform.select({
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? localApiUrl;
 
+export type NoticeField = { value: string; evidence: string };
+export type NoticeExtraction = Record<
+  'artistName' | 'concertTitle' | 'venue' | 'performancePeriod' | 'fanVerificationPeriod'
+  | 'presaleAt' | 'generalSaleAt' | 'vendor' | 'ticketUrl', NoticeField
+>;
+export type TicketNotice = {
+  id: string;
+  sourceUrl: string;
+  sourceText: string;
+  extracted: NoticeExtraction;
+  reviewed: NoticeExtraction | null;
+  status: 'DRAFT' | 'APPROVED';
+  model: string;
+  promptVersion: string;
+  latencyMs: number;
+  totalTokens: number;
+  createdAt: string;
+  approvedAt: string | null;
+};
+
+export async function noticeRequest<T>(key: string, path = '', body?: unknown): Promise<T> {
+  const response = await fetch(`${API_URL}/api/v1/admin/notices${path}`, {
+    method: body === undefined ? 'GET' : 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-StagePin-Admin-Key': key },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || error.detail || `요청에 실패했어요 (${response.status}).`);
+  }
+  return response.json();
+}
+
 async function request<T>(path: string): Promise<T> {
   const response = await fetch(`${API_URL}${path}`);
   if (!response.ok) {
