@@ -2,10 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { createPracticeSeats, normalizePracticeCode, secondsRemaining, type PracticeSeat } from '@/lib/ticketing-practice';
+import { claimPracticeSeats, createPracticeSeats, normalizePracticeCode, practiceQueue, secondsRemaining, type PracticeSeat } from '@/lib/ticketing-practice';
 import { colors as baseColors, radius } from '@/theme/tokens';
 
-type Step = 'ready' | 'countdown' | 'captcha' | 'seats' | 'discount' | 'delivery' | 'confirm' | 'success' | 'expired';
+type Step = 'ready' | 'countdown' | 'queue' | 'captcha' | 'seats' | 'discount' | 'delivery' | 'confirm' | 'success' | 'expired';
 type Vendor = 'YES24' | 'NOL';
 const areas = ['FLOOR A', 'FLOOR B', 'FLOOR C', 'FLOOR D', '1층 1구역', '1층 2구역'];
 const codes = ['STAGE7', 'PIN428', 'LIVE26', 'DOME52'];
@@ -22,11 +22,14 @@ export default function TicketingPracticeScreen() {
   const [deadline, setDeadline] = useState(0);
   const [now, setNow] = useState(0);
   const [started, setStarted] = useState(0);
+  const [queueStarted, setQueueStarted] = useState(0);
+  const [initialRank, setInitialRank] = useState(32000);
   const [finished, setFinished] = useState(0);
   const [code, setCode] = useState('STAGE7');
   const [answer, setAnswer] = useState('');
   const [area, setArea] = useState(areas[0]);
-  const [seats, setSeats] = useState<PracticeSeat[]>([]);
+  const [inventory, setInventory] = useState<Record<string, PracticeSeat[]>>({});
+  const seats = inventory[area] ?? [];
   const [selected, setSelected] = useState<PracticeSeat | null>(null);
   const [mistakes, setMistakes] = useState(0);
   const [message, setMessage] = useState('');
@@ -40,11 +43,23 @@ export default function TicketingPracticeScreen() {
       if (countdown > 1) setCountdown(countdown - 1);
       else {
         const time = Date.now();
-        setStarted(time); setNow(time); setDeadline(time + 120000); setStep('captcha');
+        setQueueStarted(time); setNow(time); setStep('queue');
       }
     }, 1000);
     return () => clearTimeout(timer);
   }, [step, countdown]);
+
+  useEffect(() => {
+    if (step !== 'queue') return;
+    const timer = setInterval(() => {
+      const time = Date.now();
+      setNow(time);
+      if (practiceQueue(queueStarted, time, initialRank).rank === 0) {
+        setStarted(time); setDeadline(time + 120000); setStep('captcha');
+      }
+    }, 200);
+    return () => clearInterval(timer);
+  }, [step, queueStarted, initialRank]);
 
   useEffect(() => {
     if (!['captcha', 'seats', 'discount', 'delivery', 'confirm'].includes(step)) return;
@@ -58,19 +73,19 @@ export default function TicketingPracticeScreen() {
 
   useEffect(() => {
     if (step !== 'seats') return;
-    const timer = setInterval(() => setSeats((current) => {
-      const candidates = current.filter((seat) => !seat.taken && seat.id !== selected?.id);
-      const target = candidates[Math.floor(Math.random() * candidates.length)];
-      return target ? current.map((seat) => seat.id === target.id ? { ...seat, taken: true } : seat) : current;
-    }), 3000);
+    const timer = setInterval(() => setInventory((current) => Object.fromEntries(
+      Object.entries(current).map(([name, availableSeats]) => [name,
+        claimPracticeSeats(availableSeats, name === area ? selected?.id : undefined)]),
+    )), 1500);
     return () => clearInterval(timer);
-  }, [step, selected]);
+  }, [step, selected, area]);
 
   const start = () => {
     setCountdown(3); setCode(codes[Math.floor(Math.random() * codes.length)]);
     setAnswer(''); setMessage(''); setMistakes(0); setSelected(null);
     setDiscount(false); setDelivery('현장수령'); setPayment('신용카드');
-    setArea(areas[0]); setSeats(createPracticeSeats()); setStep('countdown');
+    setInitialRank(24000 + Math.floor(Math.random() * 32001));
+    setArea(areas[0]); setInventory(Object.fromEntries(areas.map((name) => [name, createPracticeSeats()]))); setStep('countdown');
   };
   const verify = () => {
     if (Date.now() >= deadline) { setStep('expired'); return; }
@@ -91,7 +106,8 @@ export default function TicketingPracticeScreen() {
   };
   const remaining = secondsRemaining(deadline, now);
   const active = ['captcha', 'seats', 'discount', 'delivery', 'confirm'].includes(step);
-  const stageIndex = step === 'ready' || step === 'countdown' ? 0
+  const queue = practiceQueue(queueStarted, now, initialRank);
+  const stageIndex = step === 'ready' || step === 'countdown' || step === 'queue' ? 0
     : step === 'captcha' || step === 'seats' ? 1 : step === 'discount' ? 2 : step === 'delivery' ? 3 : 4;
   const stageNames = vendor === 'YES24'
     ? ['관람일/회차', '좌석선택', '할인/쿠폰', '수령방법', '결제방법']
@@ -107,7 +123,7 @@ export default function TicketingPracticeScreen() {
           <Text style={styles.practiceBadge}>STAGEPIN 연습</Text>
         </View>
         <View style={styles.platforms}>
-          {(['YES24', 'NOL'] as Vendor[]).map((item) => <Pressable key={item} disabled={active || step === 'countdown'}
+          {(['YES24', 'NOL'] as Vendor[]).map((item) => <Pressable key={item} disabled={active || step === 'countdown' || step === 'queue'}
             accessibilityRole="button" accessibilityState={{ selected: vendor === item }}
             onPress={() => { setVendor(item); setStep('ready'); }}
             style={vendor === item ? styles.platformSelected : styles.platformSoon}>
@@ -173,7 +189,11 @@ export default function TicketingPracticeScreen() {
                   <Text style={styles.dateText}>{date === item ? '●' : '○'}  {item}</Text>
                 </Pressable>
               ))}
-              <Text style={styles.hint}>3초 카운트다운 후 시작 · 총 2분 · 보안문자 → 좌석 → 할인 → 수령 → 모의 결제</Text>
+              <View style={styles.rushBanner}>
+                <Text style={styles.rushTitle}>오픈런 · 가상 접속자 100,000명</Text>
+                <Text style={styles.hint}>대기열 약 15~35초 → 입장 후 2분 제한 · 좌석 선점 경쟁</Text>
+                <Text style={styles.hint}>시간을 압축한 시뮬레이션이며 실제 접속자·서버 부하가 아닙니다.</Text>
+              </View>
             </View>
             <Action accent={accent} label="연습 예매 시작" onPress={start} />
           </>
@@ -182,6 +202,22 @@ export default function TicketingPracticeScreen() {
             <Text style={styles.cardTitle}>곧 예매가 열려요</Text>
             <Text style={styles.countdown}>{countdown}</Text>
             <Text style={styles.muted}>심호흡 한 번, 준비됐죠?</Text>
+          </View>
+        ) : step === 'queue' ? (
+          <View style={styles.queueCard}>
+            <Ionicons name="people-outline" size={42} color={accent} />
+            <Text style={styles.resultTitle}>예매 대기 중입니다</Text>
+            <Text style={styles.muted}>접속자가 많아 순서대로 입장하고 있습니다.</Text>
+            <Text style={styles.queueCaption}>내 앞 대기 인원</Text>
+            <Text accessibilityLiveRegion="none" style={styles.queueRank}>{queue.rank.toLocaleString('ko-KR')}<Text style={styles.recordUnit}>명</Text></Text>
+            <View style={styles.queueTrack}><View style={[styles.queueFill, { width: `${queue.progress * 100}%` }]} /></View>
+            <View style={styles.queueStats}>
+              <Text style={styles.muted}>누적 가상 접속 {queue.visitors.toLocaleString('ko-KR')}명</Text>
+              <Text style={styles.muted}>입장까지 약 {queue.secondsLeft}초</Text>
+            </View>
+            <Text style={styles.hint}>신규 접속자는 내 뒤에 합류합니다. 순서가 되면 자동으로 입장합니다.</Text>
+            <Text style={styles.hint}>연습용 압축 시간 · 초당 1,600명 가상 입장 · 실제 예매처의 수치가 아닙니다.</Text>
+            <Pressable accessibilityRole="button" onPress={() => setStep('ready')} style={styles.textButton}><Text style={styles.link}>연습 취소</Text></Pressable>
           </View>
         ) : step === 'captcha' ? (
           <View style={styles.card}>
@@ -203,7 +239,7 @@ export default function TicketingPracticeScreen() {
                 <View style={styles.stage}><Text style={styles.stageText}>STAGE</Text></View>
                 <View style={styles.areaGrid}>{areas.map((item) => (
                   <Pressable accessibilityRole="button" accessibilityState={{ selected: area === item }}
-                    key={item} onPress={() => { setArea(item); setSeats(createPracticeSeats()); setSelected(null); }}
+                    key={item} onPress={() => { setArea(item); setSelected(null); }}
                     style={[styles.area, area === item && styles.areaSelected]}>
                     <Text style={[styles.areaText, area === item && styles.areaTextSelected]}>{item}</Text>
                   </Pressable>
@@ -214,7 +250,7 @@ export default function TicketingPracticeScreen() {
             <View style={styles.card}>
               <View style={styles.seatHeading}><Text style={styles.cardTitle}>{area}</Text>
                 <Text style={styles.available}>{seats.filter((seat) => !seat.taken).length}석 남음</Text></View>
-              <Text style={styles.hint}>무대 방향 ↑ · 연습 중 다른 관객이 좌석을 선점합니다.</Text>
+              <Text style={styles.hint}>무대 방향 ↑ · 가상 경쟁자가 1.5초마다 좌석을 선점합니다. 선택한 좌석은 임시 확보됩니다.</Text>
               <View style={styles.legend}><Text style={styles.legendText}>🟪 선택 가능</Text><Text style={styles.legendText}>⬛ 선택한 좌석</Text><Text style={styles.legendText}>▫ 판매 완료</Text></View>
               {Array.from({ length: 6 }, (_, row) => (
                 <View key={row} style={styles.seatRow}>
@@ -409,5 +445,13 @@ return StyleSheet.create({
   calendarSelectedText: { color: '#FFFFFF', textAlign: 'center', fontSize: 12, fontWeight: '800' },
   calendarUnselected: { backgroundColor: colors.primarySoft },
   calendarUnselectedText: { color: colors.primary },
+  rushBanner: { backgroundColor: colors.primarySoft, padding: 12, gap: 5, borderLeftWidth: 3, borderLeftColor: colors.primary },
+  rushTitle: { color: colors.primary, fontSize: 14, fontWeight: '900' },
+  queueCard: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CCCCCC', padding: 24, gap: 18, alignItems: 'center', marginTop: 20 },
+  queueCaption: { color: '#555555', fontSize: 13, marginTop: 14 },
+  queueRank: { color: colors.primary, fontSize: 52, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  queueTrack: { height: 10, width: '100%', backgroundColor: '#EEEEEE', borderRadius: 5, overflow: 'hidden' },
+  queueFill: { height: '100%', backgroundColor: colors.primary },
+  queueStats: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%', gap: 10 },
 });
 }
