@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { DemoNotice } from '@/components/GoodsDemo';
 
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -66,10 +67,7 @@ export default function LogbookScreen() {
           </View>
         </View>
 
-        <View style={styles.previewNotice}>
-          <Ionicons color={colors.primary} name="images-outline" size={18} />
-          <Text style={styles.previewText}>사진과 감상 기록이 쌓이면 이런 로그북이 완성돼요.</Text>
-        </View>
+        <DemoNotice />
 
         <Pressable onPress={() => router.push('/pinlog/create')} style={styles.createCard}>
           <View style={styles.createIcon}>

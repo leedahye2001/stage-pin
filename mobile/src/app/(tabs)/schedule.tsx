@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { DemoNotice } from '@/components/GoodsDemo';
 
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -14,45 +15,45 @@ const filters: { label: string; value: ScheduleKind | 'ALL' }[] = [
 ];
 
 const days = [
-  { day: '월', date: 19 },
-  { day: '화', date: 20 },
-  { day: '수', date: 21 },
-  { day: '목', date: 22 },
-  { day: '금', date: 23, today: true },
-  { day: '토', date: 24 },
-  { day: '일', date: 25 },
+  { day: '월', date: 2 },
+  { day: '화', date: 3 },
+  { day: '수', date: 4 },
+  { day: '목', date: 5 },
+  { day: '금', date: 6, today: true },
+  { day: '토', date: 7 },
+  { day: '일', date: 8 },
 ];
 
 const schedules = [
   {
     id: 'schedule-1',
     kind: 'PRESALE' as const,
-    date: '10.24',
-    weekday: '토',
+    date: '11.06',
+    weekday: '금',
     time: '20:00',
     label: '팬클럽 선예매',
-    title: 'STAGEPIN LIVE: 우리의 첫 번째 무대',
-    detail: 'NOL 티켓 · D-1',
+    title: 'SEVENTEEN FAN DAY · 가상 팬콘',
+    detail: 'NOL 티켓 예시 · 실제 예매 일정 아님',
   },
   {
     id: 'schedule-2',
     kind: 'SALE' as const,
-    date: '10.27',
-    weekday: '화',
+    date: '11.09',
+    weekday: '월',
     time: '19:00',
     label: '일반 예매',
-    title: 'Moonlight Band Tour [서울]',
-    detail: 'YES24 티켓 · D-4',
+    title: 'IVE FAN DAY · 가상 팬미팅',
+    detail: 'YES24 티켓 예시 · 실제 예매 일정 아님',
   },
   {
     id: 'schedule-3',
     kind: 'SHOW' as const,
-    date: '11.07',
+    date: '11.14',
     weekday: '토',
     time: '18:00',
     label: '공연',
-    title: 'Purple Night: ENCORE',
-    detail: '올림픽공원 KSPO DOME',
+    title: 'SEVENTEEN 가상 팬콘',
+    detail: 'KSPO DOME · 가상 공연장 설정',
   },
   {
     id: 'schedule-4',
@@ -61,8 +62,8 @@ const schedules = [
     weekday: '토',
     time: '17:00',
     label: '공연',
-    title: '우리들의 계절, 겨울의 시작',
-    detail: '인스파이어 아레나',
+    title: 'IVE 가상 팬미팅',
+    detail: '인스파이어 아레나 · 가상 공연장 설정',
   },
 ];
 
@@ -88,16 +89,13 @@ export default function ScheduleScreen() {
           </View>
         </View>
 
-        <View style={styles.previewNotice}>
-          <Ionicons color={colors.primary} name="sparkles" size={17} />
-          <Text style={styles.previewText}>찜한 공연이 쌓이면 이런 모습으로 정리돼요.</Text>
-        </View>
+        <DemoNotice />
 
         <View style={styles.calendarCard}>
           <View style={styles.monthRow}>
-            <Pressable accessibilityLabel="이전 주"><Ionicons color={colors.textMuted} name="chevron-back" size={20} /></Pressable>
-            <Text style={styles.month}>2026년 10월</Text>
-            <Pressable accessibilityLabel="다음 주"><Ionicons color={colors.textMuted} name="chevron-forward" size={20} /></Pressable>
+            <Ionicons color={colors.textMuted} name="calendar-outline" size={20} />
+            <Text style={styles.month}>2026년 11월 · 샘플 달력</Text>
+            <Text style={styles.previewText}>미리보기</Text>
           </View>
           <View style={styles.weekRow}>
             {days.map((item) => (

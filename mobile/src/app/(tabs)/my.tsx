@@ -4,19 +4,35 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConcertCard } from '@/components/ConcertCard';
+import { DemoNotice, GoodsCard, marketStyles } from '@/components/GoodsDemo';
+import { demoGoods } from '@/lib/goods-demo';
+import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function MyScreen() {
   const { artists, concerts, isConcertFavorite, toggleArtist, toggleConcert } = useFavorites();
+  const { saved, requested } = useGoodsDemo();
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         <View>
           <Text style={styles.eyebrow}>MY STAGEPIN</Text>
-          <Text style={styles.title}>내가 찜한 무대</Text>
-          <Text style={styles.subtitle}>관심 아티스트와 놓치고 싶지 않은 공연을 모아봤어요.</Text>
+          <Text style={styles.title}>나의 덕질 보관함</Text>
+          <Text style={styles.subtitle}>찜한 굿즈와 무대, 교환하고 싶은 마음까지.</Text>
+        </View>
+
+        <DemoNotice />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>데모 신청 내역 · {requested.length}</Text>
+          <Text style={styles.emptyText}>상대방에게 전송되지 않으며 새로고침 시 초기화돼요.</Text>
+          {requested.length ? demoGoods.filter((item) => requested.includes(item.id)).map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => router.push({ pathname: '/goods/[id]', params: { id: item.id } })} style={styles.emptyCard}><Ionicons name="swap-horizontal" color={colors.primary} size={23} /><View style={{ flex: 1 }}><Text style={{ color: colors.text, fontWeight: '700', lineHeight: 22 }}>{item.title}</Text><Text style={styles.emptyText}>{item.kind} 신청 미리보기 · 데모 보관</Text></View><Ionicons name="chevron-forward" color={colors.primary} size={17} /></Pressable>) : <EmptyFavorite message="굿즈 상세에서 데모 신청을 남겨보세요." />}
+        </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>찜한 굿즈 · {saved.length}</Text>
+          <View style={marketStyles.grid}>{demoGoods.filter((item) => saved.includes(item.id)).map((item) => <View key={item.id} style={marketStyles.gridItem}><GoodsCard item={item} /></View>)}</View>
+          {!saved.length ? <EmptyFavorite message="마음에 드는 굿즈의 하트를 눌러보세요." /> : null}
         </View>
 
         <View style={styles.section}>

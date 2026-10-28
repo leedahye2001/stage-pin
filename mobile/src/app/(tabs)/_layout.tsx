@@ -26,9 +26,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: '공연',
+          title: '홈',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons color={color as string} name={focused ? 'map' : 'map-outline'} size={23} />
+            <Ionicons color={color as string} name={focused ? 'home' : 'home-outline'} size={23} />
           ),
         }}
       />
@@ -38,6 +38,15 @@ export default function TabLayout() {
           title: '일정',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons color={color as string} name={focused ? 'calendar' : 'calendar-outline'} size={23} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="goods"
+        options={{
+          title: '굿즈',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons color={color as string} name={focused ? 'bag-handle' : 'bag-handle-outline'} size={23} />
           ),
         }}
       />
