@@ -8,6 +8,9 @@
   Core data는 CC0. 사용자 태그·평점·annotations 등 supplementary data는 별도 NC 라이선스이므로 가져오지 않음.
   https://musicbrainz.org/doc/About/Data_License
   https://musicbrainz.org/doc/MusicBrainz_Database
+- **데이터 라이선스와 호스팅 API 이용 조건은 다르다.** MusicBrainz 웹 서비스는 비상업 사용에 무료이며 상업 사용은 commercial plans 또는 문의를 안내한다. 현재 연결은 결제·실거래 없는 로컬 포트폴리오/비상업 목업 기준이다. 실제 굿즈 판매 서비스, 광고·수수료 등 상업 운영 전 API 계약/요금 조건 확인 또는 허용되는 자체 CC0 카탈로그/다른 제공자로 전환해야 한다. CC0라는 이유만으로 상업 API 사용까지 무조건 무료라고 안내하지 않는다.
+  https://musicbrainz.org/doc/MusicBrainz_API
+  https://metabrainz.org/supporters/account-type
 - Wikidata Query Service: MusicBrainz ID(P434)와 이미지(P18) 연결. 구조화 데이터는 CC0지만, P18이 가리키는 사진의 라이선스까지 CC0인 것은 아님.
   https://www.wikidata.org/wiki/Wikidata:Data_access
 - Wikimedia Commons imageinfo/extmetadata: 이미지 URL, 작성자/맞춤 출처 표기, 파일 페이지, 라이선스를 확인.
