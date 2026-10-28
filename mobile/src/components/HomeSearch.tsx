@@ -13,8 +13,8 @@ export function HomeSearch() {
   const [keyword, setKeyword] = useState('');
   const { isArtistFavorite, toggleArtist } = useFavorites();
   useEffect(() => { const timer = setTimeout(() => setKeyword(query.trim()), 450); return () => clearTimeout(timer); }, [query]);
-  const results = useQuery({ queryKey: ['artists', keyword], queryFn: () => getArtists(keyword), enabled: keyword.length >= 2, retry: false, staleTime: 3600000 });
-  const searching = query.trim().length >= 2;
+  const results = useQuery({ queryKey: ['artists', keyword], queryFn: () => getArtists(keyword), enabled: keyword.length >= 1, retry: false, staleTime: 3600000 });
+  const searching = query.trim().length >= 1;
   const pending = keyword !== query.trim() || results.isFetching;
   const searchConcerts = () => { if (query.trim()) router.push({ pathname: '/search', params: { query: query.trim() } }); };
   return <View style={s.container}>

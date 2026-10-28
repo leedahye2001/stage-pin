@@ -47,7 +47,7 @@ public class ArtistCatalogClient {
 
     public synchronized List<ArtistSearchResponse> search(String query) {
         String keyword = query.trim();
-        if (keyword.length() < 2) {
+        if (keyword.isEmpty()) {
             return List.of();
         }
         String cacheKey = keyword.toLowerCase(Locale.ROOT);

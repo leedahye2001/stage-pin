@@ -12,6 +12,11 @@ class ArtistCatalogClientTest {
     private final ArtistCatalogClient client = new ArtistCatalogClient(new ObjectMapper());
 
     @Test
+    void blankSearchDoesNotCallExternalServices() {
+        assertThat(client.search("  ")).isEmpty();
+    }
+
+    @Test
     void readsMultilingualAliasesFromMusicBrainz() {
         var artists = client.parseMusicBrainz(json("""
                 {"artists":[{
