@@ -7,6 +7,7 @@ import { WebAnalytics } from '@/components/WebAnalytics';
 
 import { FavoritesProvider } from '@/lib/favorites';
 import { GoodsDemoProvider } from '@/lib/goods-demo-state';
+import { SavedSchedulesProvider } from '@/lib/saved-schedules-state';
 import { queryClient } from '@/lib/query-client';
 import { colors } from '@/theme/tokens';
 
@@ -16,6 +17,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <FavoritesProvider>
           <GoodsDemoProvider>
+            <SavedSchedulesProvider>
             <StatusBar style="dark" />
             <WebAnalytics />
             <Stack
@@ -37,6 +39,7 @@ export default function RootLayout() {
               <Stack.Screen name="goods/[id]" options={{ title: '굿즈 상세' }} />
               <Stack.Screen name="goods/create" options={{ title: '굿즈 등록' }} />
             </Stack>
+            </SavedSchedulesProvider>
           </GoodsDemoProvider>
         </FavoritesProvider>
       </QueryClientProvider>
