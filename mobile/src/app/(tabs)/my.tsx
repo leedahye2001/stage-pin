@@ -1,9 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConcertCard } from '@/components/ConcertCard';
+import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { DemoNotice, GoodsCard, marketStyles } from '@/components/GoodsDemo';
 import { demoGoods } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
@@ -55,13 +56,7 @@ export default function MyScreen() {
             <ScrollView contentContainerStyle={styles.artistList} horizontal showsHorizontalScrollIndicator={false}>
               {artists.map((artist) => (
                 <View key={artist.id} style={styles.artistCard}>
-                  {artist.imageUrl ? (
-                    <Image accessibilityIgnoresInvertColors source={{ uri: artist.imageUrl }} style={styles.artistImage} />
-                  ) : (
-                    <View style={styles.artistFallback}>
-                      <Ionicons color={colors.primary} name="person" size={24} />
-                    </View>
-                  )}
+                  <ArtistPhoto artist={artist} size={68} />
                   <Text numberOfLines={1} style={styles.artistName}>{artist.name}</Text>
                   <Pressable
                     accessibilityLabel={`${artist.name} 관심 해제`}

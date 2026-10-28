@@ -26,6 +26,7 @@ import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { TicketingCarousel } from '@/components/TicketingCarousel';
 import { TicketingFab } from '@/components/TicketingFab';
+import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -212,32 +213,21 @@ export default function ConcertDiscoveryScreen() {
                 ) : artistSuggestionsQuery.data?.length || performanceSuggestionsQuery.data?.length ? (
                   <>
                   {artistSuggestionsQuery.data?.map((artist) => (
-                    <Pressable
+                    <View
                       key={artist.id}
-                      onPress={() => selectArtist(artist)}
                       style={styles.searchDropdownRow}
                     >
-                      {artist.imageUrl ? (
-                        <Image
-                          accessibilityIgnoresInvertColors
-                          source={{ uri: artist.imageUrl }}
-                          style={styles.artistAvatar}
-                        />
-                      ) : (
-                        <View style={styles.searchIcon}>
-                          <Ionicons color={colors.primary} name="person" size={18} />
-                        </View>
-                      )}
-                      <View style={styles.searchDropdownContent}>
+                      <ArtistPhoto artist={artist} size={42} />
+                      <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 공연 기록 보기`} onPress={() => selectArtist(artist)} style={styles.searchDropdownContent}>
                         <Text style={styles.searchDropdownTitle}>{artist.name}</Text>
                         <Text numberOfLines={1} style={styles.searchDropdownDescription}>
                           {[artist.description, artist.aliases.filter((alias) => alias !== artist.name).slice(0, 2).join(' · ')]
                             .filter(Boolean)
                             .join(' · ')}
                         </Text>
-                      </View>
+                      </Pressable>
                       <Ionicons color={colors.textMuted} name="chevron-forward" size={18} />
-                    </Pressable>
+                    </View>
                   ))}
                   {performanceSuggestionsQuery.data?.length ? (
                     <Pressable onPress={selectPerformance} style={styles.searchDropdownRow}>
@@ -277,25 +267,13 @@ export default function ConcertDiscoveryScreen() {
                     showsHorizontalScrollIndicator={false}
                   >
                     {favoriteArtists.map((artist) => (
-                      <Pressable
-                        accessibilityLabel={`${artist.name} 공연 보기`}
+                      <View
                         key={artist.id}
-                        onPress={() => selectArtist(artist)}
                         style={styles.favoriteArtistCard}
                       >
-                        {artist.imageUrl ? (
-                          <Image
-                            accessibilityIgnoresInvertColors
-                            source={{ uri: artist.imageUrl }}
-                            style={styles.favoriteArtistImage}
-                          />
-                        ) : (
-                          <View style={styles.favoriteArtistFallback}>
-                            <Ionicons color={colors.primary} name="person" size={20} />
-                          </View>
-                        )}
-                        <Text numberOfLines={1} style={styles.favoriteArtistName}>{artist.name}</Text>
-                      </Pressable>
+                        <ArtistPhoto artist={artist} size={54} />
+                        <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 공연 보기`} onPress={() => selectArtist(artist)}><Text numberOfLines={1} style={styles.favoriteArtistName}>{artist.name}</Text></Pressable>
+                      </View>
                     ))}
                   </ScrollView>
                 ) : (

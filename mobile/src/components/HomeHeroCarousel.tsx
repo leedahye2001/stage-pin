@@ -1,0 +1,45 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
+import { useRef, useState, type ComponentRef } from 'react';
+import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { colors } from '@/theme/tokens';
+
+const banners = [
+  { title: '무대에서 만나고,\n취향으로 연결돼요.', copy: '기다리던 공연부터 갖고 싶던 포카까지.\n우리의 덕질을 한곳에 핀!', tag: '좋아하는 마음이 만나는 곳', cta: '굿즈 교환·판매 둘러보기', route: '/goods', color: '#EEE8FD', accent: '#6C4CF1', mark: '♡' },
+  { title: '내 최애의 예매일,\n한눈에 모아봐요.', copy: '아티스트 하트를 눌러보세요.\n확인된 선예매·일반예매만 모아드려요.', tag: '흩어진 예매 일정을 한곳에', cta: '공연·아티스트 찾아보기', route: '/explore', color: '#E7EFE5', accent: '#4F785C', mark: '✦' },
+  { title: '함께 부른 순간을\n한 페이지에 담아요.', copy: '공연이 끝나도 오래 기억할 수 있도록.\n나만의 로그북을 차곡차곡 채워봐요.', tag: '오늘의 무대, 오래 남을 기억', cta: '로그북 둘러보기', route: '/logbook', color: '#F7E9E9', accent: '#AD737F', mark: '✧' },
+] as const;
+
+export function HomeHeroCarousel() {
+  const [width, setWidth] = useState(0);
+  const [page, setPage] = useState(0);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  return <View style={{ gap: 11 }} onLayout={(event) => { const nextWidth = event.nativeEvent.layout.width; setWidth(nextWidth); scroll.current?.scrollTo({ x: page * nextWidth, animated: false }); }}>
+    <ScrollView ref={scroll} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={(event) => { if (width) setPage(Math.round(event.nativeEvent.contentOffset.x / width)); }}>
+      {banners.map((item) => <View key={item.title} style={[s.hero, { width: width || 320, backgroundColor: item.color }]}>
+        <Text style={[s.tag, { color: item.accent }]}>{item.tag}</Text><Text style={s.title}>{item.title}</Text><Text style={s.copy}>{item.copy}</Text>
+        <View style={s.art}><Text style={[s.mark, { color: item.accent }]}>{item.mark}</Text><View style={[s.card, { borderColor: item.accent }]}><Text style={[s.cardText, { color: item.accent }]}>MY{`\n`}FAVE</Text></View></View>
+        <Pressable accessibilityRole="button" onPress={() => router.push(item.route)} style={[s.cta, { backgroundColor: item.accent }]}><Text style={s.ctaText}>{item.cta}</Text><Ionicons name="arrow-forward" size={16} color="#FFFFFF" /></Pressable>
+      </View>)}
+    </ScrollView>
+    <View style={s.controls}>{banners.map((item, index) => <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={`${index + 1}번 홈 배너 보기`} accessibilityState={{ selected: page === index }} onPress={() => { setPage(index); scroll.current?.scrollTo({ x: index * width, animated: true }); }} style={s.dotTouch}><View style={[s.dot, page === index && s.dotActive]} /></Pressable>)}<Text style={s.counter}>{page + 1} / {banners.length}</Text></View>
+  </View>;
+}
+
+const s = StyleSheet.create({
+  hero: { borderRadius: 24, padding: 22, gap: 16, overflow: 'hidden', minHeight: 260 },
+  tag: { alignSelf: 'flex-start', fontSize: 10, fontWeight: '800', backgroundColor: '#FFFFFFAA', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 18, zIndex: 1 },
+  title: { color: '#33264A', fontSize: 27, fontWeight: '900', lineHeight: 37, letterSpacing: -1, zIndex: 1 },
+  copy: { color: '#80718D', fontSize: 12, lineHeight: 21, zIndex: 1 },
+  cta: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 15, borderRadius: 20, zIndex: 1 },
+  ctaText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
+  art: { position: 'absolute', width: 130, height: 180, right: -15, top: 70, opacity: 0.16 },
+  mark: { fontSize: 60 },
+  card: { width: 75, height: 105, borderWidth: 5, borderRadius: 9, transform: [{ rotate: '16deg' }], alignSelf: 'flex-end', justifyContent: 'center', alignItems: 'center' },
+  cardText: { fontSize: 21, fontWeight: '900' },
+  controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  dotTouch: { padding: 7 },
+  dot: { width: 6, height: 6, backgroundColor: '#D6CEDF', borderRadius: 4 },
+  dotActive: { width: 18, backgroundColor: colors.primary },
+  counter: { position: 'absolute', right: 2, fontSize: 10, color: colors.textMuted },
+});
