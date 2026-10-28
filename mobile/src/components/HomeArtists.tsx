@@ -35,7 +35,7 @@ export function HomeArtists({ onSelect }: { onSelect: (name: string) => void }) 
       </ScrollView> : null}
       {profiles.some((item) => item.isFetching) ? <View style={m.row}><ActivityIndicator size="small" color={colors.primary} /><Text style={m.subtitle}>공개 아티스트 프로필을 불러오고 있어요</Text></View> : null}
       {profiles.some((item) => item.isError) ? <View style={{ gap: 9 }}><Text style={s.error}>일부 아티스트 조회가 지연되고 있어요. 잠시 후 다시 시도해 주세요.</Text><Pressable accessibilityRole="button" onPress={() => profiles.filter((item) => item.isError).forEach((item) => item.refetch())}><Text style={m.link}>조회에 실패한 프로필 다시 불러오기</Text></Pressable></View> : null}
-      <Text style={s.creditHint}>사진의 ⓘ에서 작성자·라이선스를 확인하세요. 사진이 없으면 기본 아이콘으로 표시해요.</Text>
+      <Text style={s.creditHint}>Spotify 표시는 아티스트 페이지로 연결돼요. ⓘ에서는 사진 출처를 확인할 수 있어요. 사진이 없으면 기본 아이콘으로 표시해요.</Text>
     </View>
     <View style={m.section}>
       <View style={m.between}><Text style={m.sectionTitle}>찜한 아티스트의 예매 일정</Text><Text style={s.count}>{favorites.length}명 찜</Text></View>

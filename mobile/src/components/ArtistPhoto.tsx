@@ -1,23 +1,23 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useState } from 'react';
 import { Image, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ArtistSearchResult } from '@/api/concerts';
 import { colors } from '@/theme/tokens';
+import { isSpotifyArtist, usableArtistImage } from '@/lib/artist-media';
 
 export function ArtistPhoto({ artist, size = 62 }: { artist: ArtistSearchResult; size?: number }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const [credit, setCredit] = useState(false);
-  const usable = Boolean(artist.imageUrl && artist.imagePageUrl && artist.imageLicense
-    && /^(CC BY(?:-SA)? [234]\.0|CC0)$/.test(artist.imageLicense)
-    && artist.imagePageUrl.startsWith('https://commons.wikimedia.org/wiki/File:')
-    && (artist.imageAttribution || artist.imageLicense === 'CC0')
-    && artist.imageUrl !== failedUrl);
-  return <View style={{ width: size, height: size }}>
-    <View style={[s.frame, { width: size, height: size, borderRadius: size / 3 }]}>
+  const spotify = isSpotifyArtist(artist);
+  const usable = usableArtistImage(artist) && artist.imageUrl !== failedUrl;
+  return <View style={{ width: size, height: size + (spotify ? 36 : 0) }}>
+    <View style={[s.frame, { width: size, height: size, borderRadius: spotify ? 0 : size / 3 }]}>
       {usable ? <Image accessibilityLabel={`${artist.name} 아티스트 사진`} source={{ uri: artist.imageUrl! }} resizeMode="contain" style={{ width: size, height: size }} onError={() => setFailedUrl(artist.imageUrl)} />
         : <Ionicons name="person-outline" size={size / 2.5} color="#9A8AAD" />}
     </View>
-    {usable ? <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 사진 출처와 라이선스`} onPress={() => setCredit(true)} style={s.info}><Ionicons name="information-circle" size={18} color={colors.primary} /></Pressable> : null}
+    {spotify ? <Pressable accessibilityRole="link" accessibilityLabel={`${artist.name} Spotify에서 보기`} onPress={() => Linking.openURL(artist.imagePageUrl!)} style={s.spotify}><FontAwesome name="spotify" size={21} color="#191414" />{size >= 62 ? <Text style={s.spotifyText}>Spotify</Text> : null}</Pressable>
+      : usable ? <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 사진 출처와 라이선스`} onPress={() => setCredit(true)} style={s.info}><Ionicons name="information-circle" size={18} color={colors.primary} /></Pressable> : null}
     <Modal visible={credit} transparent animationType="fade" onRequestClose={() => setCredit(false)}>
       <View style={s.backdrop}><View accessibilityViewIsModal style={s.modal}>
         <Text style={s.title}>{artist.name} 사진 출처</Text>
@@ -34,6 +34,8 @@ export function ArtistPhoto({ artist, size = 62 }: { artist: ArtistSearchResult;
 
 const s = StyleSheet.create({
   frame: { backgroundColor: '#EEEAF5', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+  spotify: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 7 },
+  spotifyText: { color: '#191414', fontSize: 10, fontWeight: '700' },
   info: { position: 'absolute', bottom: -3, right: -5, width: 27, height: 27, borderRadius: 14, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' },
   backdrop: { flex: 1, backgroundColor: '#21192D77', padding: 24, alignItems: 'center', justifyContent: 'center' },
   modal: { width: '100%', maxWidth: 460, padding: 24, borderRadius: 23, backgroundColor: '#FFFFFF', gap: 17 },
