@@ -142,7 +142,8 @@ KOPIS 장애 시 API가 DB의 한국 데모 공연을 반환할 수 있지만 �
 - Mobile: Node 24, `npm ci`, lint, TypeScript 검사, Node 테스트, `expo-doctor`.
 - Vercel에서 `npm run build:web` 수행. 현재 GitHub CI 자체에 웹 export 단계는 없다.
 - 헬스체크 `/actuator/health`, AI 공지에 모델·프롬프트 버전·지연 시간·토큰 수 저장.
-- 중앙 로그·분산 트레이싱·사용자 행동 분석 파이프라인은 구현된 것으로 보지 않는다.
+- Vercel Web Analytics 연결 코드 추가: 운영 웹 도메인만 수집하고 개발·미리보기·네이티브 앱과 관리자 페이지는 제외한다. URL 검색 파라미터와 fragment는 전송 전에 제거한다. 대시보드 활성화와 해당 코드 배포가 필요하다.
+- 중앙 로그·분산 트레이싱·별도 사용자 행동 분석 파이프라인은 없다.
 
 ## 7. 미구현 운영 기능
 

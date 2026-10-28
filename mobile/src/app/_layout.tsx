@@ -3,6 +3,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { WebAnalytics } from '@/components/WebAnalytics';
+
 import { FavoritesProvider } from '@/lib/favorites';
 import { GoodsDemoProvider } from '@/lib/goods-demo-state';
 import { queryClient } from '@/lib/query-client';
@@ -15,6 +17,7 @@ export default function RootLayout() {
         <FavoritesProvider>
           <GoodsDemoProvider>
             <StatusBar style="dark" />
+            <WebAnalytics />
             <Stack
               screenOptions={{
                 contentStyle: { backgroundColor: colors.background },

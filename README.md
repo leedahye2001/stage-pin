@@ -82,6 +82,15 @@ Xcode when prompted, and run `npm run ios:device`. In `mobile/.env`, set
 
 ## Verification
 
+### Web visitor analytics
+
+Vercel project → **Analytics** shows visitors and page views after Web Analytics
+is enabled and the integration is deployed. Tracking runs only on the production
+web origin `https://stage-pin.vercel.app`; local development, preview domains,
+native apps, and admin pages are excluded. Search parameters and URL fragments
+are removed before sending page views. No custom business events are tracked.
+Statistics start with collection, not retroactively before activation.
+
 ```bash
 cd backend && ./gradlew test
 cd mobile && npm run lint && npx tsc --noEmit && npx expo-doctor
