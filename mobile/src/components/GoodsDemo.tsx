@@ -41,8 +41,8 @@ export function GoodsCard({ item }: { item: DemoGoods }) {
         <View style={s.row}><Text style={[s.badge, item.kind === '교환' && s.exchange]}>{item.kind}</Text><Text style={s.artist}>{item.artist}</Text></View>
         <Text numberOfLines={2} style={s.cardTitle}>{item.title}</Text>
         <Text style={s.price}>{goodsPrice(item)}</Text>
-        <Text numberOfLines={1} style={s.meta}>{item.kind === '교환' ? `구해요 · ${item.wanted}` : item.condition}</Text>
-        <Text style={s.meta}>{item.methods.join(' · ')}{item.status === '예약 중' ? ' · 예약 중' : ''}</Text>
+        {item.kind === '판매' ? <Text numberOfLines={1} style={s.meta}>{item.condition}</Text> : null}
+        {item.status === '예약 중' ? <Text style={s.meta}>예약 중</Text> : null}
       </View>
     </Pressable>
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.title} 찜`} accessibilityState={{ selected: saved.includes(item.id) }}
