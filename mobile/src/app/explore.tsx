@@ -25,7 +25,7 @@ import {
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { TicketingCarousel } from '@/components/TicketingCarousel';
-import { TicketingFab } from '@/components/TicketingFab';
+import { GoodsFab } from '@/components/GoodsFab';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -83,7 +83,7 @@ export default function ConcertDiscoveryScreen() {
       <SafeAreaView style={styles.centered}>
         <ActivityIndicator color={colors.primary} size="large" />
         <Text style={styles.loadingText}>예정 공연을 불러오는 중이에요.</Text>
-        <TicketingFab />
+        <GoodsFab />
       </SafeAreaView>
     );
   }
@@ -96,7 +96,7 @@ export default function ConcertDiscoveryScreen() {
         <Pressable onPress={() => upcomingQuery.refetch()} style={styles.retryButton}>
           <Text style={styles.retryLabel}>다시 시도</Text>
         </Pressable>
-        <TicketingFab />
+        <GoodsFab />
       </SafeAreaView>
     );
   }
@@ -394,7 +394,7 @@ export default function ConcertDiscoveryScreen() {
         }
         renderItem={() => null}
       />
-      <TicketingFab />
+      <GoodsFab />
     </SafeAreaView>
   );
 }
