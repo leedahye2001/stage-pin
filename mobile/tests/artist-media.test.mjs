@@ -17,4 +17,5 @@ test('Commons credit requirements are preserved for previously saved favorites',
   assert.equal(usableArtistImage({ ...artist, imageLicense: 'All rights reserved' }), false);
   assert.equal(usableArtistImage({ ...artist, imageUrl: 'https://upload.wikimedia.org.evil/example.jpg' }), false);
   assert.equal(usableArtistImage({ ...artist, imageAttribution: '', imageLicense: 'CC0' }), true);
+  assert.equal(usableArtistImage({ ...artist, imageLicense: 'Public domain' }), true);
 });

@@ -217,7 +217,10 @@ public class ArtistCatalogClient {
                 String pageUrl = info.path("descriptionurl").asText();
                 if (!filename.isBlank() && isWikimediaImage(imageUrl)
                         && pageUrl.startsWith("https://commons.wikimedia.org/wiki/File:")
-                        && reusableLicense(license, licenseUrl)
+                        && (reusableLicense(license, licenseUrl)
+                            || (license.equals("Public domain")
+                                && metadata.path("License").path("value").asText().equals("pd")
+                                && metadata.path("Copyrighted").path("value").asText().equalsIgnoreCase("false")))
                         && (!stripHtml(metadata.path("Attribution").path("value").asText()).isBlank()
                             || !stripHtml(metadata.path("Artist").path("value").asText()).isBlank()
                             || license.equals("CC0"))

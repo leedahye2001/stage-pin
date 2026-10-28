@@ -100,6 +100,27 @@ class ArtistCatalogClientTest {
     }
 
     @Test
+    void acceptsVerifiedPublicDomainPhotosWithoutInventingACreativeCommonsLicense() {
+        String body = """
+                {"query":{"pages":{"1":{"title":"File:BTS White House.jpg","imageinfo":[{
+                  "thumburl":"https://thumb.wikimedia.org/bts.jpg",
+                  "descriptionurl":"https://commons.wikimedia.org/wiki/File:BTS_White_House.jpg",
+                  "extmetadata":{
+                    "Artist":{"value":"The White House"},
+                    "LicenseShortName":{"value":"Public domain"},
+                    "License":{"value":"pd"},"Copyrighted":{"value":"%s"}
+                  }
+                }]}}}}
+                """;
+        var images = client.parseCommonsImages(json(body.formatted("False")));
+        assertThat(images.get("BTS White House.jpg").license()).isEqualTo("Public domain");
+        assertThat(images.get("BTS White House.jpg").attribution()).isEqualTo("The White House");
+        assertThat(client.parseCommonsImages(json(body.formatted("True")))).isEmpty();
+        assertThat(client.parseCommonsImages(json(body.formatted("")))).isEmpty();
+        assertThat(client.parseCommonsImages(json(body.formatted("False").replace("\"pd\"", "\"unknown\"")))).isEmpty();
+    }
+
+    @Test
     void excludesUnknownNoncommercialAndIncompleteLicenses() {
         for (String license : new String[] {"", "All rights reserved", "CC BY-NC 4.0", "CC BY-SA 4.0"}) {
             var images = client.parseCommonsImages(json("""

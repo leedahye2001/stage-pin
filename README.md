@@ -95,8 +95,9 @@ the photo URL, author, source page and license. No Spotify account, subscription
 or image API key is needed. Existing Spotify credentials in a local `.env` are
 not used or passed into the API container.
 
-Only supported CC BY / CC BY-SA / CC0 photos with the required metadata are
-displayed. The UI keeps the original proportions and exposes credits via ⓘ.
+Only supported CC BY / CC BY-SA / CC0 photos or verified Public domain photos
+with the required metadata are displayed. The UI center-crops images to fill
+the square profile, preserves aspect ratio and exposes credits and the crop notice via ⓘ.
 Missing or unverified photos use a default icon; latest official profile photos
 and coverage of every artist are not guaranteed. Search results are cached for
 six hours. See [source and license rules](docs/artist-profile-sources.md), including

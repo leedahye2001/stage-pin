@@ -11,7 +11,7 @@ export function ArtistPhoto({ artist, size = 62 }: { artist: ArtistSearchResult;
   const usable = usableArtistImage(artist) && artist.imageUrl !== failedUrl;
   return <View style={{ width: size, height: size }}>
     <View style={[s.frame, { width: size, height: size, borderRadius: size / 3 }]}>
-      {usable ? <Image accessibilityLabel={`${artist.name} 아티스트 사진`} source={{ uri: artist.imageUrl! }} resizeMode="contain" style={{ width: size, height: size }} onError={() => setFailedUrl(artist.imageUrl)} />
+      {usable ? <Image accessibilityLabel={`${artist.name} 아티스트 사진`} source={{ uri: artist.imageUrl! }} resizeMode="cover" style={{ width: size, height: size }} onError={() => setFailedUrl(artist.imageUrl)} />
         : <Ionicons name="person-outline" size={size / 2.5} color="#9A8AAD" />}
     </View>
     {usable ? <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 사진 출처와 라이선스`} onPress={() => setCredit(true)} style={s.info}><Ionicons name="information-circle" size={18} color={colors.primary} /></Pressable> : null}
@@ -20,7 +20,7 @@ export function ArtistPhoto({ artist, size = 62 }: { artist: ArtistSearchResult;
         <Text style={s.title}>{artist.name} 사진 출처</Text>
         <Text selectable style={s.body}>{artist.imageAttribution || 'CC0 공개 자료'}</Text>
         <Text style={s.body}>{artist.imageLicense} · Wikimedia Commons</Text>
-        <Text style={s.body}>원본 비율 유지·축소 표시. 공식 프로필 또는 제휴를 의미하지 않습니다.</Text>
+        <Text style={s.body}>화면에 맞게 중앙 크롭·축소 표시했습니다. 공식 프로필 또는 제휴를 의미하지 않습니다.</Text>
         <Text style={s.body}>{artist.imagePageUrl?.split('/wiki/File:')[1]?.replace(/_/g, ' ')}</Text>
         <Pressable accessibilityRole="link" onPress={() => artist.imagePageUrl && Linking.openURL(artist.imagePageUrl)}><Text style={s.link}>원본 파일·라이선스 보기 ↗</Text></Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="사진 출처 닫기" onPress={() => setCredit(false)} style={s.close}><Text style={s.link}>닫기</Text></Pressable>
