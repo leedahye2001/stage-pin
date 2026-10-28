@@ -9,6 +9,7 @@ type TicketingCarouselProps = {
   openings: TicketOpening[];
   scheduleType: Extract<ScheduleType, 'FAN_PRESALE' | 'GENERAL_SALE'>;
   title: string;
+  compact?: boolean;
 };
 
 type TicketVendorFilter = TicketVendor | 'ALL';
@@ -54,7 +55,7 @@ const scheduleLabel = (opening: TicketOpening) => {
   return `${dateLabel} ${timeLabel}`;
 };
 
-export function TicketingCarousel({ openings, scheduleType, title }: TicketingCarouselProps) {
+export function TicketingCarousel({ openings, scheduleType, title, compact = false }: TicketingCarouselProps) {
   const [selectedVendor, setSelectedVendor] = useState<TicketVendorFilter>('ALL');
   const [renderedAt] = useState(Date.now);
   const items = useMemo(() => {
@@ -69,12 +70,12 @@ export function TicketingCarousel({ openings, scheduleType, title }: TicketingCa
 
   return (
     <View style={styles.section}>
-      <View style={styles.heading}>
+      {!compact ? <View style={styles.heading}>
         <Text style={styles.title}>{title}</Text>
         {items.length ? <Text style={styles.count}>{items.length}</Text> : null}
-      </View>
+      </View> : null}
 
-      <ScrollView
+      {!compact || items.length ? <ScrollView
         contentContainerStyle={styles.vendorFilters}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -99,7 +100,7 @@ export function TicketingCarousel({ openings, scheduleType, title }: TicketingCa
             </Pressable>
           );
         })}
-      </ScrollView>
+      </ScrollView> : null}
 
       {filteredItems.length ? (
         <FlatList

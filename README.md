@@ -1,8 +1,9 @@
 # StagePin
 
-StagePin is a mobile concert companion for discovering upcoming shows on a map,
-tracking ticket-sale schedules, and preparing for show day. The same concert
-record will later power setlists and a personal concert logbook.
+StagePin connects concert discovery, ticket-opening schedules, and fan-to-fan
+goods sales and exchanges, including meetups at the same performance.
+The current goods marketplace is a local-only prototype: listings, requests,
+and artwork are previews, not real publishing, messaging, or payments.
 
 ## Repository
 
@@ -10,6 +11,14 @@ record will later power setlists and a personal concert logbook.
 - `backend`: Spring Boot REST API backed by PostgreSQL
 - `infra`: local Docker Compose environment
 - `docs`: architecture and API notes
+
+## Architecture documentation
+
+Current implementation, with live data and local prototypes distinguished:
+
+- [시스템 아키텍처 · 실행/배포 · 보안 경계](docs/architecture.md)
+- [실제 DB ERD · 굿즈/찜 데이터 모델](docs/erd.md)
+- [주요 데이터 흐름 · AI 검수 · API 목록](docs/data-flows.md)
 
 ## Local development
 
@@ -22,6 +31,7 @@ cd infra
 cp .env.example .env
 # .env의 KOPIS_API_KEY에 발급받은 서비스 키를 입력하세요.
 # 네이버 관련 검색도 사용하려면 NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET을 입력하세요.
+# 아티스트 사진은 Wikidata/Wikimedia Commons를 사용하므로 별도 키가 필요 없습니다.
 docker compose up --build
 ```
 
@@ -72,6 +82,15 @@ Xcode when prompted, and run `npm run ios:device`. In `mobile/.env`, set
 
 ## Verification
 
+### Web visitor analytics
+
+Vercel project → **Analytics** shows visitors and page views after Web Analytics
+is enabled and the integration is deployed. Tracking runs only on the production
+web origin `https://stage-pin.vercel.app`; local development, preview domains,
+native apps, and admin pages are excluded. Search parameters and URL fragments
+are removed before sending page views. No custom business events are tracked.
+Statistics start with collection, not retroactively before activation.
+
 ```bash
 cd backend && ./gradlew test
 cd mobile && npm run lint && npx tsc --noEmit && npx expo-doctor
@@ -86,6 +105,24 @@ the source of truth for the app's design system.
 
 ## Live concert data
 
+### Artist search and reusable photos
+
+Artist names, multilingual aliases and stable IDs come from MusicBrainz.
+Wikidata links the MusicBrainz ID to an image, and Wikimedia Commons supplies
+the photo URL, author, source page and license. No Spotify account, subscription
+or image API key is needed. Existing Spotify credentials in a local `.env` are
+not used or passed into the API container.
+
+Only supported CC BY / CC BY-SA / CC0 photos or verified Public domain photos
+with the required metadata are displayed. The UI center-crops images to fill
+the square profile, preserves aspect ratio and exposes credits and the crop notice via ⓘ.
+Missing or unverified photos use a default icon; latest official profile photos
+and coverage of every artist are not guaranteed. Search results are cached for
+six hours. See [source and license rules](docs/artist-profile-sources.md), including
+the separate MusicBrainz hosted-API terms to review before commercial operation.
+
+### Performance data
+
 The API reads the next 31 days of Korean popular-music performances from the
 official KOPIS Open API (`shcate=CCCD`). It combines performance details with
 facility coordinates, caches up to 12 results for 30 minutes, and falls back to
@@ -99,11 +136,13 @@ are stored separately as StagePin-verified ticket openings. Set
 artist, agency, or organizer notice. The public mobile feed reads upcoming
 verified entries from `GET /api/v1/ticket-openings`; ticket-vendor pages are not
 scraped or copied.
-Poster images are intentionally not imported until their reuse terms are
-confirmed.
+KOPIS response poster URLs are currently exposed by the API. This implementation
+does not itself establish reuse rights; review source-specific display terms separately.
 
-Artist search first shows a KOPIS-backed suggestion. Selecting it loads every
-matching KOPIS performance record and plots the distinct venues on the map.
+Artist suggestions use the external artist catalog described above. Selecting an
+artist opens a separate page with matching KOPIS records and venue locations.
+Performance search is limited to the first KOPIS page and up to 30 returned records,
+not every historical performance.
 Historical list results only include a region, so those pins use approximate
 regional coordinates until a venue-detail lookup can supply exact coordinates.
 

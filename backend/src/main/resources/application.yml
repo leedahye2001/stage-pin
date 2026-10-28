@@ -1,4 +1,13 @@
 spring:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:not-configured}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o-mini}
+          temperature: 0
+    retry:
+      max-attempts: 1
   application:
     name: stage-pin-api
   datasource:

@@ -1,0 +1,457 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { claimPracticeSeats, createPracticeSeats, normalizePracticeCode, practiceQueue, secondsRemaining, type PracticeSeat } from '@/lib/ticketing-practice';
+import { colors as baseColors, radius } from '@/theme/tokens';
+
+type Step = 'ready' | 'countdown' | 'queue' | 'captcha' | 'seats' | 'discount' | 'delivery' | 'confirm' | 'success' | 'expired';
+type Vendor = 'YES24' | 'NOL';
+const areas = ['FLOOR A', 'FLOOR B', 'FLOOR C', 'FLOOR D', '1층 1구역', '1층 2구역'];
+const codes = ['STAGE7', 'PIN428', 'LIVE26', 'DOME52'];
+
+export default function TicketingPracticeScreen() {
+  const [vendor, setVendor] = useState<Vendor>('YES24');
+  const styles = useMemo(() => createStyles(vendor), [vendor]);
+  const accent = vendor === 'YES24' ? '#EC7D2C' : '#4154FF';
+  const colors = { ...baseColors, primary: accent };
+  const wide = useWindowDimensions().width >= 760;
+  const [step, setStep] = useState<Step>('ready');
+  const [date, setDate] = useState('2026.12.05 (토) 18:00');
+  const [countdown, setCountdown] = useState(3);
+  const [deadline, setDeadline] = useState(0);
+  const [now, setNow] = useState(0);
+  const [started, setStarted] = useState(0);
+  const [queueStarted, setQueueStarted] = useState(0);
+  const [initialRank, setInitialRank] = useState(32000);
+  const [finished, setFinished] = useState(0);
+  const [code, setCode] = useState('STAGE7');
+  const [answer, setAnswer] = useState('');
+  const [area, setArea] = useState(areas[0]);
+  const [inventory, setInventory] = useState<Record<string, PracticeSeat[]>>({});
+  const seats = inventory[area] ?? [];
+  const [selected, setSelected] = useState<PracticeSeat | null>(null);
+  const [mistakes, setMistakes] = useState(0);
+  const [message, setMessage] = useState('');
+  const [discount, setDiscount] = useState(false);
+  const [delivery, setDelivery] = useState('현장수령');
+  const [payment, setPayment] = useState('신용카드');
+
+  useEffect(() => {
+    if (step !== 'countdown') return;
+    const timer = setTimeout(() => {
+      if (countdown > 1) setCountdown(countdown - 1);
+      else {
+        const time = Date.now();
+        setQueueStarted(time); setNow(time); setStep('queue');
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [step, countdown]);
+
+  useEffect(() => {
+    if (step !== 'queue') return;
+    const timer = setInterval(() => {
+      const time = Date.now();
+      setNow(time);
+      if (practiceQueue(queueStarted, time, initialRank).rank === 0) {
+        setStarted(time); setDeadline(time + 120000); setStep('captcha');
+      }
+    }, 200);
+    return () => clearInterval(timer);
+  }, [step, queueStarted, initialRank]);
+
+  useEffect(() => {
+    if (!['captcha', 'seats', 'discount', 'delivery', 'confirm'].includes(step)) return;
+    const timer = setInterval(() => {
+      const time = Date.now();
+      setNow(time);
+      if (secondsRemaining(deadline, time) === 0) setStep('expired');
+    }, 200);
+    return () => clearInterval(timer);
+  }, [deadline, step]);
+
+  useEffect(() => {
+    if (step !== 'seats') return;
+    const timer = setInterval(() => setInventory((current) => Object.fromEntries(
+      Object.entries(current).map(([name, availableSeats]) => [name,
+        claimPracticeSeats(availableSeats, name === area ? selected?.id : undefined)]),
+    )), 1500);
+    return () => clearInterval(timer);
+  }, [step, selected, area]);
+
+  const start = () => {
+    setCountdown(3); setCode(codes[Math.floor(Math.random() * codes.length)]);
+    setAnswer(''); setMessage(''); setMistakes(0); setSelected(null);
+    setDiscount(false); setDelivery('현장수령'); setPayment('신용카드');
+    setInitialRank(24000 + Math.floor(Math.random() * 32001));
+    setArea(areas[0]); setInventory(Object.fromEntries(areas.map((name) => [name, createPracticeSeats()]))); setStep('countdown');
+  };
+  const verify = () => {
+    if (Date.now() >= deadline) { setStep('expired'); return; }
+    if (normalizePracticeCode(answer) !== code) {
+      setMistakes((value) => value + 1); setMessage('문자를 다시 확인해 주세요.'); return;
+    }
+    setMessage(''); setStep('seats');
+  };
+  const confirm = () => {
+    if (Date.now() >= deadline) { setStep('expired'); return; }
+    if (!selected) return;
+    setMessage(''); setStep('discount');
+  };
+  const finish = () => {
+    const time = Date.now();
+    if (time >= deadline) { setStep('expired'); return; }
+    setFinished(time); setStep('success');
+  };
+  const remaining = secondsRemaining(deadline, now);
+  const active = ['captcha', 'seats', 'discount', 'delivery', 'confirm'].includes(step);
+  const queue = practiceQueue(queueStarted, now, initialRank);
+  const stageIndex = step === 'ready' || step === 'countdown' || step === 'queue' ? 0
+    : step === 'captcha' || step === 'seats' ? 1 : step === 'discount' ? 2 : step === 'delivery' ? 3 : 4;
+  const stageNames = vendor === 'YES24'
+    ? ['관람일/회차', '좌석선택', '할인/쿠폰', '수령방법', '결제방법']
+    : ['날짜/회차', '등급/좌석', '가격/할인', '배송선택', '결제하기'];
+  const next = (target: Step) => Date.now() >= deadline ? setStep('expired') : setStep(target);
+  const price = discount ? '143,000' : '154,000';
+
+  return (
+    <SafeAreaView edges={['bottom']} style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.topline}>
+          <Text style={styles.providerName}>{vendor === 'YES24' ? 'YES24 TICKET' : 'NOL 티켓'}<Text style={styles.providerPractice}> 모의 예매</Text></Text>
+          <Text style={styles.practiceBadge}>STAGEPIN 연습</Text>
+        </View>
+        <View style={styles.platforms}>
+          {(['YES24', 'NOL'] as Vendor[]).map((item) => <Pressable key={item} disabled={active || step === 'countdown' || step === 'queue'}
+            accessibilityRole="button" accessibilityState={{ selected: vendor === item }}
+            onPress={() => { setVendor(item); setStep('ready'); }}
+            style={vendor === item ? styles.platformSelected : styles.platformSoon}>
+            <Text style={vendor === item ? styles.platformLabel : styles.muted}>{item === 'YES24' ? 'YES24 연습' : 'NOL 연습'}</Text>
+          </Pressable>)}
+        </View>
+        <View style={styles.steps}>{stageNames.map((name, index) => <View key={name}
+          style={[styles.step, index === stageIndex && styles.stepActive]}>
+          <Text style={[styles.stepNumber, index === stageIndex && styles.stepActiveText]}>{String(index + 1).padStart(2, '0')}</Text>
+          <Text style={[styles.stepName, index === stageIndex && styles.stepActiveText]}>{name}</Text>
+        </View>)}</View>
+        <View style={styles.notice}>
+          <Ionicons name="information-circle-outline" color={colors.primary} size={18} />
+          <Text style={styles.noticeText}>독립적인 모의 연습입니다. 실제 예매·결제는 진행되지 않으며 좌석 배치와 절차는 단순화했습니다.</Text>
+        </View>
+        {active ? (
+          <View style={styles.timerRow}>
+            <Text style={styles.timerLabel}>{step === 'captcha' ? '안심예매 · 보안문자 확인' : `STEP ${stageIndex + 1}. ${stageNames[stageIndex]}`}</Text>
+            <Text accessibilityLiveRegion="none" style={[styles.timer, remaining < 20 && styles.timerUrgent]}>
+              {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}
+            </Text>
+          </View>
+        ) : null}
+
+        {step === 'ready' ? (
+          <>
+            <View style={styles.concert}>
+              <View style={styles.poster}>
+                <Ionicons name="ticket" size={38} color={colors.white} />
+                <Text style={styles.posterTitle}>FIRST{`\n`}ROW{`\n`}CLUB ✦</Text>
+                <Text style={styles.posterCaption}>STAGEPIN PRACTICE CONCERT</Text>
+              </View>
+              <View style={styles.concertCopy}>
+                <Text style={styles.concertTitle}>FIRST ROW CLUB</Text>
+                <Text style={styles.muted}>가상 연습 공연</Text>
+                <Text style={styles.venue}>KSPO DOME</Text>
+                <Text style={styles.muted}>올림픽공원 체조경기장</Text>
+                <Text style={styles.price}>1인 1매 · 모의 좌석 선택</Text>
+              </View>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>관람일 선택</Text>
+              <Text style={styles.calendarTitle}>〈　2026. 12　〉</Text>
+              <View style={styles.calendarWeek}>{['일', '월', '화', '수', '목', '금', '토'].map((day) => <Text key={day} style={styles.calendarDay}>{day}</Text>)}</View>
+              {Array.from({ length: 5 }, (_, week) => <View key={week} style={styles.calendarWeek}>
+                {Array.from({ length: 7 }, (_, column) => {
+                  const day = week * 7 + column - 1;
+                  const selectable = day === 5 || day === 6;
+                  const selectedDate = date.startsWith(`2026.12.${String(day).padStart(2, '0')}`);
+                  return <View key={column} style={styles.calendarCell}>
+                    {selectable ? <Pressable accessibilityRole="button" accessibilityLabel={`12월 ${day}일 선택`}
+                      onPress={() => setDate(day === 5 ? '2026.12.05 (토) 18:00' : '2026.12.06 (일) 17:00')}
+                      style={[styles.calendarSelectable, !selectedDate && styles.calendarUnselected]}>
+                      <Text style={[styles.calendarSelectedText, !selectedDate && styles.calendarUnselectedText]}>{day}</Text>
+                    </Pressable> : <Text style={styles.calendarDay}>{day > 0 && day <= 31 ? day : ''}</Text>}
+                  </View>;
+                })}
+              </View>)}
+              <Text style={styles.cardTitle}>회차 선택</Text>
+              {['2026.12.05 (토) 18:00', '2026.12.06 (일) 17:00'].map((item) => (
+                <Pressable key={item} accessibilityRole="radio" accessibilityState={{ checked: date === item }}
+                  onPress={() => setDate(item)} style={[styles.date, date === item && styles.dateSelected]}>
+                  <Text style={styles.dateText}>{date === item ? '●' : '○'}  {item}</Text>
+                </Pressable>
+              ))}
+              <View style={styles.rushBanner}>
+                <Text style={styles.rushTitle}>오픈런 · 가상 접속자 100,000명</Text>
+                <Text style={styles.hint}>대기열 약 15~35초 → 입장 후 2분 제한 · 좌석 선점 경쟁</Text>
+                <Text style={styles.hint}>시간을 압축한 시뮬레이션이며 실제 접속자·서버 부하가 아닙니다.</Text>
+              </View>
+            </View>
+            <Action accent={accent} label="연습 예매 시작" onPress={start} />
+          </>
+        ) : step === 'countdown' ? (
+          <View style={styles.result}>
+            <Text style={styles.cardTitle}>곧 예매가 열려요</Text>
+            <Text style={styles.countdown}>{countdown}</Text>
+            <Text style={styles.muted}>심호흡 한 번, 준비됐죠?</Text>
+          </View>
+        ) : step === 'queue' ? (
+          <View style={styles.queueCard}>
+            <Ionicons name="people-outline" size={42} color={accent} />
+            <Text style={styles.resultTitle}>예매 대기 중입니다</Text>
+            <Text style={styles.muted}>접속자가 많아 순서대로 입장하고 있습니다.</Text>
+            <Text style={styles.queueCaption}>내 앞 대기 인원</Text>
+            <Text accessibilityLiveRegion="none" style={styles.queueRank}>{queue.rank.toLocaleString('ko-KR')}<Text style={styles.recordUnit}>명</Text></Text>
+            <View style={styles.queueTrack}><View style={[styles.queueFill, { width: `${queue.progress * 100}%` }]} /></View>
+            <View style={styles.queueStats}>
+              <Text style={styles.muted}>누적 가상 접속 {queue.visitors.toLocaleString('ko-KR')}명</Text>
+              <Text style={styles.muted}>입장까지 약 {queue.secondsLeft}초</Text>
+            </View>
+            <Text style={styles.hint}>신규 접속자는 내 뒤에 합류합니다. 순서가 되면 자동으로 입장합니다.</Text>
+            <Text style={styles.hint}>연습용 압축 시간 · 초당 1,600명 가상 입장 · 실제 예매처의 수치가 아닙니다.</Text>
+            <Pressable accessibilityRole="button" onPress={() => setStep('ready')} style={styles.textButton}><Text style={styles.link}>연습 취소</Text></Pressable>
+          </View>
+        ) : step === 'captcha' ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>보안문자를 입력해 주세요</Text>
+            <Text style={styles.hint}>대소문자는 구분하지 않아요. 연습용 문자입니다.</Text>
+            <View style={styles.codeCard}><Text selectable={false} style={styles.code}>{code}</Text></View>
+            <TextInput accessibilityLabel="연습용 보안문자" autoCapitalize="characters" autoCorrect={false} maxLength={12}
+              value={answer} onChangeText={setAnswer} onSubmitEditing={verify} placeholder="위의 6자리 문자 입력"
+              placeholderTextColor={colors.textMuted} style={styles.input} />
+            {message ? <Text accessibilityRole="alert" style={styles.error}>{message}</Text> : null}
+            <Action accent={accent} label="입력 완료 · 좌석 선택" onPress={verify} />
+          </View>
+        ) : step === 'seats' ? (
+          <View style={[styles.bookingLayout, wide && styles.bookingLayoutWide]}>
+          <View style={styles.seatCanvas}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>KSPO DOME · 구역 선택</Text>
+              <View style={styles.arena}>
+                <View style={styles.stage}><Text style={styles.stageText}>STAGE</Text></View>
+                <View style={styles.areaGrid}>{areas.map((item) => (
+                  <Pressable accessibilityRole="button" accessibilityState={{ selected: area === item }}
+                    key={item} onPress={() => { setArea(item); setSelected(null); }}
+                    style={[styles.area, area === item && styles.areaSelected]}>
+                    <Text style={[styles.areaText, area === item && styles.areaTextSelected]}>{item}</Text>
+                  </Pressable>
+                ))}</View>
+              </View>
+              <Text style={styles.hint}>연습용 배치입니다. 실제 공연의 무대·구역·좌석 수와 다릅니다.</Text>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.seatHeading}><Text style={styles.cardTitle}>{area}</Text>
+                <Text style={styles.available}>{seats.filter((seat) => !seat.taken).length}석 남음</Text></View>
+              <Text style={styles.hint}>무대 방향 ↑ · 가상 경쟁자가 1.5초마다 좌석을 선점합니다. 선택한 좌석은 임시 확보됩니다.</Text>
+              <View style={styles.legend}><Text style={styles.legendText}>🟪 선택 가능</Text><Text style={styles.legendText}>⬛ 선택한 좌석</Text><Text style={styles.legendText}>▫ 판매 완료</Text></View>
+              {Array.from({ length: 6 }, (_, row) => (
+                <View key={row} style={styles.seatRow}>
+                  <Text style={styles.rowLabel}>{row + 1}열</Text>
+                  {seats.slice(row * 8, row * 8 + 8).map((seat) => (
+                    <Pressable key={seat.id} disabled={seat.taken} accessibilityRole="button"
+                      accessibilityLabel={`${seat.row}열 ${seat.number}번 ${seat.taken ? '판매 완료' : '선택 가능'}`}
+                      accessibilityState={{ disabled: seat.taken, selected: selected?.id === seat.id }}
+                      onPress={() => setSelected(selected?.id === seat.id ? null : seat)}
+                      style={[styles.seat, seat.taken && styles.seatTaken, selected?.id === seat.id && styles.seatSelected]}>
+                      <Text style={styles.seatNumber}>{seat.taken ? '' : seat.number}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ))}
+              <Text style={styles.selection}>{selected ? `${area} · ${selected.row}열 ${selected.number}번` : '원하는 좌석 1개를 선택해 주세요'}</Text>
+              {!wide ? <Action accent={accent} disabled={!selected} label="좌석 선택 완료" onPress={confirm} /> : null}
+            </View>
+          </View>
+          <View style={[styles.bookingAside, !wide && styles.bookingAsideMobile]}>
+            <Text style={styles.asideTitle}>좌석등급 / 잔여석</Text>
+            <View style={styles.gradeRow}><View style={styles.gradeDot} /><Text style={styles.gradeLabel}>VIP석</Text><Text style={styles.gradePrice}>154,000원</Text></View>
+            <Text style={styles.gradeRemaining}>{area} · {seats.filter((seat) => !seat.taken).length}석</Text>
+            <Text style={styles.asideTitle}>선택한 좌석</Text>
+            <Text style={styles.muted}>총 {selected ? '1' : '0'}석 선택</Text>
+            <View style={styles.selectedBox}><Text style={styles.selectedBoxText}>{selected ? `VIP석 ${area}\n${selected.row}열 ${selected.number}번` : '좌석을 선택해 주세요.'}</Text></View>
+            <Text style={styles.asideTitle}>MY 예매정보</Text>
+            <Text style={styles.muted}>FIRST ROW CLUB</Text><Text style={styles.hint}>{date}</Text><Text style={styles.hint}>KSPO DOME</Text>
+            <View style={styles.totalRow}><Text style={styles.gradeLabel}>총 결제금액</Text><Text style={styles.totalPrice}>{selected ? '154,000' : '0'}원</Text></View>
+            {wide ? <Action accent={accent} disabled={!selected} label="좌석 선택 완료" onPress={confirm} /> : null}
+          </View>
+          </View>
+        ) : step === 'discount' ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>가격 / 할인 선택</Text>
+            <Text style={styles.muted}>VIP석 · {area} · {selected?.row}열 {selected?.number}번</Text>
+            {[false, true].map((item) => <Pressable key={String(item)} accessibilityRole="radio" accessibilityState={{ checked: discount === item }}
+              onPress={() => setDiscount(item)} style={[styles.date, discount === item && styles.dateSelected]}>
+              <Text style={styles.dateText}>{discount === item ? '●' : '○'} {item ? '팬클럽 할인 (연습)' : '일반'}　{item ? '143,000' : '154,000'}원 · 1매</Text>
+            </Pressable>)}
+            <Action accent={accent} label="다음 단계 · 수령방법" onPress={() => next('delivery')} />
+          </View>
+        ) : step === 'delivery' ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>티켓 수령방법</Text>
+            {['현장수령', '모바일 티켓'].map((item) => <Pressable key={item} accessibilityRole="radio" accessibilityState={{ checked: delivery === item }}
+              onPress={() => setDelivery(item)} style={[styles.date, delivery === item && styles.dateSelected]}>
+              <Text style={styles.dateText}>{delivery === item ? '●' : '○'} {item}</Text>
+            </Pressable>)}
+            <Text style={styles.hint}>모의 연습이므로 이름·전화번호·배송지를 입력하지 않습니다.</Text>
+            <Action accent={accent} label="다음 단계 · 결제방법" onPress={() => next('confirm')} />
+          </View>
+        ) : step === 'confirm' ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>결제방법 선택</Text>
+            <Text style={styles.concertTitle}>FIRST ROW CLUB</Text>
+            <Text style={styles.muted}>{date}</Text>
+            <Text style={styles.muted}>KSPO DOME · {area}</Text>
+            <Text style={styles.selection}>{selected?.row}열 {selected?.number}번 · 1매</Text>
+            <Text style={styles.muted}>수령방법: {delivery} · 모의 금액: {price}원</Text>
+            <View style={styles.platforms}>{['신용카드', '간편결제'].map((item) => <Pressable key={item}
+              onPress={() => setPayment(item)} style={[styles.date, payment === item && styles.dateSelected]}>
+              <Text style={styles.dateText}>{payment === item ? '●' : '○'} {item}</Text>
+            </Pressable>)}</View>
+            <Text style={styles.hint}>결제 정보는 입력하지 않아요. 아래 버튼으로 연습이 완료됩니다.</Text>
+            <Action accent={accent} label="모의 예매 완료" onPress={finish} />
+            <Pressable onPress={() => setStep('seats')} style={styles.textButton}><Text style={styles.link}>좌석 다시 고르기</Text></Pressable>
+          </View>
+        ) : (
+          <View style={styles.result}>
+            <View style={styles.resultIcon}><Ionicons name={step === 'success' ? 'ticket' : 'timer-outline'} color={colors.primary} size={42} /></View>
+            <Text style={styles.resultTitle}>{step === 'success' ? '내 자리 잡았다! ✦' : '아쉽지만, 시간 종료!'}</Text>
+            {step === 'success' ? <>
+              <Text style={styles.selection}>{area} · {selected?.row}열 {selected?.number}번</Text>
+              <Text style={styles.record}>{((finished - started) / 1000).toFixed(1)}<Text style={styles.recordUnit}>초</Text></Text>
+              <Text style={styles.muted}>전체 소요 시간 · 문자 입력 실수 {mistakes}회</Text>
+            </> : <Text style={styles.muted}>보안문자부터 다시 도전해 보세요.</Text>}
+            <Text style={styles.hint}>연습 결과이며 실제 티켓이 발급되지 않습니다.</Text>
+            <Action accent={accent} label="한 번 더 연습하기" onPress={start} />
+            <Pressable onPress={() => setStep('ready')} style={styles.textButton}><Text style={styles.link}>회차 다시 선택</Text></Pressable>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function Action({ label, onPress, disabled = false, accent }: { label: string; onPress: () => void; disabled?: boolean; accent: string }) {
+  const styles = createStyles(accent === '#EC7D2C' ? 'YES24' : 'NOL');
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[styles.action, disabled && styles.disabled]}>
+    <Text style={styles.actionText}>{label}</Text><Ionicons name="arrow-forward" color={baseColors.white} size={17} />
+  </Pressable>;
+}
+
+function createStyles(vendor: Vendor) {
+const colors = { ...baseColors, primary: vendor === 'YES24' ? '#EC7D2C' : '#4154FF', primarySoft: vendor === 'YES24' ? '#FFF4E9' : '#EEF0FF' };
+return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#F0F0F0' },
+  content: { padding: 12, paddingBottom: 40, gap: 12, maxWidth: 1040, width: '100%', alignSelf: 'center' },
+  topline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  eyebrow: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
+  practiceBadge: { color: colors.primary, backgroundColor: colors.primarySoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, fontSize: 10, fontWeight: '800' },
+  title: { fontSize: 27, fontWeight: '900', color: colors.text, letterSpacing: -1 },
+  subtitle: { color: colors.textMuted, fontSize: 13, marginTop: -8 },
+  platforms: { flexDirection: 'row', gap: 8 },
+  platformSelected: { backgroundColor: colors.primarySoft, borderColor: colors.primary, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 3 },
+  platformLabel: { color: colors.primary, fontSize: 12, fontWeight: '900' },
+  platformSoon: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CCCCCC', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 3 },
+  muted: { color: colors.textMuted, fontSize: 12, lineHeight: 19 },
+  notice: { flexDirection: 'row', gap: 7, backgroundColor: colors.primarySoft, padding: 12, borderRadius: radius.md },
+  noticeText: { flex: 1, fontSize: 10, color: colors.primary, lineHeight: 16 },
+  concert: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 2, borderWidth: 1, borderColor: '#CDCDCD', overflow: 'hidden' },
+  poster: { backgroundColor: '#293E3A', padding: 16, width: '42%', gap: 16 },
+  posterTitle: { color: '#DDFB92', fontSize: 26, lineHeight: 28, fontWeight: '900' },
+  posterCaption: { color: '#A0B7AE', fontSize: 7, fontWeight: '800', letterSpacing: 1 },
+  concertCopy: { flex: 1, justifyContent: 'center', padding: 14, gap: 3 },
+  concertTitle: { color: colors.text, fontSize: 18, fontWeight: '900' },
+  venue: { color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 12 },
+  price: { color: colors.primary, fontWeight: '700', fontSize: 10, marginTop: 12 },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 2, borderWidth: 1, borderColor: '#CDCDCD', padding: 14, gap: 12 },
+  cardTitle: { color: vendor === 'YES24' ? '#536F89' : '#25366E', fontSize: 14, fontWeight: '900', paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#DDDDDD' },
+  date: { padding: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 2 },
+  dateSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  dateText: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  hint: { color: colors.textMuted, fontSize: 10, lineHeight: 17 },
+  action: { backgroundColor: colors.primary, borderRadius: 3, minHeight: 48, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%' },
+  actionText: { color: colors.white, fontWeight: '900', fontSize: 14 },
+  disabled: { opacity: 0.4 },
+  result: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 24, alignItems: 'center', gap: 16, marginTop: 12 },
+  countdown: { color: colors.primary, fontWeight: '900', fontSize: 96, paddingVertical: 24 },
+  timerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
+  timerLabel: { fontWeight: '800', color: colors.primary, fontSize: 12 },
+  timer: { fontVariant: ['tabular-nums'], color: colors.text, fontSize: 26, fontWeight: '900' },
+  timerUrgent: { color: '#D94D68' },
+  codeCard: { backgroundColor: '#EBF1E7', borderRadius: radius.md, padding: 24, alignItems: 'center', borderWidth: 2, borderStyle: 'dashed', borderColor: '#C0D2B5' },
+  code: { color: '#364A32', letterSpacing: 8, fontSize: 30, fontWeight: '900', transform: [{ rotate: '-3deg' }] },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 14, fontSize: 16, color: colors.text },
+  error: { color: '#D94D68', fontSize: 12 },
+  arena: { backgroundColor: '#F7F7F7', borderRadius: 3, borderWidth: 1, borderColor: '#D0D0D0', padding: 22, gap: 15 },
+  stage: { backgroundColor: '#302B41', padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 32 },
+  stageText: { color: colors.white, letterSpacing: 4, fontSize: 10, fontWeight: '900' },
+  areaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  area: { width: '45%', minHeight: 42, backgroundColor: colors.surface, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
+  areaSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  areaText: { color: colors.textMuted, fontSize: 11, fontWeight: '900' },
+  areaTextSelected: { color: colors.white },
+  seatHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  available: { color: colors.primary, fontWeight: '800', fontSize: 12 },
+  legend: { flexDirection: 'row', gap: 9, flexWrap: 'wrap' },
+  legendText: { color: colors.textMuted, fontSize: 9 },
+  seatRow: { flexDirection: 'row', gap: 4, alignItems: 'center' },
+  rowLabel: { color: colors.textMuted, fontSize: 9, width: 20 },
+  seat: { flex: 1, minHeight: 32, borderRadius: 5, backgroundColor: '#9476F4', alignItems: 'center', justifyContent: 'center' },
+  seatTaken: { backgroundColor: '#E9E6F0' },
+  seatSelected: { backgroundColor: '#302B41', borderWidth: 2, borderColor: '#C6F28B' },
+  seatNumber: { color: colors.white, fontSize: 9, fontWeight: '700' },
+  selection: { color: colors.primary, fontWeight: '800', fontSize: 13, paddingVertical: 8 },
+  textButton: { alignSelf: 'center', padding: 10 },
+  link: { color: colors.primary, fontSize: 12, fontWeight: '700' },
+  resultIcon: { backgroundColor: colors.primarySoft, borderRadius: 32, height: 76, width: 76, alignItems: 'center', justifyContent: 'center' },
+  resultTitle: { fontSize: 23, fontWeight: '900', color: colors.text },
+  record: { color: colors.primary, fontSize: 56, fontWeight: '900' },
+  recordUnit: { fontSize: 18 },
+  providerName: { color: vendor === 'YES24' ? '#222222' : '#4154FF', fontSize: 22, fontWeight: '900', letterSpacing: -0.6 },
+  providerPractice: { color: '#777777', fontSize: 12, fontWeight: '500' },
+  steps: { flexDirection: 'row', borderWidth: 1, borderColor: '#C7C7C7', backgroundColor: '#E8E8E8' },
+  step: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRightWidth: 1, borderRightColor: '#D0D0D0', gap: 4 },
+  stepActive: { backgroundColor: colors.primary },
+  stepNumber: { color: '#9A9A9A', fontSize: 16, fontWeight: '900' },
+  stepName: { color: '#777777', fontSize: 9, fontWeight: '800' },
+  stepActiveText: { color: '#FFFFFF' },
+  bookingLayout: { gap: 12 },
+  bookingLayoutWide: { flexDirection: 'row', alignItems: 'flex-start' },
+  seatCanvas: { flex: 1, gap: 12 },
+  bookingAside: { width: 240, backgroundColor: '#FAFAFA', borderWidth: 1, borderColor: '#C8C8C8', padding: 14, gap: 12 },
+  bookingAsideMobile: { width: '100%' },
+  asideTitle: { backgroundColor: '#E6E9EC', fontSize: 12, fontWeight: '900', color: '#444444', padding: 9 },
+  gradeRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  gradeDot: { width: 10, height: 10, backgroundColor: '#9476F4' },
+  gradeLabel: { color: '#444444', fontSize: 11, fontWeight: '800' },
+  gradePrice: { color: '#555555', fontSize: 11, marginLeft: 'auto' },
+  gradeRemaining: { color: colors.primary, fontSize: 11, paddingLeft: 17 },
+  selectedBox: { minHeight: 74, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#DDDDDD', padding: 10, justifyContent: 'center' },
+  selectedBoxText: { color: '#444444', fontSize: 12, lineHeight: 22 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 1, borderTopColor: '#CCCCCC' },
+  totalPrice: { color: colors.primary, fontSize: 17, fontWeight: '900' },
+  calendarTitle: { fontWeight: '800', color: '#333333', textAlign: 'center', padding: 10, backgroundColor: '#F5F5F5' },
+  calendarWeek: { flexDirection: 'row', alignItems: 'center' },
+  calendarDay: { color: '#777777', textAlign: 'center', flex: 1, fontSize: 12 },
+  calendarCell: { flex: 1, minHeight: 36, justifyContent: 'center' },
+  calendarSelectable: { backgroundColor: colors.primary, paddingVertical: 9 },
+  calendarSelectedText: { color: '#FFFFFF', textAlign: 'center', fontSize: 12, fontWeight: '800' },
+  calendarUnselected: { backgroundColor: colors.primarySoft },
+  calendarUnselectedText: { color: colors.primary },
+  rushBanner: { backgroundColor: colors.primarySoft, padding: 12, gap: 5, borderLeftWidth: 3, borderLeftColor: colors.primary },
+  rushTitle: { color: colors.primary, fontSize: 14, fontWeight: '900' },
+  queueCard: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CCCCCC', padding: 24, gap: 18, alignItems: 'center', marginTop: 20 },
+  queueCaption: { color: '#555555', fontSize: 13, marginTop: 14 },
+  queueRank: { color: colors.primary, fontSize: 52, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  queueTrack: { height: 10, width: '100%', backgroundColor: '#EEEEEE', borderRadius: 5, overflow: 'hidden' },
+  queueFill: { height: '100%', backgroundColor: colors.primary },
+  queueStats: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%', gap: 10 },
+});
+}

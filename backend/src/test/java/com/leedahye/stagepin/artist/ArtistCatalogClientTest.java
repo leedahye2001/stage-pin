@@ -12,6 +12,11 @@ class ArtistCatalogClientTest {
     private final ArtistCatalogClient client = new ArtistCatalogClient(new ObjectMapper());
 
     @Test
+    void blankSearchDoesNotCallExternalServices() {
+        assertThat(client.search("  ")).isEmpty();
+    }
+
+    @Test
     void readsMultilingualAliasesFromMusicBrainz() {
         var artists = client.parseMusicBrainz(json("""
                 {"artists":[{
@@ -25,6 +30,23 @@ class ArtistCatalogClientTest {
         assertThat(artists).hasSize(1);
         assertThat(artists.getFirst().matches("데이식스")).isTrue();
         assertThat(artists.getFirst().matches("day6")).isTrue();
+    }
+
+    @Test
+    void commonsImagesPreserveFavoritesAndMultilingualAliases() {
+        var candidates = client.parseMusicBrainz(json("""
+                {"artists":[{"id":"existing-id","name":"Young K","country":"KR",
+                "aliases":[{"name":"영케이"},{"name":"youngk"}]}]}
+                """));
+        var image = new ArtistCatalogClient.CommonsImage("https://upload.wikimedia.org/example.jpg",
+                "https://commons.wikimedia.org/wiki/File:Example.jpg", "Author", "CC BY-SA 4.0");
+        var result = candidates.getFirst().toResponse(image, "영케이");
+        assertThat(result.id()).isEqualTo("existing-id");
+        assertThat(result.aliases()).contains("영케이", "youngk");
+        assertThat(result.searchName()).isEqualTo("Young K");
+        assertThat(result.imageLicense()).isEqualTo("CC BY-SA 4.0");
+        assertThat(result.imageAttribution()).isEqualTo("Author");
+        assertThat(candidates.getFirst().toResponse(null, "youngk").imageUrl()).isNull();
     }
 
     @Test
@@ -62,7 +84,8 @@ class ArtistCatalogClientTest {
                     "descriptionurl":"https://commons.wikimedia.org/wiki/File:DAY6_in_taiwan.jpg",
                     "extmetadata":{
                       "Artist":{"value":"<b>Example Author</b>"},
-                      "LicenseShortName":{"value":"CC BY-SA 4.0"}
+                      "LicenseShortName":{"value":"CC BY-SA 4.0"},
+                      "LicenseUrl":{"value":"https://creativecommons.org/licenses/by-sa/4.0"}
                     }
                   }]
                 }}}}
@@ -74,5 +97,57 @@ class ArtistCatalogClientTest {
 
     private byte[] json(String value) {
         return value.getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void acceptsVerifiedPublicDomainPhotosWithoutInventingACreativeCommonsLicense() {
+        String body = """
+                {"query":{"pages":{"1":{"title":"File:BTS White House.jpg","imageinfo":[{
+                  "thumburl":"https://thumb.wikimedia.org/bts.jpg",
+                  "descriptionurl":"https://commons.wikimedia.org/wiki/File:BTS_White_House.jpg",
+                  "extmetadata":{
+                    "Artist":{"value":"The White House"},
+                    "LicenseShortName":{"value":"Public domain"},
+                    "License":{"value":"pd"},"Copyrighted":{"value":"%s"}
+                  }
+                }]}}}}
+                """;
+        var images = client.parseCommonsImages(json(body.formatted("False")));
+        assertThat(images.get("BTS White House.jpg").license()).isEqualTo("Public domain");
+        assertThat(images.get("BTS White House.jpg").attribution()).isEqualTo("The White House");
+        assertThat(client.parseCommonsImages(json(body.formatted("True")))).isEmpty();
+        assertThat(client.parseCommonsImages(json(body.formatted("")))).isEmpty();
+        assertThat(client.parseCommonsImages(json(body.formatted("False").replace("\"pd\"", "\"unknown\"")))).isEmpty();
+    }
+
+    @Test
+    void excludesUnknownNoncommercialAndIncompleteLicenses() {
+        for (String license : new String[] {"", "All rights reserved", "CC BY-NC 4.0", "CC BY-SA 4.0"}) {
+            var images = client.parseCommonsImages(json("""
+                    {"query":{"pages":{"1":{"title":"File:Photo.jpg","imageinfo":[{
+                      "thumburl":"https://upload.wikimedia.org/photo.jpg",
+                      "descriptionurl":"https://commons.wikimedia.org/wiki/File:Photo.jpg",
+                      "extmetadata":{"Artist":{"value":"Author"},"LicenseShortName":{"value":"%s"}}
+                    }]}}}}
+                    """.formatted(license)));
+            assertThat(images).isEmpty();
+        }
+    }
+
+    @Test
+    void respectsCustomAttributionAndRejectsDeletionCandidates() {
+        String body = """
+                {"query":{"pages":{"1":{"title":"File:Photo.jpg","imageinfo":[{
+                  "thumburl":"https://upload.wikimedia.org/photo.jpg",
+                  "descriptionurl":"https://commons.wikimedia.org/wiki/File:Photo.jpg",
+                  "extmetadata":{
+                    "Artist":{"value":"Author"},"Attribution":{"value":"<b>Full credit &amp; source</b>"},
+                    "LicenseShortName":{"value":"CC BY 4.0"},
+                    "LicenseUrl":{"value":"https://creativecommons.org/licenses/by/4.0/"}%s
+                  }
+                }]}}}}
+                """;
+        assertThat(client.parseCommonsImages(json(body.formatted(""))).get("Photo.jpg").attribution()).isEqualTo("Full credit & source");
+        assertThat(client.parseCommonsImages(json(body.formatted(",\"DeletionReason\":{\"value\":\"Under review\"}")))).isEmpty();
     }
 }

@@ -56,7 +56,7 @@ public class TicketOpeningService {
         return toResponse(repository.save(opening));
     }
 
-    private void verifyAdminKey(String providedAdminKey) {
+    void verifyAdminKey(String providedAdminKey) {
         if (adminKey.isBlank()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Admin API is disabled");
         }

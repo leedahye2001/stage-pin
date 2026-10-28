@@ -4,7 +4,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -17,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getArtists, getConcerts, getNaverSearch } from '@/api/concerts';
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
+import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -70,13 +70,7 @@ export default function ArtistScreen() {
           </View>
         ) : artist ? (
           <View style={styles.profileCard}>
-            {artist.imageUrl ? (
-              <Image accessibilityIgnoresInvertColors source={{ uri: artist.imageUrl }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarFallback}>
-                <Ionicons color={colors.primary} name="musical-notes" size={30} />
-              </View>
-            )}
+            <ArtistPhoto artist={artist} size={76} />
             <View style={styles.profileCopy}>
               <Text style={styles.artistName}>{artist.name}</Text>
               {artist.description ? <Text style={styles.description}>{artist.description}</Text> : null}
@@ -89,7 +83,7 @@ export default function ArtistScreen() {
                   onPress={() => Linking.openURL(artist.imagePageUrl!)}
                   style={styles.credit}
                 >
-                  사진 출처: {artist.imageAttribution || 'Wikimedia Commons'}
+                  사진 출처: {artist.imageAttribution || 'Wikimedia Commons'} · {artist.imageLicense}
                 </Text>
               ) : null}
             </View>

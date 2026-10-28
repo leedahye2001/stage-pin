@@ -16,6 +16,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.util.HtmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +47,7 @@ public class ArtistCatalogClient {
 
     public synchronized List<ArtistSearchResponse> search(String query) {
         String keyword = query.trim();
-        if (keyword.length() < 2) {
+        if (keyword.isEmpty()) {
             return List.of();
         }
         String cacheKey = keyword.toLowerCase(Locale.ROOT);
@@ -74,6 +76,7 @@ public class ArtistCatalogClient {
 
     private List<Candidate> searchMusicBrainz(String query) {
         respectMusicBrainzRateLimit();
+        lastMusicBrainzRequest = Instant.now();
         byte[] body = musicBrainz.get()
                 .uri(uriBuilder -> uriBuilder.path("/ws/2/artist/")
                         .queryParam("query", query)
@@ -82,7 +85,6 @@ public class ArtistCatalogClient {
                         .build())
                 .retrieve()
                 .body(byte[].class);
-        lastMusicBrainzRequest = Instant.now();
         return parseMusicBrainz(body);
     }
 
@@ -203,13 +205,31 @@ public class ArtistCatalogClient {
                 JsonNode info = page.path("imageinfo").path(0);
                 String filename = page.path("title").asText().replaceFirst("^File:", "");
                 String imageUrl = info.path("thumburl").asText(info.path("url").asText());
-                if (!filename.isBlank() && !imageUrl.isBlank()) {
-                    JsonNode metadata = info.path("extmetadata");
+                JsonNode metadata = info.path("extmetadata");
+                String license = metadata.path("LicenseShortName").path("value").asText();
+                String licenseUrl = metadata.path("LicenseUrl").path("value").asText();
+                String author = stripHtml(metadata.path("Attribution").path("value").asText());
+                if (author.isBlank()) {
+                    author = stripHtml(metadata.path("Artist").path("value").asText());
+                    String credit = stripHtml(metadata.path("Credit").path("value").asText());
+                    if (!credit.isBlank() && !credit.equals(author)) author += " · " + credit;
+                }
+                String pageUrl = info.path("descriptionurl").asText();
+                if (!filename.isBlank() && isWikimediaImage(imageUrl)
+                        && pageUrl.startsWith("https://commons.wikimedia.org/wiki/File:")
+                        && (reusableLicense(license, licenseUrl)
+                            || (license.equals("Public domain")
+                                && metadata.path("License").path("value").asText().equals("pd")
+                                && metadata.path("Copyrighted").path("value").asText().equalsIgnoreCase("false")))
+                        && (!stripHtml(metadata.path("Attribution").path("value").asText()).isBlank()
+                            || !stripHtml(metadata.path("Artist").path("value").asText()).isBlank()
+                            || license.equals("CC0"))
+                        && metadata.path("DeletionReason").path("value").asText().isBlank()) {
                     images.put(filename, new CommonsImage(
                             imageUrl,
-                            info.path("descriptionurl").asText(),
-                            stripHtml(metadata.path("Artist").path("value").asText()),
-                            metadata.path("LicenseShortName").path("value").asText()));
+                            pageUrl,
+                            author,
+                            license));
                 }
             });
             return images;
@@ -232,8 +252,12 @@ public class ArtistCatalogClient {
     }
 
     private RestClient client(String baseUrl) {
+        var factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(4));
+        factory.setReadTimeout(Duration.ofSeconds(8));
         return RestClient.builder()
                 .baseUrl(baseUrl)
+                .requestFactory(factory)
                 .defaultHeader("User-Agent", USER_AGENT)
                 .build();
     }
@@ -253,7 +277,20 @@ public class ArtistCatalogClient {
     }
 
     private String stripHtml(String value) {
-        return value.replaceAll("<[^>]+>", "").replace("&amp;", "&").trim();
+        return HtmlUtils.htmlUnescape(value.replaceAll("<[^>]+>", "")).trim();
+    }
+
+    private boolean isWikimediaImage(String url) {
+        return url.startsWith("https://upload.wikimedia.org/") || url.startsWith("https://thumb.wikimedia.org/");
+    }
+
+    private boolean reusableLicense(String license, String url) {
+        String secureUrl = url.replaceFirst("^http://", "https://");
+        if (license.equals("CC0")) return secureUrl.matches("https://creativecommons\\.org/publicdomain/zero/1\\.0/?");
+        if (!license.matches("CC BY(?:-SA)? [234]\\.0")) return false;
+        String slug = license.startsWith("CC BY-SA") ? "by-sa" : "by";
+        String version = license.substring(license.length() - 3);
+        return secureUrl.matches("https://creativecommons\\.org/licenses/" + slug + "/" + version.replace(".", "\\.") + "(?:/(?:deed(?:\\.[a-zA-Z-]+)?)?)?");
     }
 
     record Candidate(String id, String name, String description, List<String> aliases) {
