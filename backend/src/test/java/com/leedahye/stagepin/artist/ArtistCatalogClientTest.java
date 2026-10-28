@@ -62,7 +62,8 @@ class ArtistCatalogClientTest {
                     "descriptionurl":"https://commons.wikimedia.org/wiki/File:DAY6_in_taiwan.jpg",
                     "extmetadata":{
                       "Artist":{"value":"<b>Example Author</b>"},
-                      "LicenseShortName":{"value":"CC BY-SA 4.0"}
+                      "LicenseShortName":{"value":"CC BY-SA 4.0"},
+                      "LicenseUrl":{"value":"https://creativecommons.org/licenses/by-sa/4.0"}
                     }
                   }]
                 }}}}
@@ -74,5 +75,36 @@ class ArtistCatalogClientTest {
 
     private byte[] json(String value) {
         return value.getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void excludesUnknownNoncommercialAndIncompleteLicenses() {
+        for (String license : new String[] {"", "All rights reserved", "CC BY-NC 4.0", "CC BY-SA 4.0"}) {
+            var images = client.parseCommonsImages(json("""
+                    {"query":{"pages":{"1":{"title":"File:Photo.jpg","imageinfo":[{
+                      "thumburl":"https://upload.wikimedia.org/photo.jpg",
+                      "descriptionurl":"https://commons.wikimedia.org/wiki/File:Photo.jpg",
+                      "extmetadata":{"Artist":{"value":"Author"},"LicenseShortName":{"value":"%s"}}
+                    }]}}}}
+                    """.formatted(license)));
+            assertThat(images).isEmpty();
+        }
+    }
+
+    @Test
+    void respectsCustomAttributionAndRejectsDeletionCandidates() {
+        String body = """
+                {"query":{"pages":{"1":{"title":"File:Photo.jpg","imageinfo":[{
+                  "thumburl":"https://upload.wikimedia.org/photo.jpg",
+                  "descriptionurl":"https://commons.wikimedia.org/wiki/File:Photo.jpg",
+                  "extmetadata":{
+                    "Artist":{"value":"Author"},"Attribution":{"value":"<b>Full credit &amp; source</b>"},
+                    "LicenseShortName":{"value":"CC BY 4.0"},
+                    "LicenseUrl":{"value":"https://creativecommons.org/licenses/by/4.0/"}%s
+                  }
+                }]}}}}
+                """;
+        assertThat(client.parseCommonsImages(json(body.formatted(""))).get("Photo.jpg").attribution()).isEqualTo("Full credit & source");
+        assertThat(client.parseCommonsImages(json(body.formatted(",\"DeletionReason\":{\"value\":\"Under review\"}")))).isEmpty();
     }
 }
