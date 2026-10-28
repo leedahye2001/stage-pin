@@ -5,16 +5,22 @@ import type { ArtistSearchResult } from '@/api/concerts';
 import { colors } from '@/theme/tokens';
 import { usableArtistImage } from '@/lib/artist-media';
 
-export function ArtistPhoto({ artist, size = 62 }: { artist: ArtistSearchResult; size?: number }) {
+export function ArtistPhoto({ artist, size = 62, favorite = false, onFavoriteToggle }: {
+  artist: ArtistSearchResult;
+  size?: number;
+  favorite?: boolean;
+  onFavoriteToggle?: () => void;
+}) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const [credit, setCredit] = useState(false);
   const usable = usableArtistImage(artist) && artist.imageUrl !== failedUrl;
-  return <View style={{ width: size, height: size }}>
+  return <View style={{ width: size, height: size + (onFavoriteToggle ? 23 : 0) }}>
     <View style={[s.frame, { width: size, height: size, borderRadius: size / 3 }]}>
       {usable ? <Image accessibilityLabel={`${artist.name} 아티스트 사진`} source={{ uri: artist.imageUrl! }} resizeMode="cover" style={{ width: size, height: size }} onError={() => setFailedUrl(artist.imageUrl)} />
         : <Ionicons name="person-outline" size={size / 2.5} color="#9A8AAD" />}
     </View>
-    {usable ? <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 사진 출처와 라이선스`} onPress={() => setCredit(true)} style={s.info}><Ionicons name="information-circle" size={18} color={colors.primary} /></Pressable> : null}
+    {onFavoriteToggle ? <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 관심 아티스트 ${favorite ? '해제' : '찜하기'}`} accessibilityState={{ selected: favorite }} hitSlop={8} onPress={onFavoriteToggle} style={[s.info, { top: size - 24, bottom: undefined }]}><Ionicons name={favorite ? 'heart' : 'heart-outline'} size={18} color={colors.primary} /></Pressable> : null}
+    {usable ? <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 사진 출처와 라이선스`} hitSlop={4} onPress={() => setCredit(true)} style={onFavoriteToggle ? s.creditLabel : s.info}>{onFavoriteToggle ? <Text style={s.creditText}>사진 출처</Text> : <Ionicons name="information-circle" size={18} color={colors.primary} />}</Pressable> : null}
     <Modal visible={credit} transparent animationType="fade" onRequestClose={() => setCredit(false)}>
       <View style={s.backdrop}><View accessibilityViewIsModal style={s.modal}>
         <Text style={s.title}>{artist.name} 사진 출처</Text>
@@ -32,6 +38,8 @@ export function ArtistPhoto({ artist, size = 62 }: { artist: ArtistSearchResult;
 const s = StyleSheet.create({
   frame: { backgroundColor: '#EEEAF5', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   info: { position: 'absolute', bottom: -3, right: -5, width: 27, height: 27, borderRadius: 14, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' },
+  creditLabel: { alignSelf: 'center', paddingTop: 7, paddingBottom: 3 },
+  creditText: { color: colors.textMuted, fontSize: 9 },
   backdrop: { flex: 1, backgroundColor: '#21192D77', padding: 24, alignItems: 'center', justifyContent: 'center' },
   modal: { width: '100%', maxWidth: 460, padding: 24, borderRadius: 23, backgroundColor: '#FFFFFF', gap: 17 },
   title: { color: colors.text, fontSize: 19, fontWeight: '800' },
