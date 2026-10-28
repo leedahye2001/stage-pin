@@ -1,8 +1,9 @@
 # StagePin
 
-StagePin is a mobile concert companion for discovering upcoming shows on a map,
-tracking ticket-sale schedules, and preparing for show day. The same concert
-record will later power setlists and a personal concert logbook.
+StagePin connects concert discovery, ticket-opening schedules, and fan-to-fan
+goods sales and exchanges, including meetups at the same performance.
+The current goods marketplace is a local-only prototype: listings, requests,
+and artwork are previews, not real publishing, messaging, or payments.
 
 ## Repository
 
