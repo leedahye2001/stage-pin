@@ -12,6 +12,14 @@ and artwork are previews, not real publishing, messaging, or payments.
 - `infra`: local Docker Compose environment
 - `docs`: architecture and API notes
 
+## Architecture documentation
+
+Current implementation, with live data and local prototypes distinguished:
+
+- [시스템 아키텍처 · 실행/배포 · 보안 경계](docs/architecture.md)
+- [실제 DB ERD · 굿즈/찜 데이터 모델](docs/erd.md)
+- [주요 데이터 흐름 · AI 검수 · API 목록](docs/data-flows.md)
+
 ## Local development
 
 ### Backend and database
@@ -119,11 +127,13 @@ are stored separately as StagePin-verified ticket openings. Set
 artist, agency, or organizer notice. The public mobile feed reads upcoming
 verified entries from `GET /api/v1/ticket-openings`; ticket-vendor pages are not
 scraped or copied.
-Poster images are intentionally not imported until their reuse terms are
-confirmed.
+KOPIS response poster URLs are currently exposed by the API. This implementation
+does not itself establish reuse rights; review source-specific display terms separately.
 
-Artist search first shows a KOPIS-backed suggestion. Selecting it loads every
-matching KOPIS performance record and plots the distinct venues on the map.
+Artist suggestions use the external artist catalog described above. Selecting an
+artist opens a separate page with matching KOPIS records and venue locations.
+Performance search is limited to the first KOPIS page and up to 30 returned records,
+not every historical performance.
 Historical list results only include a region, so those pins use approximate
 regional coordinates until a venue-detail lookup can supply exact coordinates.
 
