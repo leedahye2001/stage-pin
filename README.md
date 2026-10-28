@@ -19,6 +19,7 @@ Current implementation, with live data and local prototypes distinguished:
 - [시스템 아키텍처 · 실행/배포 · 보안 경계](docs/architecture.md)
 - [실제 DB ERD · 굿즈/찜 데이터 모델](docs/erd.md)
 - [주요 데이터 흐름 · AI 검수 · API 목록](docs/data-flows.md)
+- [내 일정 저장 · 달력 · 예매처 이동 흐름](docs/personal-schedule.md)
 
 ## Local development
 

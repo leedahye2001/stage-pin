@@ -147,3 +147,7 @@ API 서버와 DB 호출은 없다. 사진은 서버에 업로드되지 않고 �
 굿즈 실거래·대규모 동시성 처리·결제를 이미 운영한 것으로 설명하지 않는다.
 근거: 각 Controller/Service/Client 및 `mobile/src/api/concerts.ts`, `HomeSearch.tsx`, `goods/create.tsx`.
 관련: [아키텍처](architecture.md), [ERD](erd.md).
+
+내 일정 탭은 이제 목업 달력이 아닌 기기 저장 일정이다. 공연 상세에서 선택한 공연 시작일·확인된 예매일을
+AsyncStorage에 저장하고 달력에서 조회한다. 아티스트 찜·예매 완료와 구분하며
+구체적인 범위와 날짜 한계는 [내 일정 흐름](personal-schedule.md)을 참고한다.

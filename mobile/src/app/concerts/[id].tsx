@@ -4,21 +4,11 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getConcert, type ConcertGenre, type FanCategory, type ScheduleType } from '@/api/concerts';
+import { getConcert, type ConcertGenre, type FanCategory } from '@/api/concerts';
+import { ConcertSchedulePicker } from '@/components/ConcertSchedulePicker';
 import { VenueMap } from '@/components/VenueMap';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
-
-const scheduleLabels: Record<ScheduleType, string> = {
-  FAN_VERIFICATION_OPEN: '팬클럽 인증 시작',
-  FAN_VERIFICATION_CLOSE: '팬클럽 인증 마감',
-  FAN_PRESALE: '팬클럽 선예매',
-  GENERAL_SALE: '일반 예매',
-  ADDITIONAL_SALE: '추가 판매',
-  MERCH_SALE: 'MD 판매',
-  DOOR_OPEN: '입장 시작',
-  SHOW: '공연 시작',
-};
 
 const genreLabels: Record<ConcertGenre, string> = {
   POPULAR_MUSIC: '대중음악',
@@ -35,6 +25,7 @@ const fanCategoryLabels: Record<FanCategory, string> = {
 };
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -88,6 +79,7 @@ export default function ConcertDetailScreen() {
       }));
   const concertDate = isKopis
     ? new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -129,6 +121,8 @@ export default function ConcertDetailScreen() {
         </Text>
       ) : null}
 
+      <ConcertSchedulePicker key={concert.id} concert={concert} />
+
       <View style={styles.venueCard}>
         <Text style={styles.cardLabel}>공연장</Text>
         <Text style={styles.venueName}>{concert.venue.name}</Text>
@@ -144,32 +138,6 @@ export default function ConcertDetailScreen() {
         ) : null}
         <VenueMap venue={concert.venue} />
       </View>
-
-      <Text style={styles.sectionTitle}>티켓팅 타임라인</Text>
-      {concert.schedules.length ? (
-        <View style={styles.timeline}>
-          {concert.schedules.map((schedule, index) => (
-          <View key={schedule.id} style={styles.timelineRow}>
-            <View style={styles.timelineRail}>
-              <View style={styles.timelineDot} />
-              {index < concert.schedules.length - 1 ? <View style={styles.timelineLine} /> : null}
-            </View>
-            <View style={styles.timelineContent}>
-              <Text style={styles.scheduleLabel}>{scheduleLabels[schedule.type]}</Text>
-              <Text style={styles.scheduleDate}>{dateFormatter.format(new Date(schedule.startsAt))}</Text>
-              <Text style={styles.timezone}>{schedule.timezone}</Text>
-            </View>
-          </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.emptySchedule}>
-          <Text style={styles.emptyScheduleTitle}>예매 일정은 공식 공지에서 확인해 주세요.</Text>
-          <Text style={styles.emptyScheduleDescription}>
-            선예매·일반예매 일정은 추후 공식 공지와 예매처에서 연동할 예정이에요.
-          </Text>
-        </View>
-      )}
 
       <Text style={styles.sectionTitle}>예매처</Text>
       {ticketLinks.length ? (
@@ -302,11 +270,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     marginTop: spacing.xl,
   },
-  timeline: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
   emptySchedule: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -320,45 +283,6 @@ const styles = StyleSheet.create({
   emptyScheduleDescription: {
     color: colors.textMuted,
     lineHeight: 20,
-    marginTop: spacing.xs,
-  },
-  timelineRow: {
-    flexDirection: 'row',
-    minHeight: 88,
-  },
-  timelineRail: {
-    alignItems: 'center',
-    marginRight: spacing.md,
-    width: 18,
-  },
-  timelineDot: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    height: 12,
-    marginTop: 4,
-    width: 12,
-  },
-  timelineLine: {
-    backgroundColor: colors.primarySoft,
-    flex: 1,
-    marginVertical: 4,
-    width: 2,
-  },
-  timelineContent: {
-    flex: 1,
-  },
-  scheduleLabel: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '800',
-  },
-  scheduleDate: {
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-  },
-  timezone: {
-    color: colors.primary,
-    fontSize: typography.caption,
     marginTop: spacing.xs,
   },
   primaryButton: {
