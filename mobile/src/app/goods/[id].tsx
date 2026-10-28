@@ -4,18 +4,19 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DemoNotice, GoodsArtwork, marketStyles as m } from '@/components/GoodsDemo';
-import { demoGoods, goodsPrice } from '@/lib/goods-demo';
+import { goodsPrice } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
 
 export default function GoodsDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const item = demoGoods.find((value) => value.id === id);
-  const { saved, requested, toggleSaved, request } = useGoodsDemo();
+  const { items, saved, requested, toggleSaved, request } = useGoodsDemo();
+  const item = items.find((value) => value.id === id);
   const [preview, setPreview] = useState(false);
   const [sent, setSent] = useState(false);
   if (!item) return <SafeAreaView style={m.safe}><View style={m.content}><Text style={m.title}>굿즈를 찾을 수 없어요</Text><Text style={m.subtitle}>삭제되었거나 존재하지 않는 샘플이에요.</Text><Pressable accessibilityRole="button" onPress={() => router.replace('/goods')}><Text style={m.link}>굿즈장터로 돌아가기</Text></Pressable></View></SafeAreaView>;
   const isExchange = item.kind === '교환';
+  const isOwnPreview = item.id.startsWith('local-');
   const hasRequest = requested.includes(item.id);
   return <SafeAreaView edges={['bottom']} style={m.safe}>
     <ScrollView contentContainerStyle={[m.content, { paddingBottom: 24 }]}>
@@ -34,7 +35,7 @@ export default function GoodsDetailScreen() {
     </ScrollView>
     <View style={s.bottom}>
       <Pressable accessibilityRole="button" accessibilityLabel="이 굿즈 찜" accessibilityState={{ selected: saved.includes(item.id) }} onPress={() => toggleSaved(item.id)} style={s.heart}><Ionicons name={saved.includes(item.id) ? 'heart' : 'heart-outline'} color={colors.primary} size={24} /></Pressable>
-      <Pressable accessibilityRole="button" disabled={item.status === '예약 중' || hasRequest} onPress={() => { setSent(false); setPreview(true); }} style={[s.cta, (item.status === '예약 중' || hasRequest) && s.disabled]}><Text style={s.ctaText}>{hasRequest ? '데모 신청을 남겼어요' : item.status === '예약 중' ? '예약 중인 굿즈예요' : `${isExchange ? '교환' : '구매'} 신청 미리보기`}</Text><Ionicons name="arrow-forward" color="#FFFFFF" size={17} /></Pressable>
+      <Pressable accessibilityRole="button" disabled={isOwnPreview || item.status === '예약 중' || hasRequest} onPress={() => { setSent(false); setPreview(true); }} style={[s.cta, (isOwnPreview || item.status === '예약 중' || hasRequest) && s.disabled]}><Text style={s.ctaText}>{isOwnPreview ? '내가 등록한 미리보기예요' : hasRequest ? '데모 신청을 남겼어요' : item.status === '예약 중' ? '예약 중인 굿즈예요' : `${isExchange ? '교환' : '구매'} 신청 미리보기`}</Text><Ionicons name="arrow-forward" color="#FFFFFF" size={17} /></Pressable>
     </View>
     <Modal visible={preview} transparent animationType="fade" onRequestClose={() => setPreview(false)}>
       <View style={s.modalBackdrop}><View accessibilityViewIsModal style={s.modal}>

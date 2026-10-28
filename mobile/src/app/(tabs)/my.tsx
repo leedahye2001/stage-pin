@@ -6,14 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ConcertCard } from '@/components/ConcertCard';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { DemoNotice, GoodsCard, marketStyles } from '@/components/GoodsDemo';
-import { demoGoods } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function MyScreen() {
   const { artists, concerts, isConcertFavorite, toggleArtist, toggleConcert } = useFavorites();
-  const { saved, requested } = useGoodsDemo();
+  const { items, saved, requested } = useGoodsDemo();
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -28,11 +27,11 @@ export default function MyScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>데모 신청 내역 · {requested.length}</Text>
           <Text style={styles.emptyText}>상대방에게 전송되지 않으며 새로고침 시 초기화돼요.</Text>
-          {requested.length ? demoGoods.filter((item) => requested.includes(item.id)).map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => router.push({ pathname: '/goods/[id]', params: { id: item.id } })} style={styles.emptyCard}><Ionicons name="swap-horizontal" color={colors.primary} size={23} /><View style={{ flex: 1 }}><Text style={{ color: colors.text, fontWeight: '700', lineHeight: 22 }}>{item.title}</Text><Text style={styles.emptyText}>{item.kind} 신청 미리보기 · 데모 보관</Text></View><Ionicons name="chevron-forward" color={colors.primary} size={17} /></Pressable>) : <EmptyFavorite message="굿즈 상세에서 데모 신청을 남겨보세요." />}
+          {requested.length ? items.filter((item) => requested.includes(item.id)).map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => router.push({ pathname: '/goods/[id]', params: { id: item.id } })} style={styles.emptyCard}><Ionicons name="swap-horizontal" color={colors.primary} size={23} /><View style={{ flex: 1 }}><Text style={{ color: colors.text, fontWeight: '700', lineHeight: 22 }}>{item.title}</Text><Text style={styles.emptyText}>{item.kind} 신청 미리보기 · 데모 보관</Text></View><Ionicons name="chevron-forward" color={colors.primary} size={17} /></Pressable>) : <EmptyFavorite message="굿즈 상세에서 데모 신청을 남겨보세요." />}
         </View>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>찜한 굿즈 · {saved.length}</Text>
-          <View style={marketStyles.grid}>{demoGoods.filter((item) => saved.includes(item.id)).map((item) => <View key={item.id} style={marketStyles.gridItem}><GoodsCard item={item} /></View>)}</View>
+          <View style={marketStyles.grid}>{items.filter((item) => saved.includes(item.id)).map((item) => <View key={item.id} style={marketStyles.gridItem}><GoodsCard item={item} /></View>)}</View>
           {!saved.length ? <EmptyFavorite message="마음에 드는 굿즈의 하트를 눌러보세요." /> : null}
         </View>
 

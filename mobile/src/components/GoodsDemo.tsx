@@ -6,7 +6,7 @@ import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
 
 export function DemoNotice() {
-  return <View style={s.notice}><Ionicons name="flask-outline" size={14} color={colors.primary} /><Text style={s.noticeText}>데모 모드 · 모든 굿즈와 일정은 가상 데이터예요</Text></View>;
+  return <View style={s.notice}><Ionicons name="information-circle-outline" size={14} color={colors.primary} /><Text style={s.noticeText}>미리보기 · 실제 게시·결제·거래는 진행되지 않아요</Text></View>;
 }
 
 export function GoodsArtwork({ item, large = false }: { item: DemoGoods; large?: boolean }) {

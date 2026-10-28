@@ -32,6 +32,7 @@ export default function RootLayout() {
               <Stack.Screen name="practice/ticketing" options={{ title: '모의 티켓팅' }} />
               <Stack.Screen name="explore" options={{ title: '공연 탐색' }} />
               <Stack.Screen name="goods/[id]" options={{ title: '굿즈 상세' }} />
+              <Stack.Screen name="goods/create" options={{ title: '굿즈 등록' }} />
             </Stack>
           </GoodsDemoProvider>
         </FavoritesProvider>

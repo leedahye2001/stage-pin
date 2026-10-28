@@ -24,13 +24,35 @@ export const demoGoods: DemoGoods[] = [
   { id: 'demo-aespa-2', artist: 'aespa', member: '카리나', title: '카리나 포토카드 홀더', kind: '판매', category: '기타 굿즈', color: '#D5E6F7', ink: '#4D719B', mark: 'K', price: 6000, wanted: '', condition: '개봉 · 미사용', methods: ['현장', '택배'], event: '11.28 · aespa 가상 콘서트', seller: '에스파스테이션', time: '1시간 전', description: '포카 홀더 형태를 보여주는 샘플 상품이에요. 모든 닉네임, 가격, 거래 상태는 임의로 만든 목업 데이터입니다.', status: '거래 가능' },
 ];
 
-export function filterDemoGoods(items: DemoGoods[], artist: string, kind: string, query: string) {
+export function filterDemoGoods(items: DemoGoods[], artist: string, kind: string, query: string, onsiteOnly = false) {
   const normalized = query.toLocaleLowerCase().replace(/\s/g, '');
   return items.filter((item) => (artist === '전체' || item.artist === artist)
     && (kind === '전체' || item.kind === kind)
+    && (!onsiteOnly || (item.methods.includes('현장') && Boolean(item.event)))
     && `${item.title}${item.artist}${demoArtists.find((entry) => entry.name === item.artist)?.aliases ?? ''}${item.member}${item.category}${item.wanted}`.toLocaleLowerCase().replace(/\s/g, '').includes(normalized));
 }
 
 export function goodsPrice(item: DemoGoods) {
   return item.kind === '교환' ? '교환해요' : `${item.price?.toLocaleString('ko-KR')}원`;
+}
+
+export type GoodsDraft = {
+  artist: string; title: string; kind: '교환' | '판매'; price: string; wanted: string;
+  condition: string; description: string; onsite: boolean; delivery: boolean; event: string;
+};
+
+export function createDemoListing(draft: GoodsDraft, id: string): DemoGoods {
+  if (!draft.artist.trim() || !draft.title.trim() || !draft.condition.trim()) throw new Error('아티스트, 제목, 굿즈 상태를 입력해 주세요.');
+  if (draft.title.trim().length > 80 || draft.artist.trim().length > 60) throw new Error('아티스트는 60자, 제목은 80자 이내로 입력해 주세요.');
+  if (!draft.onsite && !draft.delivery) throw new Error('거래 방식을 하나 이상 골라 주세요.');
+  if (draft.onsite && !draft.event.trim()) throw new Error('현장 거래할 공연명을 입력해 주세요.');
+  if (draft.kind === '교환' && !draft.wanted.trim()) throw new Error('교환으로 구하는 굿즈를 입력해 주세요.');
+  const price = Number(draft.price);
+  if (draft.kind === '판매' && (!/^\d+$/.test(draft.price) || !Number.isSafeInteger(price) || price <= 0 || price > 100000000)) throw new Error('판매 가격은 1원부터 1억 원까지 정수로 입력해 주세요.');
+  const artist = demoArtists.find((item) => [item.name, ...item.aliases.split(' ')].some((name) => name.toLowerCase() === draft.artist.trim().toLowerCase()));
+  return { id, artist: artist?.name ?? draft.artist.trim(), member: '전체', title: draft.title.trim(), kind: draft.kind,
+    category: '기타 굿즈', color: artist?.color ?? '#E6DDF6', ink: artist?.ink ?? '#77578E', mark: artist?.short ?? '♡',
+    price: draft.kind === '판매' ? price : null, wanted: draft.kind === '교환' ? draft.wanted.trim() : '',
+    condition: draft.condition.trim(), description: draft.description.trim(), methods: [...(draft.onsite ? ['현장'] : []), ...(draft.delivery ? ['택배'] : [])],
+    event: draft.onsite ? draft.event.trim() : null, seller: '나 · 로컬 미리보기', time: '방금', status: '거래 가능' };
 }
