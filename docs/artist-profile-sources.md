@@ -4,6 +4,17 @@
 
 ## 채택한 API
 
+### Spotify 우선 모드
+
+- 서버에 `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET`을 모두 설정하면 검색 결과·사진은 Spotify Artist Search에서 가져온다. MusicBrainz는 한영 별칭과 기존 찜 ID 매칭을 보조한다. 두 키가 없으면 기존 MusicBrainz/Commons 모드를 유지한다.
+- Client Credentials로 서버에서만 토큰 발급·재사용. 프론트에 Client Secret을 노출하지 않는다. 인증 실패·호출 제한을 빈 검색 결과로 위장하지 않는다.
+- `imageLicense=Spotify`는 출처 구분자이며 자유 라이선스 또는 재배포 허락을 의미하지 않는다. Commons의 라이선스 검사와 별도로 처리한다.
+- 사진 크롭·필터·텍스트 오버레이 없이 원본 비율 유지. 사진 아래 Spotify 마크와 아티스트 원문 링크 표시. 음악 스트리밍은 추가하지 않는다.
+- API 키가 있다는 사실만으로 모든 서비스 용도가 허용되는 것은 아니다. 현재 비상업 포트폴리오 사용에서도 정책 준수가 필요하고 실제 상용화 전 별도 검토가 필요하다.
+- 공식 근거: [Client Credentials](https://developer.spotify.com/documentation/web-api/tutorials/client-credentials-flow), [Artist Search](https://developer.spotify.com/documentation/web-api/reference/search), [Developer Policy](https://developer.spotify.com/policy), [Design Guidelines](https://developer.spotify.com/documentation/design).
+
+### 기본/기존 데이터 모드
+
 - MusicBrainz artist search: 이름, MBID, 별칭, 지역, 동명이인 구분 등 core data만 사용.
   Core data는 CC0. 사용자 태그·평점·annotations 등 supplementary data는 별도 NC 라이선스이므로 가져오지 않음.
   https://musicbrainz.org/doc/About/Data_License
