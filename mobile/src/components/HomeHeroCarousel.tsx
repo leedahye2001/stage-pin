@@ -7,7 +7,6 @@ import { colors } from '@/theme/tokens';
 const banners = [
   { title: '무대에서 만나고,\n취향으로 연결돼요.', copy: '기다리던 공연부터 갖고 싶던 포카까지.\n우리의 덕질을 한곳에 핀!', tag: '좋아하는 마음이 만나는 곳', cta: '굿즈 교환·판매 둘러보기', route: '/goods', color: '#EEE8FD', accent: '#6C4CF1', mark: '♡' },
   { title: '내 최애의 예매일,\n한눈에 모아봐요.', copy: '아티스트 하트를 눌러보세요.\n확인된 선예매·일반예매만 모아드려요.', tag: '흩어진 예매 일정을 한곳에', cta: '공연·아티스트 찾아보기', route: '/explore', color: '#E7EFE5', accent: '#4F785C', mark: '✦' },
-  { title: '함께 부른 순간을\n한 페이지에 담아요.', copy: '공연이 끝나도 오래 기억할 수 있도록.\n나만의 로그북을 차곡차곡 채워봐요.', tag: '오늘의 무대, 오래 남을 기억', cta: '로그북 둘러보기', route: '/logbook', color: '#F7E9E9', accent: '#AD737F', mark: '✧' },
 ] as const;
 
 export function HomeHeroCarousel() {

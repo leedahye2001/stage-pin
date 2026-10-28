@@ -37,7 +37,6 @@ export default function FanHomeScreen() {
         <View style={m.grid}>{forArtist.map((item) => <View key={item.id} style={m.gridItem}><GoodsCard item={item} /></View>)}</View>
         {!forArtist.length ? <View style={m.empty}><Text style={m.subtitle}>이 아티스트의 목업 굿즈는 아직 없어요.</Text><Pressable accessibilityRole="button" onPress={() => openGoods()}><Text style={m.link}>전체 굿즈 둘러보기</Text></Pressable></View> : null}
       </View>
-      <Pressable accessibilityRole="button" onPress={() => router.push('/logbook')} style={s.logBanner}><View><Text style={s.logTitle}>오늘의 덕질도, 소중한 한 페이지</Text><Text style={m.subtitle}>무대의 기억을 로그북에 모아봐요</Text></View><Ionicons name="book-outline" size={30} color={colors.primary} /></Pressable>
       <Text style={s.footer}>팬이 만든 연결, STAGEPIN · 화면 검증용 목업</Text>
     </ScrollView>
     <TicketingFab />
@@ -51,7 +50,5 @@ const s = StyleSheet.create({
   sourceNotice: { backgroundColor: '#EEE8FA', borderRadius: 10, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 7 },
   sourceText: { fontSize: 9, color: '#7B6996', lineHeight: 17, flex: 1 },
   event: { fontSize: 9, color: colors.primary, paddingTop: 8, lineHeight: 15 },
-  logBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#EFEAF6', padding: 18, borderRadius: 20, gap: 8 },
-  logTitle: { color: '#514262', fontWeight: '800', fontSize: 13, marginBottom: 6 },
   footer: { color: '#A59BAD', fontSize: 9, textAlign: 'center' },
 });
