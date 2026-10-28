@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { demoGoods, demoArtists, filterDemoGoods, goodsPrice, createDemoListing } from '../src/lib/goods-demo.ts';
+import { demoGoods, demoArtists, filterDemoGoods, goodsPrice, createDemoListing, digitsOnly, validateGoodsPhotos } from '../src/lib/goods-demo.ts';
+
+const photo = { uri: 'file:///test.jpg', width: 800, height: 600, fileSize: 1024, mimeType: 'image/jpeg' };
 
 test('demo goods have unique IDs and valid exchange/sales data', () => {
   assert.equal(new Set(demoGoods.map((item) => item.id)).size, demoGoods.length);
@@ -28,11 +30,17 @@ test('exchange labels never display a null price', () => {
 });
 
 test('local listings validate sale price, exchange requirements and onsite performance', () => {
-  const draft = { artist: '데이식스', title: '테스트 포카', kind: '판매', price: '8000', wanted: '', condition: '미개봉', description: '샘플', onsite: false, delivery: true, event: '' };
+  const draft = { artist: '데이식스', title: '테스트 포카', kind: '판매', price: '8000', wanted: '', condition: 'SEALED', photos: [photo], description: '샘플', onsite: false, delivery: true, event: '' };
   const sale = createDemoListing(draft, 'local-test');
   assert.equal(sale.artist, 'DAY6');
   assert.equal(sale.price, 8000);
   assert.equal(sale.id, 'local-test');
+  assert.equal(sale.conditionCode, 'SEALED');
+  assert.equal(sale.condition, '미개봉');
+  assert.deepEqual(sale.photos, [photo]);
+  assert.notEqual(sale.photos[0], photo);
+  assert.throws(() => createDemoListing({ ...draft, condition: '아무 상태' }, 'bad'));
+  assert.throws(() => createDemoListing({ ...draft, photos: [] }, 'bad'), /사진/);
   for (const price of ['0', '-1', '1.5', 'NaN', '1e4', '100000001']) assert.throws(() => createDemoListing({ ...draft, price }, 'bad'));
   assert.throws(() => createDemoListing({ ...draft, title: ' ' }, 'bad'));
   assert.throws(() => createDemoListing({ ...draft, kind: '교환' }, 'bad'));
@@ -41,4 +49,19 @@ test('local listings validate sale price, exchange requirements and onsite perfo
   const exchange = createDemoListing({ ...draft, kind: '교환', wanted: '원필 포카', onsite: true, event: 'DAY6 공연' }, 'local-exchange');
   assert.equal(exchange.price, null);
   assert.deepEqual(filterDemoGoods([sale, exchange], '전체', '교환', '', true), [exchange]);
+});
+
+test('price input removes letters, punctuation, whitespace and pasted currency', () => {
+  assert.equal(digitsOnly('1a2b3'), '123');
+  assert.equal(digitsOnly('₩ 12,000원'), '12000');
+  assert.equal(digitsOnly('abc.-+ '), '');
+  assert.equal(digitsOnly(''), '');
+});
+
+test('photos require at least one supported image and enforce count and size limits', () => {
+  assert.doesNotThrow(() => validateGoodsPhotos([photo]));
+  assert.doesNotThrow(() => validateGoodsPhotos([{ ...photo, fileSize: 10 * 1024 * 1024 }]));
+  for (const photos of [[], Array(6).fill(photo), [{ ...photo, fileSize: 10 * 1024 * 1024 + 1 }], [{ ...photo, width: 0 }], [{ ...photo, uri: '' }], [{ ...photo, mimeType: 'image/svg+xml' }], [{ ...photo, mimeType: 'video/mp4' }]]) {
+    assert.throws(() => validateGoodsPhotos(photos));
+  }
 });

@@ -11,7 +11,26 @@ export type DemoGoods = {
   category: string; color: string; ink: string; mark: string; price: number | null;
   wanted: string; condition: string; methods: string[]; event: string | null;
   seller: string; time: string; description: string; status: '거래 가능' | '예약 중';
+  conditionCode?: string; photos?: GoodsPhoto[];
 };
+
+export const goodsConditions = [
+  { code: 'SEALED', label: '미개봉' },
+  { code: 'OPENED_UNUSED', label: '개봉 · 미사용' },
+  { code: 'USED_GOOD', label: '사용감 적음' },
+  { code: 'USED_FAIR', label: '사용감 있음' },
+  { code: 'DAMAGED', label: '하자 있음' },
+] as const;
+export type GoodsPhoto = { uri: string; width: number; height: number; fileSize?: number; mimeType?: string };
+export const MAX_GOODS_PHOTOS = 5;
+export function digitsOnly(value: string) { return value.replace(/[^0-9]/g, ''); }
+export function validateGoodsPhotos(photos: GoodsPhoto[]) {
+  if (!photos.length) throw new Error('굿즈 상태를 확인할 수 있는 사진을 1장 이상 첨부해 주세요.');
+  if (photos.length > MAX_GOODS_PHOTOS) throw new Error('사진은 최대 5장까지 첨부할 수 있어요.');
+  if (photos.some((photo) => !photo.uri || !(photo.width > 0) || !(photo.height > 0)
+    || (photo.mimeType && !/^image\/(jpeg|png|webp|heic|heif|avif)$/i.test(photo.mimeType)))) throw new Error('지원하는 사진 파일을 선택해 주세요.');
+  if (photos.some((photo) => photo.fileSize !== undefined && (!Number.isFinite(photo.fileSize) || photo.fileSize <= 0 || photo.fileSize > 10 * 1024 * 1024))) throw new Error('사진은 장당 10MB 이하로 첨부해 주세요.');
+}
 
 export const demoGoods: DemoGoods[] = [
   { id: 'demo-svt-1', artist: 'SEVENTEEN', member: '원우', title: '원우 포토카드, 민규로 교환해요', kind: '교환', category: '포토카드', color: '#F8DCE5', ink: '#8A526C', mark: 'W', price: null, wanted: '같은 시리즈 민규 포토카드', condition: '개봉 · 눈에 띄는 하자 없음', methods: ['현장'], event: '11.14 · SEVENTEEN 가상 팬콘', seller: '봉봉수집가', time: '방금', description: '슬리브에 보관한 샘플 포토카드예요. 같은 시리즈 민규로 교환하고 싶어요. 현장에서는 상태를 서로 확인한 뒤 교환해요.', status: '거래 가능' },
@@ -38,11 +57,14 @@ export function goodsPrice(item: DemoGoods) {
 
 export type GoodsDraft = {
   artist: string; title: string; kind: '교환' | '판매'; price: string; wanted: string;
-  condition: string; description: string; onsite: boolean; delivery: boolean; event: string;
+  condition: string; photos: GoodsPhoto[]; description: string; onsite: boolean; delivery: boolean; event: string;
 };
 
 export function createDemoListing(draft: GoodsDraft, id: string): DemoGoods {
   if (!draft.artist.trim() || !draft.title.trim() || !draft.condition.trim()) throw new Error('아티스트, 제목, 굿즈 상태를 입력해 주세요.');
+  const condition = goodsConditions.find((entry) => entry.code === draft.condition);
+  if (!condition) throw new Error('굿즈 상태를 목록에서 선택해 주세요.');
+  validateGoodsPhotos(draft.photos);
   if (draft.title.trim().length > 80 || draft.artist.trim().length > 60) throw new Error('아티스트는 60자, 제목은 80자 이내로 입력해 주세요.');
   if (!draft.onsite && !draft.delivery) throw new Error('거래 방식을 하나 이상 골라 주세요.');
   if (draft.onsite && !draft.event.trim()) throw new Error('현장 거래할 공연명을 입력해 주세요.');
@@ -53,6 +75,6 @@ export function createDemoListing(draft: GoodsDraft, id: string): DemoGoods {
   return { id, artist: artist?.name ?? draft.artist.trim(), member: '전체', title: draft.title.trim(), kind: draft.kind,
     category: '기타 굿즈', color: artist?.color ?? '#E6DDF6', ink: artist?.ink ?? '#77578E', mark: artist?.short ?? '♡',
     price: draft.kind === '판매' ? price : null, wanted: draft.kind === '교환' ? draft.wanted.trim() : '',
-    condition: draft.condition.trim(), description: draft.description.trim(), methods: [...(draft.onsite ? ['현장'] : []), ...(draft.delivery ? ['택배'] : [])],
+    condition: condition.label, conditionCode: condition.code, photos: draft.photos.map((photo) => ({ ...photo })), description: draft.description.trim(), methods: [...(draft.onsite ? ['현장'] : []), ...(draft.delivery ? ['택배'] : [])],
     event: draft.onsite ? draft.event.trim() : null, seller: '나 · 로컬 미리보기', time: '방금', status: '거래 가능' };
 }

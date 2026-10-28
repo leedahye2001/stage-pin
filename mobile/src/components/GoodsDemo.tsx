@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { type DemoGoods, goodsPrice } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
@@ -10,6 +11,11 @@ export function DemoNotice() {
 }
 
 export function GoodsArtwork({ item, large = false }: { item: DemoGoods; large?: boolean }) {
+  const [selected, setSelected] = useState(0);
+  if (item.photos?.length) return <View style={{ gap: 10 }}>
+    <Image accessibilityLabel={`${item.title} 실물 사진 ${large ? selected + 1 : 1}`} source={{ uri: (item.photos[large ? selected : 0] ?? item.photos[0]).uri }} resizeMode={large ? 'contain' : 'cover'} style={[s.art, { width: '100%', backgroundColor: '#F0EDF7' }, large && s.artLarge]} />
+    {large && item.photos.length > 1 ? <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{item.photos.map((photo, index) => <Pressable key={`${photo.uri}-${index}`} accessibilityRole="button" accessibilityLabel={`실물 사진 ${index + 1} 보기`} accessibilityState={{ selected: selected === index }} onPress={() => setSelected(index)}><Image source={{ uri: photo.uri }} style={{ width: 64, height: 64, borderRadius: 10, borderWidth: 2, borderColor: selected === index ? colors.primary : 'transparent' }} /></Pressable>)}</ScrollView> : null}
+  </View>;
   return <View accessibilityLabel={`${item.member} ${item.category} 샘플 일러스트`} style={[s.art, { backgroundColor: item.color }, large && s.artLarge]}>
     <Text style={[s.artStar, { color: item.ink }]}>✧</Text>
     <View style={[s.paper, large && s.paperLarge, { transform: [{ rotate: item.kind === '교환' ? '-8deg' : '7deg' }] }]}>
