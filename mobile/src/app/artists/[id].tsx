@@ -83,7 +83,7 @@ export default function ArtistScreen() {
                   onPress={() => Linking.openURL(artist.imagePageUrl!)}
                   style={styles.credit}
                 >
-                  {artist.imageLicense === 'Spotify' ? 'Spotify에서 아티스트 보기 ↗' : `사진 출처: ${artist.imageAttribution || 'Wikimedia Commons'} · ${artist.imageLicense}`}
+                  사진 출처: {artist.imageAttribution || 'Wikimedia Commons'} · {artist.imageLicense}
                 </Text>
               ) : null}
             </View>

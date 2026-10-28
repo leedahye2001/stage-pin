@@ -3,7 +3,6 @@ package com.leedahye.stagepin.artist;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -34,19 +33,20 @@ class ArtistCatalogClientTest {
     }
 
     @Test
-    void spotifyEnrichmentPreservesFavoritesAndMultilingualAliases() {
+    void commonsImagesPreserveFavoritesAndMultilingualAliases() {
         var candidates = client.parseMusicBrainz(json("""
                 {"artists":[{"id":"existing-id","name":"Young K","country":"KR",
                 "aliases":[{"name":"영케이"},{"name":"youngk"}]}]}
                 """));
-        var spotify = new ArtistSearchResponse("spotify:id", "Young K", "Young K", "k-pop", List.of("Young K"),
-                "https://i.scdn.co/image/example", "https://open.spotify.com/artist/1234567890123456789012", "Spotify", "Spotify");
-        var result = client.matchSpotify(List.of(spotify), candidates, "영케이").getFirst();
+        var image = new ArtistCatalogClient.CommonsImage("https://upload.wikimedia.org/example.jpg",
+                "https://commons.wikimedia.org/wiki/File:Example.jpg", "Author", "CC BY-SA 4.0");
+        var result = candidates.getFirst().toResponse(image, "영케이");
         assertThat(result.id()).isEqualTo("existing-id");
         assertThat(result.aliases()).contains("영케이", "youngk");
         assertThat(result.searchName()).isEqualTo("Young K");
-        assertThat(result.imageLicense()).isEqualTo("Spotify");
-        assertThat(client.matchSpotify(List.of(spotify), List.of(), "Young K").getFirst().id()).isEqualTo("spotify:id");
+        assertThat(result.imageLicense()).isEqualTo("CC BY-SA 4.0");
+        assertThat(result.imageAttribution()).isEqualTo("Author");
+        assertThat(candidates.getFirst().toResponse(null, "youngk").imageUrl()).isNull();
     }
 
     @Test

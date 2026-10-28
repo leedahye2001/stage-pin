@@ -22,7 +22,7 @@ cd infra
 cp .env.example .env
 # .env의 KOPIS_API_KEY에 발급받은 서비스 키를 입력하세요.
 # 네이버 관련 검색도 사용하려면 NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET을 입력하세요.
-# Spotify 아티스트 검색·사진은 SPOTIFY_CLIENT_ID와 SPOTIFY_CLIENT_SECRET을 입력하세요.
+# 아티스트 사진은 Wikidata/Wikimedia Commons를 사용하므로 별도 키가 필요 없습니다.
 docker compose up --build
 ```
 
@@ -87,29 +87,22 @@ the source of truth for the app's design system.
 
 ## Live concert data
 
-### Spotify artist search
+### Artist search and reusable photos
 
-Create an application in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-Set `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` only in the ignored
-`infra/.env` file, then recreate the API with `docker compose up -d --build api`
-from `infra`. A deployed backend needs both variables in its server environment
-as well. Never put the secret in `mobile/.env`, an `EXPO_PUBLIC_*` variable, or Git.
+Artist names, multilingual aliases and stable IDs come from MusicBrainz.
+Wikidata links the MusicBrainz ID to an image, and Wikimedia Commons supplies
+the photo URL, author, source page and license. No Spotify account, subscription
+or image API key is needed. Existing Spotify credentials in a local `.env` are
+not used or passed into the API container.
 
-When configured, artist results and photos come from Spotify's artist search.
-MusicBrainz still resolves multilingual aliases and retains existing favorite
-IDs where the names match exactly. If MusicBrainz is unavailable, Spotify can
-search the original query, but cross-language aliases may be missing. Spotify
-errors are surfaced instead of presented as an empty result. Without both
-credentials, the existing MusicBrainz/Commons source remains active.
+Only supported CC BY / CC BY-SA / CC0 photos with the required metadata are
+displayed. The UI keeps the original proportions and exposes credits via ⓘ.
+Missing or unverified photos use a default icon; latest official profile photos
+and coverage of every artist are not guaranteed. Search results are cached for
+six hours. See [source and license rules](docs/artist-profile-sources.md), including
+the separate MusicBrainz hosted-API terms to review before commercial operation.
 
-The backend uses Client Credentials, reuses tokens until shortly before expiry,
-refreshes once on 401, honors a 429 cooldown, and caches search results for one
-hour. The UI preserves image proportions, identifies Spotify content with its
-mark, and links back to the artist. It does not stream music, scrape profiles,
-or claim the images are Creative Commons. API access is subject to Spotify's
-current [quota modes](https://developer.spotify.com/documentation/web-api/concepts/quota-modes)
-and [Developer Policy](https://developer.spotify.com/policy); a portfolio is not
-an exemption from these terms. Live Spotify verification requires valid credentials.
+### Performance data
 
 The API reads the next 31 days of Korean popular-music performances from the
 official KOPIS Open API (`shcate=CCCD`). It combines performance details with

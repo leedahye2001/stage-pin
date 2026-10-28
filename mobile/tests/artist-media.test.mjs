@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isSpotifyArtist, usableArtistImage } from '../src/lib/artist-media.ts';
+import { usableArtistImage } from '../src/lib/artist-media.ts';
 
-test('Spotify images require the real artist link and trusted image host', () => {
+test('images from an unsupported source are not displayed', () => {
   const artist = { imageLicense: 'Spotify', imagePageUrl: 'https://open.spotify.com/artist/1234567890123456789012', imageUrl: 'https://i.scdn.co/image/example' };
-  assert.equal(isSpotifyArtist(artist), true);
-  assert.equal(usableArtistImage(artist), true);
+  assert.equal(usableArtistImage(artist), false);
   assert.equal(usableArtistImage({ ...artist, imageUrl: 'https://i.scdn.co.evil/image/example' }), false);
-  assert.equal(isSpotifyArtist({ ...artist, imagePageUrl: 'https://evil.test/artist/1234567890123456789012' }), false);
+  assert.equal(usableArtistImage({ ...artist, imagePageUrl: 'https://evil.test/artist/1234567890123456789012' }), false);
   assert.equal(usableArtistImage({ ...artist, imageUrl: null }), false);
 });
 
@@ -16,4 +15,6 @@ test('Commons credit requirements are preserved for previously saved favorites',
   assert.equal(usableArtistImage(artist), true);
   assert.equal(usableArtistImage({ ...artist, imageAttribution: '' }), false);
   assert.equal(usableArtistImage({ ...artist, imageLicense: 'All rights reserved' }), false);
+  assert.equal(usableArtistImage({ ...artist, imageUrl: 'https://upload.wikimedia.org.evil/example.jpg' }), false);
+  assert.equal(usableArtistImage({ ...artist, imageAttribution: '', imageLicense: 'CC0' }), true);
 });

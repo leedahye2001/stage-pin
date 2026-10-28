@@ -15,9 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.util.HtmlUtils;
 import org.slf4j.Logger;
@@ -37,18 +35,11 @@ public class ArtistCatalogClient {
     private final RestClient musicBrainz;
     private final RestClient wikidata;
     private final RestClient commons;
-    private final SpotifyArtistClient spotify;
     private final Map<String, CacheEntry> cache = new HashMap<>();
     private Instant lastMusicBrainzRequest = Instant.EPOCH;
 
     public ArtistCatalogClient(ObjectMapper objectMapper) {
-        this(objectMapper, new SpotifyArtistClient(objectMapper, "", ""));
-    }
-
-    @Autowired
-    public ArtistCatalogClient(ObjectMapper objectMapper, SpotifyArtistClient spotify) {
         this.objectMapper = objectMapper;
-        this.spotify = spotify;
         this.musicBrainz = client("https://musicbrainz.org");
         this.wikidata = client("https://query.wikidata.org");
         this.commons = client("https://commons.wikimedia.org");
@@ -65,33 +56,15 @@ public class ArtistCatalogClient {
             return cached.artists();
         }
 
-        List<Candidate> candidates;
-        try {
-            candidates = searchMusicBrainz(keyword);
-        } catch (RestClientException exception) {
-            if (!spotify.configured()) throw exception;
-            candidates = new ArrayList<>();
-        }
+        List<Candidate> candidates = searchMusicBrainz(keyword);
         if (candidates.stream().noneMatch(candidate -> candidate.matches(keyword))) {
             String spaced = splitTrailingLatinLetter(keyword);
             if (!spaced.equals(keyword)) {
-                try {
-                    candidates = merge(candidates, searchMusicBrainz(spaced));
-                } catch (RestClientException exception) {
-                    if (!spotify.configured()) throw exception;
-                }
+                candidates = merge(candidates, searchMusicBrainz(spaced));
             }
         }
         candidates.sort((left, right) -> Integer.compare(right.rank(keyword), left.rank(keyword)));
         candidates = candidates.stream().limit(RESULT_LIMIT).toList();
-
-        if (spotify.configured()) {
-            String spotifyQuery = candidates.stream().filter(candidate -> candidate.matches(keyword))
-                    .findFirst().map(candidate -> candidate.toResponse(null, keyword).searchName()).orElse(keyword);
-            List<ArtistSearchResponse> artists = matchSpotify(spotify.search(spotifyQuery), candidates, keyword);
-            cache.put(cacheKey, new CacheEntry(artists, Instant.now().plus(Duration.ofHours(1))));
-            return artists;
-        }
 
         Map<String, CommonsImage> images = loadImages(candidates);
         List<ArtistSearchResponse> artists = candidates.stream()
@@ -99,17 +72,6 @@ public class ArtistCatalogClient {
                 .toList();
         cache.put(cacheKey, new CacheEntry(artists, Instant.now().plus(CACHE_TTL)));
         return artists;
-    }
-
-    // Keep existing favorites and multilingual aliases when the catalog identity matches exactly.
-    List<ArtistSearchResponse> matchSpotify(List<ArtistSearchResponse> results, List<Candidate> candidates, String query) {
-        return results.stream().map(result -> {
-            Candidate matched = candidates.stream().filter(candidate -> candidate.matches(result.name())).findFirst().orElse(null);
-            if (matched == null) return result;
-            return new ArtistSearchResponse(matched.id(), result.name(),
-                    matched.toResponse(null, query).searchName(), result.description(), matched.aliases(),
-                    result.imageUrl(), result.imagePageUrl(), result.imageAttribution(), result.imageLicense());
-        }).toList();
     }
 
     private List<Candidate> searchMusicBrainz(String query) {
