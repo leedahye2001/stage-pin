@@ -10,6 +10,7 @@ import { getConcert, type ConcertGenre, type FanCategory } from '@/api/concerts'
 import { ConcertSchedulePicker } from '@/components/ConcertSchedulePicker';
 import { VenueMap } from '@/components/VenueMap';
 import { useFavorites } from '@/lib/favorites';
+import { concertArtistNames } from '@/lib/home-concerts';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const genreLabels: Record<ConcertGenre, string> = {
@@ -47,7 +48,7 @@ const ticketVendor = (url: string) => {
 
 export default function ConcertDetailScreen() {
   const { isWide, isDesktop } = useResponsiveLayout();
-  const { isConcertFavorite, toggleConcert } = useFavorites();
+  const { artists, isConcertFavorite, toggleConcert } = useFavorites();
   const { id, genre = 'POPULAR_MUSIC' } = useLocalSearchParams<{ id: string; genre: ConcertGenre }>();
   const concertQuery = useQuery({
     queryKey: ['concert', id, genre],
@@ -72,7 +73,7 @@ export default function ConcertDetailScreen() {
   }
 
   const concert = concertQuery.data;
-  const artistNames = concert.artists.map((artist) => artist.name).join(', ') || '출연진 미등록';
+  const artistNames = concertArtistNames(concert, artists);
   const isKopis = concert.source === 'KOPIS';
   const ticketLinks = concert.ticketLinks?.length
     ? concert.ticketLinks
@@ -94,19 +95,19 @@ export default function ConcertDetailScreen() {
     <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}>
       <View style={isDesktop ? { flexDirection: 'row', gap: 40, alignItems: 'flex-start' } : undefined}>
       {concert.posterUrl ? (
-        <View style={isDesktop ? { width: 340 } : undefined}>
+        <View style={isDesktop ? { width: 240 } : undefined}>
         <Image
           accessibilityIgnoresInvertColors
           accessibilityLabel={`${concert.title} 포스터`}
-          resizeMode={isDesktop ? 'contain' : 'cover'}
+          resizeMode="contain"
           source={{ uri: concert.posterUrl }}
-          style={[styles.poster, isDesktop && { height: 480 }]}
+          style={[styles.poster, isDesktop && { width: 200, height: 284 }]}
         />
         </View>
       ) : null}
       <View style={isDesktop ? { flex: 1, minWidth: 0 } : undefined}>
       <View style={styles.titleRow}>
-        <Text style={styles.artist}>{artistNames}</Text>
+        {artistNames ? <Text style={styles.artist}>{artistNames}</Text> : null}
         <Pressable
           accessibilityLabel={isConcertFavorite(concert.id) ? '공연 찜 해제' : '공연 찜하기'}
           accessibilityRole="button"
@@ -195,6 +196,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   favoriteButton: {
+    marginLeft: 'auto',
     alignItems: 'center',
     backgroundColor: colors.primarySoft,
     borderRadius: radius.pill,
@@ -207,7 +209,8 @@ const styles = StyleSheet.create({
     aspectRatio: 2 / 3,
     borderRadius: radius.md,
     marginBottom: spacing.lg,
-    width: '62%',
+    width: '54%',
+    maxWidth: 260,
   },
   title: {
     color: colors.text,

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { artistConcertKeywords, concertPhase, homeConcerts } from '../src/lib/home-concerts.ts';
+import { artistConcertKeywords, concertArtistNames, concertPhase, homeConcerts } from '../src/lib/home-concerts.ts';
 
 test('home includes favorite artist history, orders ongoing/upcoming/history, excludes cancelled and demo shows', () => {
   const now = Date.parse('2026-10-28T00:00:00Z');
@@ -50,4 +50,15 @@ test('deduplicates repeated API results and accepts published StagePin records, 
 test('bounds query variants to primary names and one Korean alias per artist', () => {
   assert.deepEqual(artistConcertKeywords([{name:'DAY6',searchName:'Day 6',aliases:['데이식스','데이 식스','デイシックス']}]),['DAY6','데이식스']);
   assert.deepEqual(artistConcertKeywords([]),[]);
+});
+
+test('detail prefers actual cast and only supplements missing cast with matching known profiles', () => {
+  const artists = [{name:'DAY6',searchName:'DAY6',aliases:['데이식스']}, {name:'IVE',searchName:'IVE',aliases:['아이브']}];
+  assert.equal(concertArtistNames({title:'DAY6 10th Anniversary Tour',artists:[]},artists),'DAY6');
+  assert.equal(concertArtistNames({title:'데이식스 콘서트',artists:[]},artists),'DAY6');
+  assert.equal(concertArtistNames({title:'DAY 6 CONCERT',artists:[]},artists),'DAY6');
+  assert.equal(concertArtistNames({title:'LIVE MUSIC',artists:[]},artists),'');
+  assert.equal(concertArtistNames({title:'DAY6 CONCERT',artists:[{name:'실제 출연진'}]},artists),'실제 출연진');
+  assert.equal(concertArtistNames({title:'DAY6 CONCERT',artists:[]},[]),'');
+  assert.equal(concertArtistNames({title:'DAY6 CONCERT',artists:[{name:' '}]},artists),'DAY6');
 });
