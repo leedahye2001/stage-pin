@@ -115,7 +115,7 @@ const localApiUrl = Platform.select({
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? localApiUrl;
 
-export type PopularSearchResponse = { initial: boolean; items: { term: string; count: number }[] };
+export type PopularSearchResponse = { initial: boolean; updatedAt: string; items: { term: string; count: number }[] };
 
 export function getPopularSearches(): Promise<PopularSearchResponse> {
   return request('/api/v1/search/popular');

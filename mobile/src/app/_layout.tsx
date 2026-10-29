@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WebAnalytics } from '@/components/WebAnalytics';
 import { LaunchIntro } from '@/components/LaunchIntro';
 import { DesktopHeader } from '@/components/DesktopHeader';
+import { OutsidePressProvider } from '@/components/OutsidePressProvider';
 
 import { FavoritesProvider } from '@/lib/favorites';
 import { GoodsDemoProvider } from '@/lib/goods-demo-state';
@@ -23,6 +24,7 @@ export default function RootLayout() {
             <StatusBar style="dark" />
             <WebAnalytics />
             <LaunchIntro>
+            <OutsidePressProvider>
             <DesktopHeader />
             <Stack
               screenOptions={{
@@ -43,6 +45,7 @@ export default function RootLayout() {
               <Stack.Screen name="goods/[id]" options={{ title: '굿즈 상세' }} />
               <Stack.Screen name="goods/create" options={{ title: '굿즈 등록' }} />
             </Stack>
+            </OutsidePressProvider>
             </LaunchIntro>
             </SavedSchedulesProvider>
           </GoodsDemoProvider>
