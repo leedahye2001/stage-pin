@@ -13,7 +13,7 @@ class PopularSearchControllerTest {
     void listsTermsWithoutCountingAndValidatesSubmissions() throws Exception {
         PopularSearchService service = mock(PopularSearchService.class);
         when(service.findPopular()).thenReturn(new PopularSearchService.PopularSearchResponse(true,
-                List.of(new PopularSearchService.PopularTerm("DAY6", 0))));
+                List.of(new PopularSearchService.PopularTerm("DAY6", 0)), java.time.Instant.parse("2026-10-29T09:00:00Z")));
         var mvc = MockMvcBuilders.standaloneSetup(new PopularSearchController(service)).build();
         mvc.perform(get("/api/v1/search/popular")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.initial").value(true)).andExpect(jsonPath("$.items[0].term").value("DAY6"));

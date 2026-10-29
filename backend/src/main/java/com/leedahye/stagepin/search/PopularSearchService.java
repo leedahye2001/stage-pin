@@ -3,11 +3,18 @@ package com.leedahye.stagepin.search;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
+@EnableScheduling
 public class PopularSearchService {
     private static final Map<String, String> ALIASES = Map.ofEntries(
             Map.entry("day6", "DAY6"), Map.entry("데이식스", "DAY6"),
@@ -21,17 +28,30 @@ public class PopularSearchService {
             Map.entry("enhypen", "ENHYPEN"), Map.entry("엔하이픈", "ENHYPEN"),
             Map.entry("lesserafim", "LE SSERAFIM"), Map.entry("르세라핌", "LE SSERAFIM"));
     private final JdbcTemplate jdbc;
+    private final Clock clock;
+    private PopularSearchResponse snapshot;
 
+    @Autowired
     public PopularSearchService(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+        this(jdbc, Clock.systemUTC());
     }
 
-    public PopularSearchResponse findPopular() {
+    PopularSearchService(JdbcTemplate jdbc, Clock clock) {
+        this.jdbc = jdbc;
+        this.clock = clock;
+    }
+
+    // A request also catches up after a sleeping server misses the scheduled boundary.
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
+    public synchronized PopularSearchResponse findPopular() {
+        Instant now = clock.instant();
+        if (snapshot != null && snapshot.updatedAt().truncatedTo(ChronoUnit.HOURS).equals(now.truncatedTo(ChronoUnit.HOURS))) return snapshot;
         List<PopularTerm> terms = jdbc.query("""
                 SELECT term, search_count FROM popular_search_term
                 ORDER BY search_count DESC, seed_rank ASC LIMIT 10
                 """, (row, index) -> new PopularTerm(row.getString("term"), row.getLong("search_count")));
-        return new PopularSearchResponse(terms.stream().allMatch(term -> term.count() == 0), terms);
+        snapshot = new PopularSearchResponse(terms.stream().allMatch(term -> term.count() == 0), terms, now);
+        return snapshot;
     }
 
     public void record(String query) {
@@ -46,5 +66,5 @@ public class PopularSearchService {
     }
 
     public record PopularTerm(String term, long count) { }
-    public record PopularSearchResponse(boolean initial, List<PopularTerm> items) { }
+    public record PopularSearchResponse(boolean initial, List<PopularTerm> items, Instant updatedAt) { }
 }
