@@ -27,7 +27,10 @@ export function HomeStageSchedule() {
   return <View style={s.section}>
     <View style={m.between}><Text style={m.sectionTitle}>공연·예매 일정</Text><Pressable accessibilityRole="button" accessibilityLabel="공연 전체 보기" onPress={() => router.push('/explore')}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
     <View style={s.tabs}>{tabs.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.label} 일정 보기`} accessibilityState={{ selected: tab === item.id }} onPress={() => setTab(item.id)} style={[s.tab, tab === item.id && s.activeTab]}><Text style={[s.tabText, tab === item.id && s.activeText]}>{item.label}</Text></Pressable>)}</View>
-    <Pressable accessibilityRole="checkbox" accessibilityLabel="찜한 아티스트 일정만 보기" accessibilityState={{ checked: favoritesOnly }} onPress={() => setFavoritesOnly(!favoritesOnly)} style={s.scope}><Ionicons name={favoritesOnly ? 'heart' : 'heart-outline'} size={15} color={favoritesOnly ? colors.primary : colors.textMuted} /><Text style={s.scopeText}>찜한 아티스트만</Text><Ionicons name={favoritesOnly ? 'checkbox' : 'square-outline'} size={16} color={colors.primary} /></Pressable>
+    <View style={s.scope}>
+      <Pressable accessibilityRole="button" accessibilityLabel="전체 아티스트 일정 보기" accessibilityState={{ selected: !favoritesOnly }} onPress={() => setFavoritesOnly(false)} style={s.scopeOption}><Text style={[s.scopeText, !favoritesOnly && s.scopeActive]}>전체</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="찜한 아티스트 일정 보기" accessibilityState={{ selected: favoritesOnly }} onPress={() => setFavoritesOnly(true)} style={s.scopeOption}><Text style={[s.scopeText, favoritesOnly && s.scopeActive]}>찜한 아티스트</Text></Pressable>
+    </View>
     {favoritesOnly && !artists.length ? <View style={s.empty}><Text style={s.emptyTitle}>먼저 좋아하는 아티스트를 찜해보세요</Text><Text style={m.subtitle}>위의 하트를 누르면 이곳에서 일정을 모아볼 수 있어요.</Text></View>
       : active.isPending ? <ActivityIndicator color={colors.primary} />
       : active.isError ? <View style={s.empty}><Text style={m.subtitle}>일정을 불러오지 못했어요.</Text><Pressable accessibilityRole="button" onPress={() => active.refetch()}><Text style={m.link}>다시 불러오기</Text></Pressable></View>
@@ -43,7 +46,9 @@ const s = StyleSheet.create({
   tabs: { flexDirection: 'row', gap: 8 },
   tab: { alignItems: 'center', justifyContent: 'center', paddingVertical: 11, paddingHorizontal: 20, minHeight: 44, borderRadius: 999, backgroundColor: colors.surfaceMuted }, activeTab: { backgroundColor: colors.buttonText },
   tabText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' }, activeText: { color: colors.white },
-  scope: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 7, paddingVertical: 5 }, scopeText: { color: colors.textMuted, fontSize: 11 },
+  scope: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+  scopeOption: { minHeight: 44, justifyContent: 'center' },
+  scopeText: { color: colors.textMuted, fontSize: 12, fontWeight: '500' }, scopeActive: { color: colors.text, fontWeight: '800' },
   empty: { backgroundColor: colors.surfaceMuted, borderRadius: 16, padding: 20, gap: 10 }, emptyTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
   source: { color: '#91859C', fontSize: 9, lineHeight: 15 },
 });
