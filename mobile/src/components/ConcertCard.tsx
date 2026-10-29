@@ -56,7 +56,6 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: Co
         <View style={styles.content}>
           <View style={styles.artistRow}>
             <Text style={[styles.statusBadge, phase === '진행 중' ? styles.ongoingBadge : phase === '예정' ? styles.upcomingBadge : styles.completedBadge]}>{phase}</Text>
-            {isKopis ? <Text style={styles.liveBadge}>KOPIS</Text> : null}
           </View>
           {artistNames ? <View style={styles.artistRow}>
             <Text style={styles.artist}>{artistNames}</Text>
@@ -163,16 +162,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  liveBadge: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    color: colors.primary,
-    fontSize: 9,
-    fontWeight: '900',
-    overflow: 'hidden',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
   },
   title: {
     color: colors.text,

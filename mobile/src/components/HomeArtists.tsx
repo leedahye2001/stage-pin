@@ -2,7 +2,7 @@ import { useQueries } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getArtists } from '@/api/concerts';
-import { ArtistPhoto } from '@/components/ArtistPhoto';
+import { ArtistPhoto, ArtistPhotoCredits } from '@/components/ArtistPhoto';
 import { marketStyles as m } from '@/components/GoodsDemo';
 import { demoArtists } from '@/lib/goods-demo';
 import { useFavorites } from '@/lib/favorites';
@@ -21,10 +21,10 @@ export function HomeArtists() {
   const artists = [...new Map([...favorites.map((artist) => recommended.find((item) => item.id === artist.id) ?? artist), ...recommended].map((artist) => [artist.id, artist])).values()];
   return <View style={{ gap: 24 }}>
     <View style={m.section}>
-      <View style={m.between}><Text style={m.sectionTitle}>좋아하는 아티스트</Text><Text style={s.creditHint}>하트로 내 취향을 핀!</Text></View>
+      <View style={m.between}><Text style={m.sectionTitle}>좋아하는 아티스트</Text><ArtistPhotoCredits artists={artists} /></View>
       {artists.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.list}>
         {artists.map((artist) => <View key={artist.id} style={s.artist}>
-          <ArtistPhoto artist={artist} size={66} favorite={isArtistFavorite(artist.id)} onFavoriteToggle={() => toggleArtist(artist)} />
+          <ArtistPhoto artist={artist} size={66} showCredit={false} favorite={isArtistFavorite(artist.id)} onFavoriteToggle={() => toggleArtist(artist)} />
           <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 공연과 아티스트 보기`} onPress={() => router.push({ pathname: '/artists/[id]', params: { id: artist.id, query: artist.searchName } })}><Text numberOfLines={1} style={s.name}>{artist.name}</Text></Pressable>
         </View>)}
       </ScrollView> : null}
