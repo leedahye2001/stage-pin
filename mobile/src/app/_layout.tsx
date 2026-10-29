@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { WebAnalytics } from '@/components/WebAnalytics';
+import { LaunchIntro } from '@/components/LaunchIntro';
 
 import { FavoritesProvider } from '@/lib/favorites';
 import { GoodsDemoProvider } from '@/lib/goods-demo-state';
@@ -20,6 +21,7 @@ export default function RootLayout() {
             <SavedSchedulesProvider>
             <StatusBar style="dark" />
             <WebAnalytics />
+            <LaunchIntro>
             <Stack
               screenOptions={{
                 contentStyle: { backgroundColor: colors.background },
@@ -39,6 +41,7 @@ export default function RootLayout() {
               <Stack.Screen name="goods/[id]" options={{ title: '굿즈 상세' }} />
               <Stack.Screen name="goods/create" options={{ title: '굿즈 등록' }} />
             </Stack>
+            </LaunchIntro>
             </SavedSchedulesProvider>
           </GoodsDemoProvider>
         </FavoritesProvider>
