@@ -6,7 +6,7 @@ alwaysApply: false
 
 # UI copy
 
-- Use short, descriptive feature headings such as 공연·예매 일정, 새로 올라온 굿즈, 현장 교환.
-- Do not add decorative subtitles, slogans, or emotional marketing copy under headings or in banners (e.g. 누군가의 보물이 내 최애가 되는 순간).
+- Preserve existing banner and section titles unless the user explicitly asks to change them. Removing small supporting copy does not authorize rewriting titles.
+- Do not add small decorative subtitles or emotional supporting copy under headings or in banners (e.g. 누군가의 보물이 내 최애가 되는 순간).
 - Keep essential source attribution, demo disclosures, validation, loading, and error guidance.
 - Home section navigation belongs to the right of the heading, with dark text and the label 전체 보기 >. Keep a context-specific accessibility label.

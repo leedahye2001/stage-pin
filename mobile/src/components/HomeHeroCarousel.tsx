@@ -5,8 +5,8 @@ import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { colors } from '@/theme/tokens';
 
 const banners = [
-  { title: '공연 일정', cta: '공연 찾아보기', route: '/explore', color: '#F5F5F6', accent: '#6C4CF1', mark: '✦' },
-  { title: '굿즈 판매·교환', cta: '굿즈장터 둘러보기', route: '/goods', color: '#F5F5F6', accent: '#6C4CF1', mark: '♡' },
+  { title: '무대를 찾고,\n취향을 나누는 곳.', cta: '다음 공연 찾아보기', route: '/explore', color: '#F5F5F6', accent: '#6C4CF1', mark: '✦' },
+  { title: '같은 공연,\n새로운 굿즈 친구.', cta: '굿즈장터 둘러보기', route: '/goods', color: '#F5F5F6', accent: '#6C4CF1', mark: '♡' },
 ] as const;
 
 export function HomeHeroCarousel() {

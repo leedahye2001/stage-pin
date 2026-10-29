@@ -33,7 +33,7 @@ export default function FanHomeScreen() {
         <View style={m.grid}>{goods.map((item) => <View key={item.id} style={m.gridItem}><GoodsCard item={item} /></View>)}</View>
       </View>
       <View style={s.onsite}>
-        <View style={m.between}><Text style={m.sectionTitle}>현장 교환</Text><Pressable accessibilityRole="button" accessibilityLabel="현장 교환 전체 보기" onPress={() => openGoods('전체', '교환', true)}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
+        <View style={m.between}><Text style={m.sectionTitle}>공연 가는 날, 여기서 만나요</Text><Pressable accessibilityRole="button" accessibilityLabel="현장 교환 전체 보기" onPress={() => openGoods('전체', '교환', true)}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
           {exchanges.map((item) => <View key={item.id} style={{ width: 174 }}><GoodsCard item={item} /><Text style={s.event}><Ionicons name="location-outline" size={10} /> {item.event}</Text></View>)}
         </ScrollView>

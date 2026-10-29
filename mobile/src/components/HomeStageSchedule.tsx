@@ -25,8 +25,8 @@ export function HomeStageSchedule() {
   const tickets = favoritesOnly ? favoriteOpenings(openings.data ?? [], artists) : openings.data ?? [];
   const active = tab === 'SHOW' ? concerts : openings;
   return <View style={s.section}>
-    <View style={m.between}><Text style={m.sectionTitle}>공연·예매 일정</Text><Pressable accessibilityRole="button" accessibilityLabel="공연 전체 보기" onPress={() => router.push('/explore')}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
-    <View style={s.tabs}>{tabs.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.label} 일정 보기`} accessibilityState={{ selected: tab === item.id }} onPress={() => setTab(item.id)} style={[s.tab, tab === item.id && s.activeTab]}><Text style={[s.tabText, tab === item.id && s.activeText]}>{item.label}</Text></Pressable>)}</View>
+    <View style={m.between}><Text style={m.sectionTitle}>공연부터 예매까지</Text><Pressable accessibilityRole="button" accessibilityLabel="공연 전체 보기" onPress={() => router.push('/explore')}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
+    <View style={m.row}>{tabs.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.label} 일정 보기`} accessibilityState={{ selected: tab === item.id }} onPress={() => setTab(item.id)} style={[m.chip, tab === item.id && m.chipSelected]}><Text style={[m.chipText, tab === item.id && m.chipSelectedText]}>{item.label}</Text></Pressable>)}</View>
     <View style={s.scope}>
       <Pressable accessibilityRole="button" accessibilityLabel="전체 아티스트 일정 보기" accessibilityState={{ selected: !favoritesOnly }} onPress={() => setFavoritesOnly(false)} style={s.scopeOption}><Text style={[s.scopeText, !favoritesOnly && s.scopeActive]}>전체</Text></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="찜한 아티스트 일정 보기" accessibilityState={{ selected: favoritesOnly }} onPress={() => setFavoritesOnly(true)} style={s.scopeOption}><Text style={[s.scopeText, favoritesOnly && s.scopeActive]}>찜한 아티스트</Text></Pressable>
@@ -43,9 +43,6 @@ export function HomeStageSchedule() {
 
 const s = StyleSheet.create({
   section: { gap: 16 },
-  tabs: { flexDirection: 'row', gap: 8 },
-  tab: { alignItems: 'center', justifyContent: 'center', paddingVertical: 11, paddingHorizontal: 20, minHeight: 44, borderRadius: 999, backgroundColor: colors.surfaceMuted }, activeTab: { backgroundColor: colors.buttonText },
-  tabText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' }, activeText: { color: colors.white },
   scope: { flexDirection: 'row', alignItems: 'center', gap: 20 },
   scopeOption: { minHeight: 44, justifyContent: 'center' },
   scopeText: { color: colors.textMuted, fontSize: 12, fontWeight: '500' }, scopeActive: { color: colors.text, fontWeight: '800' },
