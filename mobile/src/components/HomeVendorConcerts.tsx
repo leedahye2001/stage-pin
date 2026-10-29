@@ -33,7 +33,6 @@ export function HomeVendorConcerts() {
   const items = concerts.filter(concert => vendor === 'ALL' || concertVendors(concert).includes(vendor));
   const pending = searching || details.some(query => query.isPending || query.isFetching);
   const failed = searches.some(query => query.isError) || details.some(query => query.isError);
-  const retry = () => [...searches, ...details].filter(query => query.isError).forEach(query => query.refetch());
 
   return <View style={s.section}>
     <Text style={m.sectionTitle}>예매처별 공연 일정</Text>
@@ -41,12 +40,10 @@ export function HomeVendorConcerts() {
       {vendors.map(item => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.label} 예매처 공연 보기`} accessibilityState={{ selected: vendor === item.id }} onPress={() => setVendor(item.id)} style={[m.chip, vendor === item.id && m.chipSelected]}><Text style={[m.chipText, vendor === item.id && m.chipSelectedText]}>{item.label}</Text></Pressable>)}
     </ScrollView>
     {items.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-      {items.map(concert => <View key={concert.id} style={{ width: 196, gap: 8 }}>
+      {items.map(concert => <View key={concert.id} style={{ width: 196 }}>
         <ConcertCard concert={concert} favorite={isConcertFavorite(concert.id)} onFavoriteToggle={() => toggleConcert(concert)} onPress={() => router.push({ pathname: '/concerts/[id]', params: { id: concert.id, genre: concert.genre } })} />
-        {concertVendors(concert).length ? <Text style={s.source}>{concertVendors(concert).map(id => vendors.find(item => item.id === id)?.label).join(' · ')}</Text> : null}
       </View>)}
     </ScrollView> : pending ? <LoadingSkeleton kind="concerts" label="예매처별 공연 불러오는 중" /> : <View style={s.empty}><Text style={s.emptyText}>{failed ? '일부 공연 정보를 불러오지 못했어요.' : vendor === 'ALL' ? '조회된 공연이 없어요.' : '조회된 공연 중 이 예매처의 링크가 확인된 공연이 없어요.'}</Text>{vendor !== 'ALL' && candidates.length ? <Pressable accessibilityRole="button" onPress={() => details.forEach(query => query.refetch())}><Text style={m.sectionLink}>예매처 다시 확인</Text></Pressable> : null}</View>}
-    {failed ? <Pressable accessibilityRole="button" onPress={retry}><Text style={m.sectionLink}>조회에 실패한 공연 다시 불러오기</Text></Pressable> : null}
     <Text style={s.source}>공연 정보: 공연예술통합전산망 KOPIS · 임시 추천 검색어 기준 · 예매처는 확인된 링크로 분류해요.</Text>
   </View>;
 }

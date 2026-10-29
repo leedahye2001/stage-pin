@@ -24,7 +24,6 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: ConcertCardProps) {
   const [now] = useState(Date.now);
   const phase = concertPhase(concert, now);
-  const artistNames = concert.artists.map((artist) => artist.name.trim()).filter(Boolean).join(', ');
   const isKopis = concert.source === 'KOPIS';
 
   return (
@@ -57,13 +56,10 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: Co
           <View style={styles.artistRow}>
             <Text style={[styles.statusBadge, phase === '진행 중' ? styles.ongoingBadge : phase === '예정' ? styles.upcomingBadge : styles.completedBadge]}>{phase}</Text>
           </View>
-          {artistNames ? <View style={styles.artistRow}>
-            <Text style={styles.artist}>{artistNames}</Text>
-          </View> : null}
           <Text numberOfLines={2} style={styles.title}>
             {concert.title}
           </Text>
-          <Text style={styles.meta}>
+          <Text numberOfLines={1} style={styles.meta}>
             {isKopis
               ? new Intl.DateTimeFormat('ko-KR', {
                   year: 'numeric',
@@ -73,7 +69,7 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: Co
                 }).format(new Date(concert.startsAt))
               : dateFormatter.format(new Date(concert.startsAt))}
           </Text>
-          <Text style={styles.meta}>
+          <Text numberOfLines={1} style={styles.meta}>
             {concert.venue.name} · {concert.venue.city}
           </Text>
         </View>
@@ -105,11 +101,6 @@ const styles = StyleSheet.create({
   ongoingBadge: { backgroundColor: '#E7F4ED', color: colors.success },
   upcomingBadge: { backgroundColor: colors.primarySoft, color: colors.primary },
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    overflow: 'hidden',
     width: 196,
   },
   pressed: {
@@ -127,6 +118,7 @@ const styles = StyleSheet.create({
     width: 36,
   },
   posterFallback: {
+    borderRadius: radius.md,
     alignItems: 'center',
     backgroundColor: colors.primarySoft,
     height: 264,
@@ -144,19 +136,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   poster: {
+    borderRadius: radius.md,
     backgroundColor: colors.primarySoft,
     height: 264,
     width: '100%',
   },
   content: {
     gap: 3,
-    minHeight: 130,
-    padding: spacing.md,
-  },
-  artist: {
-    color: colors.primary,
-    fontSize: typography.caption,
-    fontWeight: '700',
+    paddingTop: 10,
   },
   artistRow: {
     alignItems: 'center',
@@ -164,11 +151,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   title: {
+    height: 44,
+    lineHeight: 22,
     color: colors.text,
     fontSize: typography.body,
     fontWeight: '700',
   },
   meta: {
+    lineHeight: 18,
     color: colors.textMuted,
     fontSize: typography.caption,
   },
