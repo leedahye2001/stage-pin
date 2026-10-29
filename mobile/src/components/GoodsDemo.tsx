@@ -5,18 +5,21 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { type DemoGoods, goodsPrice } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
+import { useResponsiveLayout } from '@/lib/use-responsive-layout';
 
 export function DemoNotice() {
   return <View style={s.notice}><Ionicons name="information-circle-outline" size={14} color={colors.primary} /><Text style={s.noticeText}>미리보기 · 실제 게시·결제·거래는 진행되지 않아요</Text></View>;
 }
 
 export function GoodsArtwork({ item, large = false }: { item: DemoGoods; large?: boolean }) {
+  const layout = useResponsiveLayout();
+  const wideArtwork = layout.isWide ? { height: large ? 420 : layout.cardWidth } : undefined;
   const [selected, setSelected] = useState(0);
   if (item.photos?.length) return <View style={{ gap: 10 }}>
-    <Image accessibilityLabel={`${item.title} 실물 사진 ${large ? selected + 1 : 1}`} source={{ uri: (item.photos[large ? selected : 0] ?? item.photos[0]).uri }} resizeMode={large ? 'contain' : 'cover'} style={[s.art, { width: '100%', backgroundColor: '#F0EDF7' }, large && s.artLarge]} />
+    <Image accessibilityLabel={`${item.title} 실물 사진 ${large ? selected + 1 : 1}`} source={{ uri: (item.photos[large ? selected : 0] ?? item.photos[0]).uri }} resizeMode={large ? 'contain' : 'cover'} style={[s.art, { width: '100%', backgroundColor: '#F0EDF7' }, large && s.artLarge, wideArtwork]} />
     {large && item.photos.length > 1 ? <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{item.photos.map((photo, index) => <Pressable key={`${photo.uri}-${index}`} accessibilityRole="button" accessibilityLabel={`실물 사진 ${index + 1} 보기`} accessibilityState={{ selected: selected === index }} onPress={() => setSelected(index)}><Image source={{ uri: photo.uri }} style={{ width: 64, height: 64, borderRadius: 10, borderWidth: 2, borderColor: selected === index ? colors.primary : 'transparent' }} /></Pressable>)}</ScrollView> : null}
   </View>;
-  return <View accessibilityLabel={`${item.member} ${item.category} 샘플 일러스트`} style={[s.art, { backgroundColor: item.color }, large && s.artLarge]}>
+  return <View accessibilityLabel={`${item.member} ${item.category} 샘플 일러스트`} style={[s.art, { backgroundColor: item.color }, large && s.artLarge, wideArtwork]}>
     <Text style={[s.artStar, { color: item.ink }]}>✧</Text>
     <View style={[s.paper, large && s.paperLarge, { transform: [{ rotate: item.kind === '교환' ? '-8deg' : '7deg' }] }]}>
       <View style={[s.portrait, { backgroundColor: item.color }]}>
@@ -53,28 +56,29 @@ export function GoodsCard({ item }: { item: DemoGoods }) {
 }
 
 export const marketStyles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAF9FC' },
-  content: { padding: 20, paddingBottom: 110, gap: 24, width: '100%', maxWidth: 1000, alignSelf: 'center' },
+  safe: { flex: 1, backgroundColor: colors.background },
+  content: { padding: 20, paddingBottom: 32, gap: 24, width: '100%', maxWidth: 1000, alignSelf: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1 },
   subtitle: { color: colors.textMuted, fontSize: 12, lineHeight: 20 },
   sectionTitle: { fontSize: 19, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
   link: { color: colors.primary, fontWeight: '700', fontSize: 12 },
+  sectionLink: { color: '#202124', fontWeight: '700', fontSize: 12 },
   section: { gap: 14 },
   chips: { gap: 8 },
-  chip: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E9E5F0', borderRadius: 24 },
-  chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chip: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.button, borderWidth: 1, borderColor: colors.button, borderRadius: 24 },
+  chipSelected: { backgroundColor: colors.buttonText, borderColor: colors.buttonText },
   chipText: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
   chipSelectedText: { color: '#FFFFFF' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   gridItem: { width: '47%', flexGrow: 1, maxWidth: '49%' },
-  empty: { padding: 32, gap: 12, backgroundColor: '#F0EDF7', borderRadius: 20, alignItems: 'center' },
+  empty: { padding: 32, gap: 12, backgroundColor: colors.surfaceMuted, borderRadius: 20, alignItems: 'center' },
 });
 
 const s = StyleSheet.create({
-  notice: { flexDirection: 'row', gap: 7, alignItems: 'center', backgroundColor: '#EEE8FF', borderRadius: 10, padding: 10 },
-  noticeText: { color: '#6B53A1', fontSize: 10, lineHeight: 16, flex: 1 },
+  notice: { flexDirection: 'row', gap: 7, alignItems: 'center', backgroundColor: colors.surfaceMuted, borderRadius: 10, padding: 10 },
+  noticeText: { color: colors.textMuted, fontSize: 10, lineHeight: 16, flex: 1 },
   art: { height: 175, borderRadius: 17, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   artLarge: { height: 320, borderRadius: 24 },
   artStar: { position: 'absolute', top: 10, left: 15, fontSize: 42, opacity: 0.7 },
@@ -91,8 +95,8 @@ const s = StyleSheet.create({
   card: { position: 'relative' },
   cardCopy: { paddingTop: 10, gap: 7 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  badge: { backgroundColor: '#F0EBFA', paddingHorizontal: 6, paddingVertical: 3, fontSize: 9, color: '#7858AB', fontWeight: '800', borderRadius: 5 },
-  exchange: { backgroundColor: '#E5F1E9', color: '#4F8062' },
+  badge: { backgroundColor: colors.surfaceMuted, paddingHorizontal: 6, paddingVertical: 3, fontSize: 9, color: colors.textMuted, fontWeight: '800', borderRadius: 5 },
+  exchange: { backgroundColor: colors.surfaceMuted, color: colors.buttonText },
   artist: { fontSize: 9, color: colors.textMuted, fontWeight: '700' },
   cardTitle: { color: colors.text, fontSize: 13, fontWeight: '700', lineHeight: 19, minHeight: 38 },
   price: { fontWeight: '900', color: colors.text, fontSize: 15 },

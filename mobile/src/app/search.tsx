@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getConcerts } from '@/api/concerts';
@@ -10,6 +12,7 @@ import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function PerformanceSearchScreen() {
+  const { isWide } = useResponsiveLayout();
   const params = useLocalSearchParams<{ query: string }>();
   const query = Array.isArray(params.query) ? params.query[0] : params.query;
   const { isConcertFavorite, toggleConcert } = useFavorites();
@@ -25,7 +28,7 @@ export default function PerformanceSearchScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}>
         <View style={styles.hero}>
           <Text style={styles.eyebrow}>PERFORMANCE SEARCH</Text>
           <Text style={styles.title}>‘{query}’ 공연 검색</Text>
@@ -33,10 +36,7 @@ export default function PerformanceSearchScreen() {
         </View>
 
         {concertsQuery.isPending ? (
-          <View style={styles.centered}>
-            <ActivityIndicator color={colors.primary} size="large" />
-            <Text style={styles.muted}>KOPIS 공연을 찾는 중이에요.</Text>
-          </View>
+          <LoadingSkeleton kind="concerts" label="공연 검색 중" />
         ) : concertsQuery.isError ? (
           <Text style={styles.empty}>공연 검색 결과를 불러오지 못했어요.</Text>
         ) : concerts.length ? (

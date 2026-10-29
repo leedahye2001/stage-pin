@@ -1,12 +1,14 @@
 export const colors = {
-  background: '#F6F5FA',
+  background: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceMuted: '#EFEFF6',
-  text: '#1D1A24',
-  textMuted: '#706B7B',
+  surfaceMuted: '#F4F4F5',
+  text: '#202124',
+  textMuted: '#717276',
+  button: '#F1F2F3',
+  buttonText: '#303238',
   primary: '#6C4CF1',
   primarySoft: '#E9E3FF',
-  border: '#DFDCE7',
+  border: '#E5E5E7',
   success: '#16835E',
   warning: '#D56D12',
   white: '#FFFFFF',
@@ -33,4 +35,3 @@ export const typography = {
   body: 16,
   caption: 13,
 } as const;
-

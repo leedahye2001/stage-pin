@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { createElement, useState } from 'react';
-import { CircleMarker, MapContainer, TileLayer, Tooltip } from 'react-leaflet';
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from 'react-leaflet';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Concert } from '@/api/concerts';
 import { KakaoConcertMap } from '@/components/KakaoConcertMap.web';
+import { requestCurrentLocation, type MapLocation } from '@/lib/current-location';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import 'leaflet/dist/leaflet.css';
@@ -12,6 +13,9 @@ import 'leaflet/dist/leaflet.css';
 type ConcertMapProps = {
   concerts: Concert[];
   onSelect: (concertId: string) => void;
+  initialRealMap?: boolean;
+  height?: number;
+  autoLocate?: boolean;
 };
 
 function KoreaSilhouette() {
@@ -62,18 +66,46 @@ function KoreaSilhouette() {
 
 const clampPercent = (value: number) => Math.min(100, Math.max(0, value));
 
-export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
-  const [showRealMap, setShowRealMap] = useState(false);
-  const venues = Array.from(
+function CurrentLocation({ location }: { location: MapLocation }) {
+  const map = useMap();
+  useEffect(() => { map.setView([location.latitude, location.longitude], 14); }, [map, location]);
+  return <CircleMarker center={[location.latitude, location.longitude]} radius={8} pathOptions={{ color: '#FFFFFF', fillColor: '#287AF5', fillOpacity: 1, weight: 3 }}><Tooltip>현재 위치</Tooltip></CircleMarker>;
+}
+
+export function ConcertMap({ concerts, onSelect, initialRealMap = false, height = 300, autoLocate = false }: ConcertMapProps) {
+  const [showRealMap, setShowRealMap] = useState(initialRealMap);
+  const [location, setLocation] = useState<MapLocation | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const requestInFlight = useRef(false);
+  const locate = useCallback(async () => {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
+    setLocating(true);
+    setLocationError('');
+    try {
+      const position = await requestCurrentLocation(navigator.geolocation);
+      setLocation(position);
+      setShowRealMap(true);
+    } catch (error) {
+      setLocationError(error instanceof Error ? error.message : '위치를 확인하지 못했어요.');
+    } finally { requestInFlight.current = false; setLocating(false); }
+  }, []);
+  useEffect(() => {
+    if (!autoLocate) return;
+    const timer = setTimeout(() => { void locate(); }, 0);
+    return () => clearTimeout(timer);
+  }, [autoLocate, locate]);
+  const venues = useMemo(() => Array.from(
     new Map(concerts.map((concert) => [concert.venue.name, concert])).values(),
-  ).slice(0, 30);
+  ).slice(0, 30), [concerts]);
   const useKakaoMap = Boolean(process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY);
 
   return (
-    <View style={styles.map}>
+    <View style={[styles.map, { height }]}>
       {showRealMap ? (
         useKakaoMap ? (
-          <KakaoConcertMap concerts={venues} onSelect={onSelect} />
+          <KakaoConcertMap concerts={venues} onSelect={onSelect} currentLocation={location} />
         ) : (
           <MapContainer
           attributionControl
@@ -86,6 +118,7 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            {location ? <CurrentLocation location={location} /> : null}
             {venues.map((concert) => (
               <CircleMarker
                 center={[concert.venue.latitude, concert.venue.longitude]}
@@ -140,6 +173,19 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
 
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel="현 위치로 지도 이동"
+        accessibilityState={{ disabled: locating, busy: locating }}
+        disabled={locating}
+        onPress={locate}
+        style={[styles.mapToggle, styles.locationButton]}
+      >
+        <Ionicons color={colors.text} name="locate-outline" size={17} />
+        <Text style={[styles.mapToggleText, { color: colors.text }]}>{locating ? '위치 확인 중…' : '현 위치'}</Text>
+      </Pressable>
+      {locationError ? <View accessibilityRole="alert" style={styles.locationError}><Text style={{ color: colors.text, fontSize: 12 }}>{locationError}</Text></View> : null}
+
+      <Pressable
+        accessibilityRole="button"
         onPress={() => setShowRealMap((current) => !current)}
         style={({ pressed }) => [styles.mapToggle, pressed && styles.mapTogglePressed]}
       >
@@ -151,6 +197,8 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
 }
 
 const styles = StyleSheet.create({
+  locationButton: { bottom: 65, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
+  locationError: { position: 'absolute', left: 12, right: 12, top: 12, padding: 12, backgroundColor: colors.white, borderRadius: 12 },
   map: {
     backgroundColor: '#E9E6F6',
     borderColor: '#DED8F2',

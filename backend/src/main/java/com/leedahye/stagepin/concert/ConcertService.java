@@ -49,6 +49,10 @@ public class ConcertService {
                 .toList();
     }
 
+    public List<ConcertResponse> findHome() {
+        return kopisConcertClient.findHome(Instant.now());
+    }
+
     public List<ConcertResponse> search(String query, ConcertGenre genre) {
         try {
             return kopisConcertClient.search(query, genre);

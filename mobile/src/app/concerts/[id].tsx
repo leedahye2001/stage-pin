@@ -1,24 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getConcert, type ConcertGenre, type FanCategory, type ScheduleType } from '@/api/concerts';
+import { getConcert, type ConcertGenre, type FanCategory } from '@/api/concerts';
+import { ConcertSchedulePicker } from '@/components/ConcertSchedulePicker';
 import { VenueMap } from '@/components/VenueMap';
 import { useFavorites } from '@/lib/favorites';
+import { concertArtistNames } from '@/lib/home-concerts';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
-
-const scheduleLabels: Record<ScheduleType, string> = {
-  FAN_VERIFICATION_OPEN: '팬클럽 인증 시작',
-  FAN_VERIFICATION_CLOSE: '팬클럽 인증 마감',
-  FAN_PRESALE: '팬클럽 선예매',
-  GENERAL_SALE: '일반 예매',
-  ADDITIONAL_SALE: '추가 판매',
-  MERCH_SALE: 'MD 판매',
-  DOOR_OPEN: '입장 시작',
-  SHOW: '공연 시작',
-};
 
 const genreLabels: Record<ConcertGenre, string> = {
   POPULAR_MUSIC: '대중음악',
@@ -35,6 +28,7 @@ const fanCategoryLabels: Record<FanCategory, string> = {
 };
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -53,18 +47,20 @@ const ticketVendor = (url: string) => {
 };
 
 export default function ConcertDetailScreen() {
-  const { isConcertFavorite, toggleConcert } = useFavorites();
+  const { isWide, isDesktop } = useResponsiveLayout();
+  const { artists, isConcertFavorite, toggleConcert } = useFavorites();
   const { id, genre = 'POPULAR_MUSIC' } = useLocalSearchParams<{ id: string; genre: ConcertGenre }>();
   const concertQuery = useQuery({
-    queryKey: ['concert', id, genre],
+    queryKey: ['concert-detail', id, genre],
     queryFn: () => getConcert(id, genre),
     enabled: Boolean(id),
+    refetchOnMount: 'always',
   });
 
-  if (concertQuery.isPending) {
+  if (concertQuery.isPending || (concertQuery.isError && concertQuery.isFetching)) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <ActivityIndicator color={colors.primary} size="large" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScrollView contentContainerStyle={{ padding: 20 }}><LoadingSkeleton kind="detail" label="공연 상세 불러오는 중" /></ScrollView>
       </SafeAreaView>
     );
   }
@@ -73,12 +69,16 @@ export default function ConcertDetailScreen() {
     return (
       <SafeAreaView style={styles.centered}>
         <Text style={styles.errorText}>공연 상세 정보를 불러오지 못했어요.</Text>
+        <Text style={styles.meta}>예매처가 없는 것이 아니라 상세 조회에 실패한 상태예요.</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="공연 상세 다시 불러오기" onPress={() => concertQuery.refetch()} style={styles.retryButton}>
+          <Text style={{ color: colors.buttonText, fontWeight: '700' }}>다시 불러오기</Text>
+        </Pressable>
       </SafeAreaView>
     );
   }
 
   const concert = concertQuery.data;
-  const artistNames = concert.artists.map((artist) => artist.name).join(', ') || '출연진 미등록';
+  const artistNames = concertArtistNames(concert, artists);
   const isKopis = concert.source === 'KOPIS';
   const ticketLinks = concert.ticketLinks?.length
     ? concert.ticketLinks
@@ -88,6 +88,7 @@ export default function ConcertDetailScreen() {
       }));
   const concertDate = isKopis
     ? new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -96,18 +97,22 @@ export default function ConcertDetailScreen() {
     : dateFormatter.format(new Date(concert.startsAt));
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}>
+      <View style={isDesktop ? { flexDirection: 'row', gap: 40, alignItems: 'flex-start' } : undefined}>
       {concert.posterUrl ? (
+        <View style={isDesktop ? { width: 240 } : undefined}>
         <Image
           accessibilityIgnoresInvertColors
           accessibilityLabel={`${concert.title} 포스터`}
-          resizeMode="cover"
+          resizeMode="contain"
           source={{ uri: concert.posterUrl }}
-          style={styles.poster}
+          style={[styles.poster, isDesktop && { width: 200, height: 284 }]}
         />
+        </View>
       ) : null}
+      <View style={isDesktop ? { flex: 1, minWidth: 0 } : undefined}>
       <View style={styles.titleRow}>
-        <Text style={styles.artist}>{artistNames}</Text>
+        {artistNames ? <Text style={styles.artist}>{artistNames}</Text> : null}
         <Pressable
           accessibilityLabel={isConcertFavorite(concert.id) ? '공연 찜 해제' : '공연 찜하기'}
           accessibilityRole="button"
@@ -125,9 +130,11 @@ export default function ConcertDetailScreen() {
       <Text style={styles.date}>{concertDate}</Text>
       {isKopis ? (
         <Text style={styles.sourceBadge}>
-          KOPIS · {genreLabels[concert.genre]} · {fanCategoryLabels[concert.fanCategory]}
+          {genreLabels[concert.genre]} · {fanCategoryLabels[concert.fanCategory]}
         </Text>
       ) : null}
+
+      <ConcertSchedulePicker key={concert.id} concert={concert} />
 
       <View style={styles.venueCard}>
         <Text style={styles.cardLabel}>공연장</Text>
@@ -144,32 +151,6 @@ export default function ConcertDetailScreen() {
         ) : null}
         <VenueMap venue={concert.venue} />
       </View>
-
-      <Text style={styles.sectionTitle}>티켓팅 타임라인</Text>
-      {concert.schedules.length ? (
-        <View style={styles.timeline}>
-          {concert.schedules.map((schedule, index) => (
-          <View key={schedule.id} style={styles.timelineRow}>
-            <View style={styles.timelineRail}>
-              <View style={styles.timelineDot} />
-              {index < concert.schedules.length - 1 ? <View style={styles.timelineLine} /> : null}
-            </View>
-            <View style={styles.timelineContent}>
-              <Text style={styles.scheduleLabel}>{scheduleLabels[schedule.type]}</Text>
-              <Text style={styles.scheduleDate}>{dateFormatter.format(new Date(schedule.startsAt))}</Text>
-              <Text style={styles.timezone}>{schedule.timezone}</Text>
-            </View>
-          </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.emptySchedule}>
-          <Text style={styles.emptyScheduleTitle}>예매 일정은 공식 공지에서 확인해 주세요.</Text>
-          <Text style={styles.emptyScheduleDescription}>
-            선예매·일반예매 일정은 추후 공식 공지와 예매처에서 연동할 예정이에요.
-          </Text>
-        </View>
-      )}
 
       <Text style={styles.sectionTitle}>예매처</Text>
       {ticketLinks.length ? (
@@ -190,17 +171,27 @@ export default function ConcertDetailScreen() {
         </View>
       ) : (
         <View style={styles.emptySchedule}>
-          <Text style={styles.emptyScheduleTitle}>등록된 공식 예매처가 없어요.</Text>
+          <Text style={styles.emptyScheduleTitle}>KOPIS에서 제공하는 예매처 링크가 없어요.</Text>
           <Text style={styles.emptyScheduleDescription}>
-            KOPIS에 공식 예매 링크가 등록되면 이곳에 바로 표시할게요.
+            공연 상세 조회는 완료됐지만 예매처 링크가 제공되지 않았어요. 실제 예매처가 없다는 뜻은 아니에요.
           </Text>
         </View>
       )}
+      </View></View>
+      {isKopis ? <View style={styles.sourceFooter}>
+        <Text style={styles.sourceCredit}>이 서비스는 공연예술통합전산망 KOPIS Open API를 활용합니다.</Text>
+        <Pressable accessibilityRole="link" accessibilityLabel="공연 정보 출처 KOPIS 열기" onPress={() => Linking.openURL('https://www.kopis.or.kr')}>
+          <Text style={styles.sourceCredit}>출처: (재)예술경영지원센터 공연예술통합전산망 (www.kopis.or.kr)</Text>
+        </Pressable>
+      </View> : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  sourceFooter: { marginTop: spacing.xl, gap: 4 },
+  sourceCredit: { color: colors.textMuted, fontSize: 11, lineHeight: 17 },
+  retryButton: { backgroundColor: colors.button, paddingVertical: 14, paddingHorizontal: 22, borderRadius: radius.pill, marginTop: 16 },
   content: {
     backgroundColor: colors.background,
     flexGrow: 1,
@@ -219,6 +210,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   favoriteButton: {
+    marginLeft: 'auto',
     alignItems: 'center',
     backgroundColor: colors.primarySoft,
     borderRadius: radius.pill,
@@ -231,7 +223,8 @@ const styles = StyleSheet.create({
     aspectRatio: 2 / 3,
     borderRadius: radius.md,
     marginBottom: spacing.lg,
-    width: '62%',
+    width: '54%',
+    maxWidth: 260,
   },
   title: {
     color: colors.text,
@@ -302,11 +295,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     marginTop: spacing.xl,
   },
-  timeline: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
   emptySchedule: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -320,45 +308,6 @@ const styles = StyleSheet.create({
   emptyScheduleDescription: {
     color: colors.textMuted,
     lineHeight: 20,
-    marginTop: spacing.xs,
-  },
-  timelineRow: {
-    flexDirection: 'row',
-    minHeight: 88,
-  },
-  timelineRail: {
-    alignItems: 'center',
-    marginRight: spacing.md,
-    width: 18,
-  },
-  timelineDot: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    height: 12,
-    marginTop: 4,
-    width: 12,
-  },
-  timelineLine: {
-    backgroundColor: colors.primarySoft,
-    flex: 1,
-    marginVertical: 4,
-    width: 2,
-  },
-  timelineContent: {
-    flex: 1,
-  },
-  scheduleLabel: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '800',
-  },
-  scheduleDate: {
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-  },
-  timezone: {
-    color: colors.primary,
-    fontSize: typography.caption,
     marginTop: spacing.xs,
   },
   primaryButton: {

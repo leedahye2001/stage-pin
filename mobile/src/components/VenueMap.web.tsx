@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { VenueSummary } from '@/api/concerts';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { colors, radius } from '@/theme/tokens';
 
 type KakaoWindow = Window & {
@@ -38,20 +39,24 @@ function loadKakaoMaps(appKey: string) {
 export function VenueMap({ venue }: { venue: VenueSummary }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
   const appKey = process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY;
   const kakaoMapUrl = `https://map.kakao.com/link/map/${encodeURIComponent(venue.name)},${venue.latitude},${venue.longitude}`;
 
   useEffect(() => {
     if (!appKey || !containerRef.current) return;
+    let cancelled = false;
 
     loadKakaoMaps(appKey)
       .then((maps) => {
-        if (!containerRef.current) return;
+        if (cancelled || !containerRef.current) return;
         const position = new maps.LatLng(venue.latitude, venue.longitude);
         const map = new maps.Map(containerRef.current, { center: position, level: 4 });
         new maps.Marker({ map, position, title: venue.name });
+        setReady(true);
       })
-      .catch(() => setFailed(true));
+      .catch(() => { if (!cancelled) setFailed(true); });
+    return () => { cancelled = true; };
   }, [appKey, venue.latitude, venue.longitude, venue.name]);
 
   if (!appKey || failed) {
@@ -65,7 +70,10 @@ export function VenueMap({ venue }: { venue: VenueSummary }) {
     );
   }
 
-  return <div aria-label={`${venue.name} 카카오맵`} ref={containerRef} style={styles.map} />;
+  return <View style={styles.container}>
+    {!ready ? <LoadingSkeleton kind="map" label="공연장 지도 불러오는 중" /> : null}
+    <div aria-label={`${venue.name} 카카오맵`} ref={containerRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+  </View>;
 }
 
 const styles = StyleSheet.create({
@@ -74,13 +82,6 @@ const styles = StyleSheet.create({
     height: 190,
     marginTop: 14,
     overflow: 'hidden',
-  },
-  map: {
-    borderRadius: radius.md,
-    height: 190,
-    marginTop: 14,
-    overflow: 'hidden',
-    width: '100%',
   },
   fallback: {
     alignItems: 'center',

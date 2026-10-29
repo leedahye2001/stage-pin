@@ -7,8 +7,10 @@ import { marketStyles as m } from '@/components/GoodsDemo';
 import { createDemoListing, digitsOnly, goodsConditions, MAX_GOODS_PHOTOS, validateGoodsPhotos, type GoodsDraft } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 
 export default function GoodsCreateScreen() {
+  const { isWide } = useResponsiveLayout();
   const { addListing } = useGoodsDemo();
   const [draft, setDraft] = useState<GoodsDraft>({ artist: '', title: '', kind: '판매', price: '', wanted: '', condition: '', photos: [], description: '', onsite: false, delivery: true, event: '' });
   const [error, setError] = useState('');
@@ -34,7 +36,7 @@ export default function GoodsCreateScreen() {
       router.replace({ pathname: '/goods/[id]', params: { id: item.id } });
     } catch (exception) { setError(exception instanceof Error ? exception.message : '입력 내용을 확인해 주세요.'); }
   };
-  return <SafeAreaView edges={['bottom']} style={m.safe}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={m.content}>
+  return <SafeAreaView edges={['bottom']} style={m.safe}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[m.content, isWide && responsiveStyles.form]}>
     <View style={{ gap: 8 }}><Text style={m.title}>다음 주인을 찾아요</Text><Text style={m.subtitle}>판매할 굿즈도, 교환하고 싶은 마음도.</Text></View>
     <View style={s.notice}><Text style={s.noticeTitle}>등록 흐름 미리보기</Text><Text style={m.subtitle}>글과 첨부 사진은 이 앱 안에만 추가되며 새로고침하면 사라져요. 서버 업로드·실제 게시·결제·상대방 전송은 하지 않아요.</Text></View>
     <View style={m.row}>{(['판매', '교환'] as const).map((kind) => <Pressable key={kind} accessibilityRole="button" accessibilityLabel={`${kind} 글 작성`} accessibilityState={{ selected: draft.kind === kind }} onPress={() => setDraft({ ...draft, kind })} style={[m.chip, draft.kind === kind && m.chipSelected]}><Text style={[m.chipText, draft.kind === kind && m.chipSelectedText]}>{kind}</Text></Pressable>)}</View>
@@ -63,12 +65,12 @@ const s = StyleSheet.create({
   options: { backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: '#E6E0EE', overflow: 'hidden' },
   option: { padding: 15, flexDirection: 'row', justifyContent: 'space-between', minHeight: 48 },
   photo: { width: 100, height: 110, position: 'relative' }, photoImage: { width: '100%', height: '100%', borderRadius: 12 },
-  addPhoto: { width: 100, height: 110, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9B9E5', justifyContent: 'center', alignItems: 'center', gap: 7, backgroundColor: '#F2EDF9' },
+  addPhoto: { width: 100, height: 110, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, justifyContent: 'center', alignItems: 'center', gap: 7, backgroundColor: colors.surfaceMuted },
   remove: { position: 'absolute', right: 0, top: 0, width: 44, height: 44, borderRadius: 12, backgroundColor: '#30273DC9', alignItems: 'center', justifyContent: 'center' },
   cover: { position: 'absolute', bottom: 5, left: 5, color: '#FFFFFF', backgroundColor: colors.primary, fontSize: 10, padding: 4, borderRadius: 5 },
   field: { gap: 10 }, label: { fontSize: 13, color: colors.text, fontWeight: '800' },
   input: { padding: 15, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E6E0EE', borderRadius: 14, fontSize: 14, color: colors.text },
-  multiline: { minHeight: 110, textAlignVertical: 'top' }, notice: { padding: 16, borderRadius: 17, backgroundColor: '#F0ECF7', gap: 7 },
+  multiline: { minHeight: 110, textAlignVertical: 'top' }, notice: { padding: 16, borderRadius: 17, backgroundColor: colors.surfaceMuted, gap: 7 },
   noticeTitle: { fontSize: 12, fontWeight: '800', color: colors.primary }, error: { color: '#AE4958', fontSize: 13 },
   submit: { backgroundColor: colors.primary, borderRadius: 18, padding: 18, alignItems: 'center' }, submitText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
 });

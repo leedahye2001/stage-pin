@@ -1,7 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Concert } from '@/api/concerts';
+import { concertPhase } from '@/lib/home-concerts';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 type ConcertCardProps = {
@@ -20,8 +22,8 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 });
 
 export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: ConcertCardProps) {
-  const artistNames = concert.artists.map((artist) => artist.name).join(', ')
-    || (concert.status === 'COMPLETED' ? '공연 완료' : '출연진 미등록');
+  const [now] = useState(Date.now);
+  const phase = concertPhase(concert, now);
   const isKopis = concert.source === 'KOPIS';
 
   return (
@@ -52,13 +54,12 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: Co
 
         <View style={styles.content}>
           <View style={styles.artistRow}>
-            <Text style={styles.artist}>{artistNames}</Text>
-            {isKopis ? <Text style={styles.liveBadge}>KOPIS</Text> : null}
+            <Text style={[styles.statusBadge, phase === '진행 중' ? styles.ongoingBadge : phase === '예정' ? styles.upcomingBadge : styles.completedBadge]}>{phase}</Text>
           </View>
           <Text numberOfLines={2} style={styles.title}>
             {concert.title}
           </Text>
-          <Text style={styles.meta}>
+          <Text numberOfLines={1} style={styles.meta}>
             {isKopis
               ? new Intl.DateTimeFormat('ko-KR', {
                   year: 'numeric',
@@ -68,7 +69,7 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: Co
                 }).format(new Date(concert.startsAt))
               : dateFormatter.format(new Date(concert.startsAt))}
           </Text>
-          <Text style={styles.meta}>
+          <Text numberOfLines={1} style={styles.meta}>
             {concert.venue.name} · {concert.venue.city}
           </Text>
         </View>
@@ -95,12 +96,11 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: Co
 }
 
 const styles = StyleSheet.create({
+  statusBadge: { borderRadius: 8, overflow: 'hidden', fontSize: 12, lineHeight: 18, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 4 },
+  completedBadge: { backgroundColor: colors.surfaceMuted, color: colors.textMuted },
+  ongoingBadge: { backgroundColor: '#E7F4ED', color: colors.success },
+  upcomingBadge: { backgroundColor: colors.primarySoft, color: colors.primary },
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    overflow: 'hidden',
     width: 196,
   },
   pressed: {
@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     width: 36,
   },
   posterFallback: {
+    borderRadius: radius.md,
     alignItems: 'center',
     backgroundColor: colors.primarySoft,
     height: 264,
@@ -135,41 +136,29 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   poster: {
+    borderRadius: radius.md,
     backgroundColor: colors.primarySoft,
     height: 264,
     width: '100%',
   },
   content: {
     gap: 3,
-    minHeight: 152,
-    padding: spacing.md,
-  },
-  artist: {
-    color: colors.primary,
-    fontSize: typography.caption,
-    fontWeight: '700',
+    paddingTop: 10,
   },
   artistRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  liveBadge: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    color: colors.primary,
-    fontSize: 9,
-    fontWeight: '900',
-    overflow: 'hidden',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
   title: {
+    height: 44,
+    lineHeight: 22,
     color: colors.text,
     fontSize: typography.body,
     fontWeight: '700',
   },
   meta: {
+    lineHeight: 18,
     color: colors.textMuted,
     fontSize: typography.caption,
   },

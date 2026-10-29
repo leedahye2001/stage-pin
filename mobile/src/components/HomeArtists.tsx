@@ -1,11 +1,12 @@
 import { useQueries } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getArtists } from '@/api/concerts';
-import { ArtistPhoto } from '@/components/ArtistPhoto';
+import { ArtistPhoto, ArtistPhotoCredits } from '@/components/ArtistPhoto';
 import { marketStyles as m } from '@/components/GoodsDemo';
 import { demoArtists } from '@/lib/goods-demo';
 import { useFavorites } from '@/lib/favorites';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { colors } from '@/theme/tokens';
 
 const normalize = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -20,14 +21,14 @@ export function HomeArtists() {
   const artists = [...new Map([...favorites.map((artist) => recommended.find((item) => item.id === artist.id) ?? artist), ...recommended].map((artist) => [artist.id, artist])).values()];
   return <View style={{ gap: 24 }}>
     <View style={m.section}>
-      <View style={m.between}><Text style={m.sectionTitle}>좋아하는 아티스트</Text><Text style={s.creditHint}>하트로 내 취향을 핀!</Text></View>
+      <View style={m.between}><Text style={m.sectionTitle}>좋아하는 아티스트</Text><ArtistPhotoCredits artists={artists} /></View>
       {artists.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.list}>
         {artists.map((artist) => <View key={artist.id} style={s.artist}>
-          <ArtistPhoto artist={artist} size={66} favorite={isArtistFavorite(artist.id)} onFavoriteToggle={() => toggleArtist(artist)} />
+          <ArtistPhoto artist={artist} size={66} showCredit={false} favorite={isArtistFavorite(artist.id)} onFavoriteToggle={() => toggleArtist(artist)} />
           <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 공연과 아티스트 보기`} onPress={() => router.push({ pathname: '/artists/[id]', params: { id: artist.id, query: artist.searchName } })}><Text numberOfLines={1} style={s.name}>{artist.name}</Text></Pressable>
         </View>)}
       </ScrollView> : null}
-      {profiles.some((item) => item.isFetching) ? <View style={m.row}><ActivityIndicator size="small" color={colors.primary} /><Text style={m.subtitle}>공개 아티스트 프로필을 불러오고 있어요</Text></View> : null}
+      {!artists.length && profiles.some((item) => item.isPending) ? <LoadingSkeleton kind="artists" label="아티스트 프로필 불러오는 중" /> : null}
       {profiles.some((item) => item.isError) ? <View style={{ gap: 9 }}><Text style={s.error}>일부 아티스트 조회가 지연되고 있어요. 잠시 후 다시 시도해 주세요.</Text><Pressable accessibilityRole="button" onPress={() => profiles.filter((item) => item.isError).forEach((item) => item.refetch())}><Text style={m.link}>조회에 실패한 프로필 다시 불러오기</Text></Pressable></View> : null}
     </View>
   </View>;

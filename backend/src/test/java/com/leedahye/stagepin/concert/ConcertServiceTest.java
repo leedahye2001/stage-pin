@@ -46,4 +46,12 @@ class ConcertServiceTest {
         assertThat(service.search("DAY6", ConcertGenre.POPULAR_MUSIC)).isEmpty();
         verify(kopisConcertClient).search("DAY6", ConcertGenre.POPULAR_MUSIC);
     }
+
+    @Test
+    void delegatesHomeToDedicatedRecommendationsWithoutDemoFallback() {
+        when(kopisConcertClient.findHome(any())).thenReturn(List.of());
+        ConcertService service = new ConcertService(concertRepository, kopisConcertClient);
+        assertThat(service.findHome()).isEmpty();
+        verify(kopisConcertClient).findHome(any());
+    }
 }

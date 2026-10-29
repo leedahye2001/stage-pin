@@ -7,6 +7,9 @@ import { radius } from '@/theme/tokens';
 type ConcertMapProps = {
   concerts: Concert[];
   onSelect: (concertId: string) => void;
+  initialRealMap?: boolean;
+  height?: number;
+  autoLocate?: boolean;
 };
 
 const cameraPosition = {
@@ -14,7 +17,7 @@ const cameraPosition = {
   zoom: 4,
 };
 
-export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
+export function ConcertMap({ concerts, onSelect, height = 300 }: ConcertMapProps) {
   const venues = Array.from(
     new Map(concerts.map((concert) => [concert.venue.name, concert])).values(),
   );
@@ -30,7 +33,7 @@ export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
   }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { height }]}>
       {Platform.OS === 'ios' ? (
         <AppleMaps.View
           cameraPosition={cameraPosition}

@@ -32,6 +32,11 @@ public class ConcertController {
         return concertService.findUpcoming(from == null ? Instant.now() : from, genre);
     }
 
+    @GetMapping("/home")
+    List<ConcertResponse> findHome() {
+        return concertService.findHome();
+    }
+
     @GetMapping("/{id}")
     ConcertResponse findById(
             @PathVariable UUID id,

@@ -2,7 +2,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
-  ActivityIndicator,
   FlatList,
   Linking,
   Pressable,
@@ -17,12 +16,15 @@ import { getArtists, getConcerts, getNaverSearch } from '@/api/concerts';
 import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const cleanHtml = (value: string) => value.replace(/<[^>]*>/g, '');
 
 export default function ArtistScreen() {
+  const { isWide } = useResponsiveLayout();
   const { id, query } = useLocalSearchParams<{ id: string; query: string }>();
   const searchName = Array.isArray(query) ? query[0] : query;
   const artistId = Array.isArray(id) ? id[0] : id;
@@ -47,7 +49,6 @@ export default function ArtistScreen() {
 
   const artist = artistQuery.data?.find((item) => item.id === artistId) ?? artistQuery.data?.[0];
   const concerts = concertsQuery.data ?? [];
-  const isLoading = artistQuery.isPending || concertsQuery.isPending;
   const openConcert = (concertId: string) => {
     router.push({ pathname: '/concerts/[id]', params: { id: concertId, genre: 'POPULAR_MUSIC' } });
   };
@@ -62,12 +63,9 @@ export default function ArtistScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {isLoading ? (
-          <View style={styles.centeredSection}>
-            <ActivityIndicator color={colors.primary} size="large" />
-            <Text style={styles.muted}>아티스트의 무대를 모으는 중이에요.</Text>
-          </View>
+      <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}>
+        {artistQuery.isPending ? (
+          <LoadingSkeleton kind="profile" label="아티스트 프로필 불러오는 중" />
         ) : artist ? (
           <View style={styles.profileCard}>
             <ArtistPhoto artist={artist} size={76} />
@@ -108,7 +106,7 @@ export default function ArtistScreen() {
             <Text style={styles.sectionTitle}>공연 기록</Text>
             <Text style={styles.count}>{concerts.length}</Text>
           </View>
-          {concertsQuery.isError ? (
+          {concertsQuery.isPending ? <LoadingSkeleton kind="concerts" label="아티스트 공연 기록 불러오는 중" /> : concertsQuery.isError ? (
             <Text style={styles.empty}>공연 기록을 불러오지 못했어요.</Text>
           ) : concerts.length ? (
             <FlatList
@@ -139,7 +137,7 @@ export default function ArtistScreen() {
           </View>
         ) : null}
 
-        {naverQuery.data?.enabled && naverQuery.data.items.length ? (
+        {naverQuery.isPending ? <LoadingSkeleton kind="schedule" label="관련 소식 불러오는 중" /> : naverQuery.data?.enabled && naverQuery.data.items.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>관련 공식 소식 더 보기</Text>
             <Text style={styles.caption}>누락된 팬미팅·공연 정보는 원문에서 확인해 주세요.</Text>

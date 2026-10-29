@@ -2,28 +2,31 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 
 import { ConcertCard } from '@/components/ConcertCard';
+import { MemberLoginCard } from '@/components/MemberLoginCard';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
-import { DemoNotice, GoodsCard, marketStyles } from '@/components/GoodsDemo';
+import { GoodsCard, marketStyles } from '@/components/GoodsDemo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function MyScreen() {
+  const { isWide } = useResponsiveLayout();
   const { artists, concerts, isConcertFavorite, toggleArtist, toggleConcert } = useFavorites();
   const { items, saved, requested } = useGoodsDemo();
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.reading]}>
         <View>
           <Text style={styles.eyebrow}>MY STAGEPIN</Text>
           <Text style={styles.title}>나의 덕질 보관함</Text>
           <Text style={styles.subtitle}>찜한 굿즈와 무대, 교환하고 싶은 마음까지.</Text>
         </View>
 
-        <DemoNotice />
+        <MemberLoginCard />
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>데모 신청 내역 · {requested.length}</Text>
           <Text style={styles.emptyText}>상대방에게 전송되지 않으며 새로고침 시 초기화돼요.</Text>
@@ -120,7 +123,7 @@ const styles = StyleSheet.create({
   sectionHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   sectionTitle: { color: colors.text, fontSize: typography.title, fontWeight: '800' },
   count: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: radius.pill,
     color: colors.primary,
     fontSize: 12,
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
   artistName: { color: colors.text, fontWeight: '800', maxWidth: '100%' },
   removeButton: {
     alignItems: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.button,
     borderRadius: radius.pill,
     height: 32,
     justifyContent: 'center',

@@ -18,6 +18,32 @@ class KopisConcertClientTest {
     private final KopisConcertClient client = new KopisConcertClient("test-key");
 
     @Test
+    void acceptsAListEntryWithoutRegionUntilDetailsAreLoaded() {
+        assertThat(client.parseListConcerts("""
+                <dbs><db><mt20id>PF001</mt20id><prfnm>가수 콘서트</prfnm><fcltynm>공연장</fcltynm>
+                <prfpdfrom>2026.11.01</prfpdfrom><prfpdto>2026.11.01</prfpdto>
+                <prfstate>공연예정</prfstate></db></dbs>
+                """, ConcertGenre.POPULAR_MUSIC, Instant.now(), 100)).hasSize(1);
+    }
+
+    @Test
+    void homeCanRankAWholeListPageBeforeLimitingDetails() {
+        String entries = java.util.stream.IntStream.range(0, 100).mapToObj(index -> """
+                <db><mt20id>PF%s</mt20id><prfnm>%s</prfnm><fcltynm>공연장</fcltynm>
+                <area>서울특별시</area><prfpdfrom>2026.11.01</prfpdfrom>
+                <prfpdto>2026.11.01</prfpdto><prfstate>공연예정</prfstate></db>
+                """.formatted(index, index == 99 ? "그룹 팬미팅" : "일반 공연 " + index))
+                .collect(java.util.stream.Collectors.joining());
+        var concerts = client.parseListConcerts("<dbs>" + entries + "</dbs>",
+                ConcertGenre.POPULAR_MUSIC, Instant.parse("2026-10-29T00:00:00Z"), 100);
+        assertThat(concerts).hasSize(100);
+        assertThat(HomeConcertRanker.rank(concerts, Instant.parse("2026-10-29T00:00:00Z"))
+                .getFirst().title()).isEqualTo("그룹 팬미팅");
+        assertThat(client.parseSearchConcerts("<dbs>" + entries + "</dbs>",
+                ConcertGenre.POPULAR_MUSIC, Instant.now())).hasSize(30);
+    }
+
+    @Test
     void decodesKopisResponseAsUtf8() {
         byte[] response = "소란 겨울 콘서트".getBytes(StandardCharsets.UTF_8);
 

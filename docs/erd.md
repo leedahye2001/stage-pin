@@ -189,6 +189,7 @@ erDiagram
 | --- | --- | --- |
 | 아티스트 찜 | `ArtistSearchResult[]` | AsyncStorage `stagepin:favorites` |
 | 공연 찜 | `Concert[]` | 같은 키의 `concerts` 배열 |
+| 내 일정 | `SavedSchedule[]` | AsyncStorage `stagepin:saved-schedules:v1`. 공연·예매 일정 스냅샷, 수동 관람 예정 표시 |
 | 굿즈 찜 | `saved: string[]` | React Context 메모리 |
 | 거래 신청 | `requested: string[]` | React Context 메모리, 상대방 전송 없음 |
 | 등록 글·사진 | `items: DemoGoods[]` | React Context 메모리, 서버 업로드 없음 |

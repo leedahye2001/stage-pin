@@ -19,6 +19,7 @@ Current implementation, with live data and local prototypes distinguished:
 - [시스템 아키텍처 · 실행/배포 · 보안 경계](docs/architecture.md)
 - [실제 DB ERD · 굿즈/찜 데이터 모델](docs/erd.md)
 - [주요 데이터 흐름 · AI 검수 · API 목록](docs/data-flows.md)
+- [내 일정 저장 · 달력 · 예매처 이동 흐름](docs/personal-schedule.md)
 
 ## Local development
 
@@ -79,6 +80,19 @@ Xcode when prompted, and run `npm run ios:device`. In `mobile/.env`, set
 `EXPO_PUBLIC_API_URL` to the Mac's LAN address, for example
 `http://192.168.0.10:8080`, because an iPhone cannot reach the Mac through
 `localhost`.
+
+After adding native packages or upgrading Expo, refresh CocoaPods before a raw
+Xcode build (`cd mobile/ios && pod install`). If CocoaPods reports local podspec
+version conflicts after an upgrade, resolve those against the installed packages
+before rebuilding. Skipping this can produce a successful compile that crashes
+at launch with `NativeModule: AsyncStorage is null`. Do not delete the app to
+fix linking: update-install the rebuilt app to preserve its local data.
+
+For a standalone device build without Metro, use
+`npx expo run:ios --device --configuration Release` from `mobile`, with
+`EXPO_PUBLIC_API_URL` set to a reachable HTTPS backend. Check the app's launch
+console and confirm it remains running; build/install success alone does not
+verify startup.
 
 ## Verification
 
