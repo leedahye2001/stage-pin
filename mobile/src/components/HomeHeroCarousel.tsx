@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
+import { router, usePathname } from 'expo-router';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { colors } from '@/theme/tokens';
 
@@ -12,16 +12,28 @@ const banners = [
 export function HomeHeroCarousel() {
   const [width, setWidth] = useState(0);
   const [page, setPage] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const pathname = usePathname();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (pathname !== '/' || !width || dragging || paused) return;
+    const timer = setTimeout(() => {
+      const next = (page + 1) % banners.length;
+      setPage(next);
+      scroll.current?.scrollTo({ x: next * width, animated: true });
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [pathname, width, page, dragging, paused]);
   return <View style={{ gap: 11 }} onLayout={(event) => { const nextWidth = event.nativeEvent.layout.width; setWidth(nextWidth); scroll.current?.scrollTo({ x: page * nextWidth, animated: false }); }}>
-    <ScrollView ref={scroll} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={(event) => { if (width) setPage(Math.round(event.nativeEvent.contentOffset.x / width)); }}>
+    <ScrollView ref={scroll} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScrollBeginDrag={() => setDragging(true)} onScrollEndDrag={() => setDragging(false)} onMomentumScrollEnd={(event) => { if (width) setPage(Math.max(0, Math.min(banners.length - 1, Math.round(event.nativeEvent.contentOffset.x / width)))); }}>
       {banners.map((item) => <View key={item.title} style={[s.hero, { width: width || 320, backgroundColor: item.color }]}>
         <Text style={s.title}>{item.title}</Text>
         <View style={s.art}><Text style={[s.mark, { color: item.accent }]}>{item.mark}</Text><View style={[s.card, { borderColor: item.accent }]}><Text style={[s.cardText, { color: item.accent }]}>MY{`\n`}FAVE</Text></View></View>
         <Pressable accessibilityRole="button" onPress={() => router.push(item.route)} style={s.cta}><Text style={s.ctaText}>{item.cta}</Text><Ionicons name="arrow-forward" size={16} color={colors.buttonText} /></Pressable>
       </View>)}
     </ScrollView>
-    <View style={s.controls}>{banners.map((item, index) => <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={`${index + 1}번 홈 배너 보기`} accessibilityState={{ selected: page === index }} onPress={() => { setPage(index); scroll.current?.scrollTo({ x: index * width, animated: true }); }} style={s.dotTouch}><View style={[s.dot, page === index && s.dotActive]} /></Pressable>)}<Text style={s.counter}>{page + 1} / {banners.length}</Text></View>
+    <View style={s.controls}>{banners.map((item, index) => <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={`${index + 1}번 홈 배너 보기`} accessibilityState={{ selected: page === index }} onPress={() => { setPage(index); scroll.current?.scrollTo({ x: index * width, animated: true }); }} style={s.dotTouch}><View style={[s.dot, page === index && s.dotActive]} /></Pressable>)}<Pressable accessibilityRole="button" accessibilityLabel={paused ? '배너 자동 넘김 재생' : '배너 자동 넘김 일시정지'} onPress={() => setPaused(!paused)} style={s.dotTouch}><Ionicons name={paused ? 'play' : 'pause'} size={12} color={colors.textMuted} /></Pressable><Text style={s.counter}>{page + 1} / {banners.length}</Text></View>
   </View>;
 }
 
