@@ -44,7 +44,6 @@ export function HomeVendorConcerts() {
         <ConcertCard concert={concert} favorite={isConcertFavorite(concert.id)} onFavoriteToggle={() => toggleConcert(concert)} onPress={() => router.push({ pathname: '/concerts/[id]', params: { id: concert.id, genre: concert.genre } })} />
       </View>)}
     </ScrollView> : pending ? <LoadingSkeleton kind="concerts" label="예매처별 공연 불러오는 중" /> : <View style={s.empty}><Text style={s.emptyText}>{failed ? '일부 공연 정보를 불러오지 못했어요.' : vendor === 'ALL' ? '조회된 공연이 없어요.' : '조회된 공연 중 이 예매처의 링크가 확인된 공연이 없어요.'}</Text>{vendor !== 'ALL' && candidates.length ? <Pressable accessibilityRole="button" onPress={() => details.forEach(query => query.refetch())}><Text style={m.sectionLink}>예매처 다시 확인</Text></Pressable> : null}</View>}
-    <Text style={s.source}>공연 정보: 공연예술통합전산망 KOPIS · 임시 추천 검색어 기준 · 예매처는 확인된 링크로 분류해요.</Text>
   </View>;
 }
 
@@ -52,5 +51,4 @@ const s = StyleSheet.create({
   section: { gap: 16 },
   empty: { backgroundColor: colors.surfaceMuted, borderRadius: 16, padding: 20 },
   emptyText: { color: colors.textMuted, fontSize: 13, lineHeight: 20 },
-  source: { color: colors.textMuted, fontSize: 10, lineHeight: 16 },
 });

@@ -130,7 +130,7 @@ export default function ConcertDetailScreen() {
       <Text style={styles.date}>{concertDate}</Text>
       {isKopis ? (
         <Text style={styles.sourceBadge}>
-          KOPIS · {genreLabels[concert.genre]} · {fanCategoryLabels[concert.fanCategory]}
+          {genreLabels[concert.genre]} · {fanCategoryLabels[concert.fanCategory]}
         </Text>
       ) : null}
 
@@ -178,11 +178,19 @@ export default function ConcertDetailScreen() {
         </View>
       )}
       </View></View>
+      {isKopis ? <View style={styles.sourceFooter}>
+        <Text style={styles.sourceCredit}>이 서비스는 공연예술통합전산망 KOPIS Open API를 활용합니다.</Text>
+        <Pressable accessibilityRole="link" accessibilityLabel="공연 정보 출처 KOPIS 열기" onPress={() => Linking.openURL('https://www.kopis.or.kr')}>
+          <Text style={styles.sourceCredit}>출처: (재)예술경영지원센터 공연예술통합전산망 (www.kopis.or.kr)</Text>
+        </Pressable>
+      </View> : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  sourceFooter: { marginTop: spacing.xl, gap: 4 },
+  sourceCredit: { color: colors.textMuted, fontSize: 11, lineHeight: 17 },
   retryButton: { backgroundColor: colors.button, paddingVertical: 14, paddingHorizontal: 22, borderRadius: radius.pill, marginTop: 16 },
   content: {
     backgroundColor: colors.background,

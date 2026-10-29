@@ -40,7 +40,6 @@ export function HomeStageSchedule({ showAll = false }: { showAll?: boolean }) {
       : tab === 'SHOW' ? shows.length ? showAll ? <View style={s.grid}>{cards}</View> : <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>{cards}</ScrollView>
         : <View style={s.empty}><Ionicons name="calendar-outline" size={25} color={colors.textMuted} /><Text style={s.emptyTitle}>찜한 아티스트의 확인된 공연이 없어요</Text></View>
       : <TicketingCarousel openings={tickets} scheduleType={tab} title={tab === 'FAN_PRESALE' ? '선예매 일정' : '일반예매 일정'} compact />}
-    {artists.length > 0 ? <Text style={s.source}>{tab === 'SHOW' ? '공연 정보 · 공연예술통합전산망 KOPIS' : '공식 출처와 예매처 링크가 확인된 일정만 표시해요.'}</Text> : null}
   </View>;
 }
 
@@ -48,5 +47,4 @@ const s = StyleSheet.create({
   section: { gap: 16 }, grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   empty: { backgroundColor: colors.surfaceMuted, borderRadius: 16, padding: 20, gap: 12 },
   emptyTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
-  source: { color: '#91859C', fontSize: 9, lineHeight: 15 },
 });
