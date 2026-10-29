@@ -24,8 +24,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.server.ResponseStatusException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -56,9 +59,14 @@ public class KopisConcertClient {
     private List<ConcertResponse> cachedHomeConcerts = List.of();
     private Instant homeCacheExpiresAt = Instant.EPOCH;
 
+    @Autowired
     public KopisConcertClient(@Value("${kopis.api-key:}") String apiKey) {
+        this(apiKey, RestClient.builder());
+    }
+
+    KopisConcertClient(String apiKey, RestClient.Builder builder) {
         this.apiKey = apiKey;
-        this.restClient = RestClient.builder()
+        this.restClient = builder
                 .baseUrl(KOPIS_API_BASE_URL)
                 .build();
     }
@@ -232,7 +240,7 @@ public class KopisConcertClient {
         return new double[] { 36.5, 127.8 };
     }
 
-    public ConcertResponse findById(UUID id, Instant from, ConcertGenre genre) {
+    public synchronized ConcertResponse findById(UUID id, Instant from, ConcertGenre genre) {
         ConcertResponse searchedConcert = java.util.stream.Stream.concat(
                         cachedHomeConcerts.stream(), cachedSearches.values().stream().flatMap(List::stream))
                 .filter(concert -> concert.id().equals(id))
@@ -246,8 +254,10 @@ public class KopisConcertClient {
                 String facilityId = text(firstDb(detailXml), "mt10id");
                 return toConcert(detailXml, get("/prfplc/" + facilityId), genre, Instant.now());
             } catch (RuntimeException exception) {
-                log.warn("KOPIS detail unavailable for searched concert {}", id, exception);
-                return searchedConcert;
+                // Do not cache a summary as successful detail, or missing links become false "no vendors" results.
+                log.warn("KOPIS detail unavailable for searched concert {} ({})", id, exception.getClass().getSimpleName());
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                        "KOPIS 공연 상세 조회에 실패했어요. 잠시 후 다시 확인해 주세요.");
             }
         }
         return findUpcoming(from, genre).stream()
