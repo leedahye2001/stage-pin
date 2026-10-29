@@ -161,6 +161,10 @@ export function getConcerts(genre: ConcertGenre, query?: string): Promise<Concer
   return request(`/api/v1/concerts?genre=${genre}${search}`);
 }
 
+export function getHomeConcerts(): Promise<Concert[]> {
+  return request('/api/v1/concerts/home');
+}
+
 export function getArtists(query: string): Promise<ArtistSearchResult[]> {
   return request(`/api/v1/artists?query=${encodeURIComponent(query)}`);
 }

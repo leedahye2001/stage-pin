@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { getConcerts, getTicketOpenings } from '@/api/concerts';
+import { getHomeConcerts, getTicketOpenings } from '@/api/concerts';
 import { ConcertCard } from '@/components/ConcertCard';
 import { TicketingCarousel } from '@/components/TicketingCarousel';
 import { marketStyles as m } from '@/components/GoodsDemo';
@@ -19,7 +19,7 @@ export function HomeStageSchedule() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [now] = useState(Date.now);
   const { artists, isConcertFavorite, toggleConcert } = useFavorites();
-  const concerts = useQuery({ queryKey: ['concerts', 'POPULAR_MUSIC'], queryFn: () => getConcerts('POPULAR_MUSIC'), retry: false });
+  const concerts = useQuery({ queryKey: ['concerts', 'home'], queryFn: getHomeConcerts, retry: false });
   const openings = useQuery({ queryKey: ['ticket-openings'], queryFn: getTicketOpenings, enabled: tab !== 'SHOW', retry: false });
   const shows = homeConcerts(concerts.data ?? [], artists, favoritesOnly, now);
   const tickets = favoritesOnly ? favoriteOpenings(openings.data ?? [], artists) : openings.data ?? [];

@@ -7,6 +7,5 @@ export function homeConcerts(concerts: Concert[], favorites: ArtistSearchResult[
   return concerts.filter((concert) => concert.source === 'KOPIS'
     && concert.status !== 'CANCELLED' && concert.status !== 'COMPLETED'
     && new Date(concert.endsAt ?? concert.startsAt).getTime() >= now
-    && (!favoritesOnly || concert.artists.some((artist) => names.has(normalize(artist.name)))))
-    .sort((left, right) => new Date(left.startsAt).getTime() - new Date(right.startsAt).getTime());
+    && (!favoritesOnly || concert.artists.some((artist) => names.has(normalize(artist.name)))));
 }
