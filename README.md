@@ -81,6 +81,19 @@ Xcode when prompted, and run `npm run ios:device`. In `mobile/.env`, set
 `http://192.168.0.10:8080`, because an iPhone cannot reach the Mac through
 `localhost`.
 
+After adding native packages or upgrading Expo, refresh CocoaPods before a raw
+Xcode build (`cd mobile/ios && pod install`). If CocoaPods reports local podspec
+version conflicts after an upgrade, resolve those against the installed packages
+before rebuilding. Skipping this can produce a successful compile that crashes
+at launch with `NativeModule: AsyncStorage is null`. Do not delete the app to
+fix linking: update-install the rebuilt app to preserve its local data.
+
+For a standalone device build without Metro, use
+`npx expo run:ios --device --configuration Release` from `mobile`, with
+`EXPO_PUBLIC_API_URL` set to a reachable HTTPS backend. Check the app's launch
+console and confirm it remains running; build/install success alone does not
+verify startup.
+
 ## Verification
 
 ### Web visitor analytics
