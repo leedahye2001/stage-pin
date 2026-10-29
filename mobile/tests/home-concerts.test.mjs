@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { artistConcertKeywords, concertArtistNames, concertPhase, homeConcerts } from '../src/lib/home-concerts.ts';
+import { artistConcertKeywords, concertArtistNames, concertPhase, concertVendors, homeConcerts, popularArtists, vendorConcertCandidates } from '../src/lib/home-concerts.ts';
 
 test('home includes favorite artist history, orders ongoing/upcoming/history, excludes cancelled and demo shows', () => {
   const now = Date.parse('2026-10-28T00:00:00Z');
@@ -61,4 +61,24 @@ test('detail prefers actual cast and only supplements missing cast with matching
   assert.equal(concertArtistNames({title:'DAY6 CONCERT',artists:[{name:'실제 출연진'}]},artists),'실제 출연진');
   assert.equal(concertArtistNames({title:'DAY6 CONCERT',artists:[]},[]),'');
   assert.equal(concertArtistNames({title:'DAY6 CONCERT',artists:[{name:' '}]},artists),'DAY6');
+});
+
+test('editorial vendor candidates cover all six artists, two each, without duplicates or unrelated titles', () => {
+  const now = Date.parse('2026-10-29T00:00:00Z');
+  const base = {source:'KOPIS',status:'COMPLETED',artists:[],endsAt:null,ticketLinks:[]};
+  const shows = popularArtists.flatMap(artist => [1,2,3].map(day => ({...base,id:`${artist.id}-${day}`,title:`${artist.name} CONCERT`,startsAt:`2026-07-0${day}T03:00:00Z`})));
+  const items = vendorConcertCandidates([...shows,shows[0],{...shows[0],id:'unrelated',title:'LIVE NIGHT'}],now);
+  assert.equal(items.length,12);
+  assert.equal(new Set(items.map(item=>item.id)).size,12);
+  assert.equal(items.some(item=>item.id==='unrelated'),false);
+  assert.equal(items.every(item=>!item.id.endsWith('-1')),true);
+  assert.deepEqual(vendorConcertCandidates([],now),[]);
+});
+
+test('ticket vendors are derived from actual URL hostnames, never titles or spoofed domain text', () => {
+  const links = urls => ({ticketLinks: urls.map(url=>({name:'NOL',url}))});
+  assert.deepEqual(concertVendors(links(['https://tickets.interpark.com/goods/123','https://nol.yanolja.com/ticket/products/123','http://ticket.yes24.com/Perf/123','https://ticket.melon.com/performance/123','https://www.ticketlink.co.kr/product/123'])),['NOL','YES24','MELON','TICKETLINK']);
+  assert.deepEqual(concertVendors(links(['https://ticket.yes24.com.evil.test/123','https://example.org/?url=yes24.com'])),['OTHER']);
+  assert.deepEqual(concertVendors(links(['javascript:alert(1)','not a url'])),[]);
+  assert.deepEqual(concertVendors(links([])),[]);
 });

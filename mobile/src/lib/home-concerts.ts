@@ -1,4 +1,16 @@
-import type { ArtistSearchResult, Concert } from '@/api/concerts';
+import type { ArtistSearchResult, Concert, TicketVendor } from '@/api/concerts';
+
+type ArtistIdentity = Pick<ArtistSearchResult, 'id' | 'name' | 'searchName' | 'aliases'>;
+
+// Editorial seed keywords, not measured popularity or a ranking.
+export const popularArtists: ArtistIdentity[] = [
+  { id: 'seed-day6', name: 'DAY6', searchName: 'DAY6', aliases: ['데이식스'] },
+  { id: 'seed-bts', name: 'BTS', searchName: 'BTS', aliases: ['방탄소년단'] },
+  { id: 'seed-seventeen', name: 'SEVENTEEN', searchName: 'SEVENTEEN', aliases: ['세븐틴'] },
+  { id: 'seed-ive', name: 'IVE', searchName: 'IVE', aliases: ['아이브'] },
+  { id: 'seed-aespa', name: 'aespa', searchName: 'aespa', aliases: ['에스파'] },
+  { id: 'seed-nct', name: 'NCT', searchName: 'NCT', aliases: ['엔시티'] },
+];
 
 const normalize = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 
@@ -35,14 +47,14 @@ export function concertPhase(concert: Pick<Concert, 'status' | 'startsAt' | 'end
   return start > now || !Number.isFinite(start) ? '예정' : '진행 중';
 }
 
-export function artistConcertKeywords(artists: ArtistSearchResult[]): string[] {
+export function artistConcertKeywords(artists: ArtistIdentity[]): string[] {
   const keywords = artists.flatMap(artist => [artist.searchName, artist.name,
     artist.aliases.find(alias => /[가-힣]/u.test(alias)) ?? '']);
   return [...new Map(keywords.filter(name => normalize(name).length >= 2)
     .map(name => [normalize(name), name.trim()])).values()];
 }
 
-export function homeConcerts(concerts: Concert[], favorites: ArtistSearchResult[], now: number): Concert[] {
+export function homeConcerts(concerts: Concert[], favorites: ArtistIdentity[], now: number): Concert[] {
   const names = new Set(favorites.flatMap(artist => [artist.name, artist.searchName, ...artist.aliases])
     .map(normalize).filter(name => name.length >= 2));
   const ids = new Set(favorites.map(artist => artist.id).filter(Boolean));
@@ -58,4 +70,27 @@ export function homeConcerts(concerts: Concert[], favorites: ArtistSearchResult[
       return rank[phaseA] - rank[phaseB]
         || (phaseA === '완료' ? Date.parse(b.startsAt) - Date.parse(a.startsAt) : Date.parse(a.startsAt) - Date.parse(b.startsAt));
     });
+}
+
+export function vendorConcertCandidates(concerts: Concert[], now: number): Concert[] {
+  const candidates = popularArtists.flatMap(artist => homeConcerts(concerts, [artist], now).slice(0, 2));
+  return homeConcerts(candidates, popularArtists, now);
+}
+
+export function concertVendors(concert: Pick<Concert, 'ticketLinks'>): TicketVendor[] {
+  const vendors: TicketVendor[] = [];
+  for (const link of concert.ticketLinks ?? []) {
+    try {
+      const url = new URL(link.url);
+      if (!['http:', 'https:'].includes(url.protocol)) continue;
+      const host = url.hostname.toLowerCase();
+      const domain = (name: string) => host === name || host.endsWith(`.${name}`);
+      const vendor: TicketVendor = domain('yes24.com') ? 'YES24'
+        : domain('interpark.com') || host === 'nol.yanolja.com' ? 'NOL'
+          : host === 'ticket.melon.com' ? 'MELON'
+            : domain('ticketlink.co.kr') ? 'TICKETLINK' : 'OTHER';
+      vendors.push(vendor);
+    } catch { /* Missing or malformed URLs are not evidence of a ticket vendor. */ }
+  }
+  return [...new Set(vendors)];
 }

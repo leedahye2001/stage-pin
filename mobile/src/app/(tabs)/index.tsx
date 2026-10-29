@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoodsCard, marketStyles as m } from '@/components/GoodsDemo';
 import { HomeSearch } from '@/components/HomeSearch';
 import { HomeHeroCarousel } from '@/components/HomeHeroCarousel';
-import { HomeArtists } from '@/components/HomeArtists';
+import { HomeVendorConcerts } from '@/components/HomeVendorConcerts';
 import { HomeStageSchedule } from '@/components/HomeStageSchedule';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
@@ -27,8 +27,8 @@ export default function FanHomeScreen() {
       </View>
       {!layout.isWide ? <HomeSearch /> : null}
       <HomeHeroCarousel />
-      <HomeArtists />
       <HomeStageSchedule />
+      <HomeVendorConcerts />
       <View style={m.section}>
         <View style={m.between}><Text style={m.sectionTitle}>새로 올라온 굿즈</Text><Pressable accessibilityRole="button" accessibilityLabel="굿즈 전체 보기" onPress={() => openGoods('전체', kind)}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
         <View style={m.row}>{['전체', '판매', '교환'].map((value) => <Pressable key={value} accessibilityRole="button" accessibilityLabel={`홈 ${value} 굿즈 보기`} accessibilityState={{ selected: kind === value }} onPress={() => setKind(value)} style={[m.chip, kind === value && m.chipSelected]}><Text style={[m.chipText, kind === value && m.chipSelectedText]}>{value}</Text></Pressable>)}</View>
