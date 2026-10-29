@@ -21,7 +21,7 @@ export default function AppTabs() {
     labelStyle={{ default: { fontSize: 10, fontWeight: '600', color: colors.textMuted }, selected: { fontSize: 10, fontWeight: '700', color: colors.primary } }}>
     <NativeTabs.Trigger name="explore" contentStyle={{ backgroundColor: colors.background }}>
       {icons ? <NativeTabs.Trigger.Icon src={icons[0]} renderingMode="template" /> : <NativeTabs.Trigger.Icon sf={{ default: 'map', selected: 'map.fill' }} />}
-      <NativeTabs.Trigger.Label>공연장</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Label>지도</NativeTabs.Trigger.Label>
     </NativeTabs.Trigger>
     <NativeTabs.Trigger name="schedule" contentStyle={{ backgroundColor: colors.background }}>
       {icons ? <NativeTabs.Trigger.Icon src={icons[1]} renderingMode="template" /> : <NativeTabs.Trigger.Icon sf="calendar" />}

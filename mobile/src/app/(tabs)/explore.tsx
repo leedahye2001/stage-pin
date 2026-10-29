@@ -1,732 +1,94 @@
-import { useQuery } from '@tanstack/react-query';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import {
-  FlatList,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  getArtists,
-  getConcerts,
-  getTicketOpenings,
-  type ArtistSearchResult,
-  type FanCategory,
-} from '@/api/concerts';
-import { ConcertCard } from '@/components/ConcertCard';
+import { getHomeConcerts } from '@/api/concerts';
 import { ConcertMap } from '@/components/ConcertMap';
-import { TicketingCarousel } from '@/components/TicketingCarousel';
-import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
-import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
-import { useFavorites } from '@/lib/favorites';
-import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { mapVenues } from '@/lib/map-venues';
+import { responsiveStyles, useResponsiveLayout } from '@/lib/use-responsive-layout';
+import { colors } from '@/theme/tokens';
 
-type FanFilter = FanCategory | 'ALL';
-
-const fanFilters: { value: FanFilter; label: string }[] = [
-  { value: 'ALL', label: '전체' },
-  { value: 'IDOL', label: '아이돌' },
-  { value: 'SOLO', label: '솔로' },
-  { value: 'BAND', label: '밴드' },
-];
-
-export default function ConcertDiscoveryScreen() {
+export default function MapScreen() {
   const { isWide } = useResponsiveLayout();
-  const {
-    artists: favoriteArtists,
-    isConcertFavorite,
-    toggleConcert,
-  } = useFavorites();
-  const [fanFilter, setFanFilter] = useState<FanFilter>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 500);
-    return () => clearTimeout(timeout);
-  }, [searchQuery]);
-
-  const serverQuery = debouncedQuery.length >= 2 ? debouncedQuery : '';
-  const upcomingQuery = useQuery({
-    queryKey: ['concerts', 'POPULAR_MUSIC', 'upcoming'],
-    queryFn: () => getConcerts('POPULAR_MUSIC'),
+  const [mode, setMode] = useState<'venues' | 'exchange'>('venues');
+  const [selectedVenue, setSelectedVenue] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: ['concerts', 'POPULAR_MUSIC', 'home'],
+    queryFn: getHomeConcerts,
   });
-  const artistSuggestionsQuery = useQuery({
-    queryKey: ['artists', serverQuery],
-    queryFn: () => getArtists(serverQuery),
-    enabled: Boolean(serverQuery),
-  });
-  const ticketOpeningsQuery = useQuery({
-    queryKey: ['ticket-openings'],
-    queryFn: getTicketOpenings,
-    retry: false,
-  });
-  const performanceSuggestionsQuery = useQuery({
-    queryKey: ['concerts', 'POPULAR_MUSIC', 'search', serverQuery],
-    queryFn: () => getConcerts('POPULAR_MUSIC', serverQuery),
-    enabled: Boolean(serverQuery),
-  });
+  const venues = useMemo(() => mapVenues(query.data ?? []), [query.data]);
+  const markers = useMemo(() => venues.map(group => group.concerts[0]), [venues]);
+  const selected = venues.find(group => group.key === selectedVenue);
+  const selectMarker = useCallback((concertId: string) => {
+    const group = venues.find(item => item.concerts.some(concert => concert.id === concertId));
+    if (group) setSelectedVenue(group.key);
+  }, [venues]);
 
-  const openConcert = (id: string) => {
-    router.push({ pathname: '/concerts/[id]', params: { id, genre: 'POPULAR_MUSIC' } });
-  };
-
-  if (upcomingQuery.isPending) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-        <ScrollView contentContainerStyle={{ padding: 20 }}><LoadingSkeleton kind="explore" label="공연장과 공연 불러오는 중" /></ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  if (upcomingQuery.isError) {
-    return (
-      <SafeAreaView style={styles.centered}>
-        <Text style={styles.errorTitle}>공연 정보를 불러오지 못했어요.</Text>
-        <Text style={styles.errorMessage}>백엔드 연결과 EXPO_PUBLIC_API_URL을 확인해 주세요.</Text>
-        <Pressable onPress={() => upcomingQuery.refetch()} style={styles.retryButton}>
-          <Text style={styles.retryLabel}>다시 시도</Text>
-        </Pressable>
-      </SafeAreaView>
-    );
-  }
-
-  const upcomingConcerts = upcomingQuery.data;
-  const targetedConcerts = upcomingConcerts.filter((concert) => concert.fanCategory !== 'OTHER');
-  const otherConcerts = upcomingConcerts.filter((concert) => concert.fanCategory === 'OTHER');
-  const concerts = fanFilter === 'ALL'
-    ? targetedConcerts
-    : targetedConcerts.filter((concert) => concert.fanCategory === fanFilter);
-  const ticketOpenings = ticketOpeningsQuery.data ?? [];
-  const showSearchDropdown = searchQuery.trim().length >= 2;
-  const searchIsLoading = debouncedQuery !== searchQuery.trim()
-    || artistSuggestionsQuery.isFetching
-    || performanceSuggestionsQuery.isFetching;
-  const changeSearchQuery = (value: string) => setSearchQuery(value);
-
-  const selectArtist = (artist?: ArtistSearchResult) => {
-    const nextArtist = artist ?? artistSuggestionsQuery.data?.[0];
-    if (!nextArtist) {
-      if (performanceSuggestionsQuery.data?.length) selectPerformance();
-      return;
-    }
-    if (searchIsLoading) return;
-    setSearchQuery('');
-    router.push({
-      pathname: '/artists/[id]',
-      params: { id: nextArtist.id, query: nextArtist.searchName },
-    });
-  };
-
-  const selectPerformance = () => {
-    if (!serverQuery || searchIsLoading) return;
-    setSearchQuery('');
-    router.push({ pathname: '/search', params: { query: serverQuery } });
-  };
-
-  return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <FlatList
-        contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}
-        data={[]}
-        keyboardShouldPersistTaps="handled"
-        ListFooterComponent={
-          <View>
-            {upcomingConcerts.some((concert) => concert.source === 'KOPIS') ? (
-              <Text style={styles.attribution}>공연 데이터: 공연예술통합전산망(KOPIS)</Text>
-            ) : null}
+  return <SafeAreaView edges={['top']} style={s.safe}>
+    <ScrollView contentContainerStyle={[s.content, isWide && responsiveStyles.content]}>
+      <Text style={s.title}>지도</Text>
+      <View style={s.tabs}>
+        {([{ key: 'venues', label: '공연 장소' }, { key: 'exchange', label: '현장 교환' }] as const).map(tab =>
+          <Pressable key={tab.key} accessibilityRole="tab" accessibilityState={{ selected: mode === tab.key }} onPress={() => setMode(tab.key)} style={[s.tab, mode === tab.key && s.activeTab]}>
+            <Text style={[s.tabText, mode === tab.key && s.activeText]}>{tab.label}</Text>
+          </Pressable>)}
+      </View>
+      {mode === 'exchange' ? <View style={s.empty}>
+        <Ionicons name="swap-horizontal-outline" size={32} color={colors.textMuted} />
+        <Text style={s.emptyTitle}>현장 교환 지도는 준비 중이에요</Text>
+        <Text style={s.note}>공연과 날짜별 교환 글을 연결할 예정이에요. 현재 위치를 수집하거나 공개하지 않아요.</Text>
+        <Pressable accessibilityRole="link" onPress={() => router.push('/goods')} style={s.button}><Text style={s.buttonText}>굿즈 보기 →</Text></Pressable>
+      </View> : query.isPending ? <LoadingSkeleton kind="map" label="공연 장소 불러오는 중" />
+        : query.isError ? <View style={s.empty}>
+          <Text style={s.emptyTitle}>공연 장소를 불러오지 못했어요</Text>
+          <Pressable accessibilityRole="button" onPress={() => query.refetch()} style={s.button}><Text style={s.buttonText}>다시 시도</Text></Pressable>
+        </View> : venues.length ? <>
+          <ConcertMap concerts={markers} onSelect={selectMarker} initialRealMap height={isWide ? 460 : 370} />
+          <View style={s.heading}>
+            <Text style={s.sectionTitle}>{selected ? selected.venue.name : '공연 장소'}</Text>
+            {selected ? <Pressable accessibilityRole="button" onPress={() => setSelectedVenue(null)}><Text style={s.buttonText}>전체 장소 보기</Text></Pressable> : <Text style={s.note}>{venues.length}곳</Text>}
           </View>
-        }
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <View style={styles.identityCard}>
-              <View style={styles.identityGlowLarge} />
-              <View style={styles.identityGlowSmall} />
-              <View style={styles.brand}>
-                <Image
-                  accessibilityIgnoresInvertColors
-                  source={require('../../../assets/stagepin-mark.png')}
-                  style={styles.brandMark}
-                />
-                <Text style={styles.identityEyebrow}>STAGEPIN</Text>
-              </View>
-              <View style={styles.identityContent}>
-                <View style={styles.identityCopy}>
-                  <Text style={styles.hero}>좋아하는 공연,{`\n`}공연장까지 한눈에.</Text>
-                  <Text style={styles.subtitle}>아티스트와 공연을 검색하고, 지도에서 공연 장소를 찾아보세요.</Text>
-                </View>
-                <View style={styles.radarPin}>
-                  <Ionicons color={colors.white} name="location" size={28} />
-                </View>
-              </View>
-              <View style={styles.vendorRow}>
-                {['NOL', 'YES24', '멜론티켓', '티켓링크'].map((vendor) => (
-                  <View key={vendor} style={styles.vendorPill}>
-                    <Text style={styles.vendorPillText}>{vendor}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.searchBox}>
-              <Ionicons color={colors.textMuted} name="search" size={20} />
-              <TextInput
-                accessibilityLabel="공연 검색"
-                autoCapitalize="none"
-                autoCorrect={false}
-                onChangeText={changeSearchQuery}
-                onSubmitEditing={() => selectArtist()}
-                placeholder="아티스트 또는 공연명을 검색해보세요"
-                placeholderTextColor={colors.textMuted}
-                returnKeyType="search"
-                style={styles.searchInput}
-                value={searchQuery}
-              />
-              {searchQuery.length > 0 && (
-                <Pressable
-                  accessibilityLabel="검색어 지우기"
-                  hitSlop={10}
-                  onPress={() => changeSearchQuery('')}
-                >
-                  <Ionicons color={colors.textMuted} name="close-circle" size={20} />
-                </Pressable>
-              )}
-            </View>
-
-            {showSearchDropdown ? (
-              <View style={styles.searchDropdown}>
-                {searchIsLoading ? (
-                  <LoadingSkeleton kind="search" label="공연·아티스트 검색 중" />
-                ) : artistSuggestionsQuery.data?.length || performanceSuggestionsQuery.data?.length ? (
-                  <>
-                  {artistSuggestionsQuery.data?.map((artist) => (
-                    <View
-                      key={artist.id}
-                      style={styles.searchDropdownRow}
-                    >
-                      <ArtistPhoto artist={artist} size={42} />
-                      <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 공연 기록 보기`} onPress={() => selectArtist(artist)} style={styles.searchDropdownContent}>
-                        <Text style={styles.searchDropdownTitle}>{artist.name}</Text>
-                        <Text numberOfLines={1} style={styles.searchDropdownDescription}>
-                          {[artist.description, artist.aliases.filter((alias) => alias !== artist.name).slice(0, 2).join(' · ')]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </Text>
-                      </Pressable>
-                      <Ionicons color={colors.textMuted} name="chevron-forward" size={18} />
-                    </View>
-                  ))}
-                  {performanceSuggestionsQuery.data?.length ? (
-                    <Pressable onPress={selectPerformance} style={styles.searchDropdownRow}>
-                      <View style={styles.performanceIcon}>
-                        <Ionicons color={colors.white} name="ticket" size={18} />
-                      </View>
-                      <View style={styles.searchDropdownContent}>
-                        <Text style={styles.searchDropdownTitle}>‘{serverQuery}’ 공연 검색</Text>
-                        <Text style={styles.searchDropdownDescription}>
-                          KOPIS 공연 {performanceSuggestionsQuery.data.length}개 · 공연장 지도 보기
-                        </Text>
-                      </View>
-                      <Ionicons color={colors.textMuted} name="chevron-forward" size={18} />
-                    </Pressable>
-                  ) : null}
-                  </>
-                ) : (
-                  <View style={styles.searchDropdownRow}>
-                    <View style={styles.searchIcon}>
-                      <Ionicons color={colors.textMuted} name="search" size={18} />
-                    </View>
-                    <Text style={styles.searchDropdownDescription}>일치하는 아티스트를 찾지 못했어요.</Text>
-                  </View>
-                )}
-              </View>
-            ) : null}
-
-            <View style={styles.section}>
-                <View style={styles.sectionHeading}>
-                  <Text style={styles.sectionTitle}>관심 아티스트 공연</Text>
-                  <Ionicons color={colors.primary} name="heart" size={18} />
-                </View>
-                {favoriteArtists.length ? (
-                  <ScrollView
-                    contentContainerStyle={styles.favoriteArtistList}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                  >
-                    {favoriteArtists.map((artist) => (
-                      <View
-                        key={artist.id}
-                        style={styles.favoriteArtistCard}
-                      >
-                        <ArtistPhoto artist={artist} size={54} />
-                        <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 공연 보기`} onPress={() => selectArtist(artist)}><Text numberOfLines={1} style={styles.favoriteArtistName}>{artist.name}</Text></Pressable>
-                      </View>
-                    ))}
-                  </ScrollView>
-                ) : (
-                  <View style={styles.interestCard}>
-                    <View style={styles.interestIcon}>
-                      <Ionicons color={colors.primary} name="sparkles" size={21} />
-                    </View>
-                    <View style={styles.interestContent}>
-                      <Text style={styles.interestTitle}>좋아하는 아티스트부터 찾아볼까요?</Text>
-                      <Text style={styles.interestDescription}>
-                        아티스트를 검색하고 하트를 누르면 이곳에서 바로 만날 수 있어요.
-                      </Text>
-                    </View>
-                  </View>
-                )}
-            </View>
-
-            <>
-                <TicketingCarousel
-                  openings={ticketOpenings}
-                  scheduleType="FAN_PRESALE"
-                  title="곧 열리는 선예매"
-                />
-                <TicketingCarousel
-                  openings={ticketOpenings}
-                  scheduleType="GENERAL_SALE"
-                  title="곧 열리는 일반예매"
-                />
-
-                <View style={styles.section}>
-                  <View style={styles.sectionHeading}>
-                    <Text style={styles.sectionTitle}>다가오는 무대</Text>
-                    <Text style={styles.count}>{concerts.length}</Text>
-                  </View>
-                  <ScrollView
-                    contentContainerStyle={styles.genreList}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                  >
-                    {fanFilters.map((item) => {
-                      const selected = item.value === fanFilter;
-                      return (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityState={{ selected }}
-                          key={item.value}
-                          onPress={() => setFanFilter(item.value)}
-                          style={[styles.genreChip, selected && styles.genreChipSelected]}
-                        >
-                          <Text style={[styles.genreLabel, selected && styles.genreLabelSelected]}>
-                            {item.label}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
-                  <Text style={styles.classificationNote}>KOPIS 공연명·출연진 기준 자동 분류</Text>
-                  {concerts.length ? (
-                    <FlatList
-                      contentContainerStyle={styles.concertList}
-                      data={concerts}
-                      decelerationRate="fast"
-                      horizontal
-                      keyExtractor={(concert) => concert.id}
-                      renderItem={({ item }) => (
-                        <ConcertCard
-                          concert={item}
-                          favorite={isConcertFavorite(item.id)}
-                          onFavoriteToggle={() => toggleConcert(item)}
-                          onPress={() => openConcert(item.id)}
-                        />
-                      )}
-                      showsHorizontalScrollIndicator={false}
-                      snapToInterval={196 + spacing.md}
-                    />
-                  ) : (
-                    <Text style={styles.empty}>해당 분류의 예정 공연이 아직 없어요.</Text>
-                  )}
-                </View>
-            </>
-
-            {upcomingConcerts.length ? (
-              <View style={styles.section}>
-                <View>
-                  <Text style={styles.sectionTitle}>공연 장소 한눈에 보기</Text>
-                  <Text style={styles.sectionCaption}>
-                    핀을 누르면 해당 공연의 상세 정보를 볼 수 있어요.
-                  </Text>
-                </View>
-                <ConcertMap concerts={upcomingConcerts} onSelect={openConcert} />
-              </View>
-            ) : null}
-
-            {otherConcerts.length ? (
-              <View style={styles.section}>
-                <View style={styles.sectionHeading}>
-                  <Text style={styles.sectionTitle}>그 외 KOPIS 공연</Text>
-                  <Text style={styles.count}>{otherConcerts.length}</Text>
-                </View>
-                <FlatList
-                  contentContainerStyle={styles.concertList}
-                  data={otherConcerts}
-                  horizontal
-                  keyExtractor={(concert) => concert.id}
-                  renderItem={({ item }) => (
-                    <ConcertCard
-                      concert={item}
-                      favorite={isConcertFavorite(item.id)}
-                      onFavoriteToggle={() => toggleConcert(item)}
-                      onPress={() => openConcert(item.id)}
-                    />
-                  )}
-                  showsHorizontalScrollIndicator={false}
-                />
-              </View>
-            ) : null}
-          </View>
-        }
-        renderItem={() => null}
-      />
-    </SafeAreaView>
-  );
+          {!selected ? venues.map(group => <Pressable key={group.key} accessibilityRole="button" accessibilityLabel={`${group.venue.name} 공연 ${group.concerts.length}개 보기`} onPress={() => setSelectedVenue(group.key)} style={s.row}>
+            <View style={s.icon}><Ionicons name="location-outline" color={colors.primary} size={22} /></View>
+            <View style={s.copy}><Text style={s.name}>{group.venue.name}</Text><Text style={s.note}>{group.venue.city} · 공연 {group.concerts.length}개</Text></View>
+            <Ionicons name="chevron-forward" color={colors.textMuted} size={18} />
+          </Pressable>) : <>
+            <Text style={s.note}>{selected.venue.address || selected.venue.city}</Text>
+            {selected.concerts.map(concert => <Pressable key={concert.id} accessibilityRole="link" onPress={() => router.push({ pathname: '/concerts/[id]', params: { id: concert.id, genre: concert.genre } })} style={s.row}>
+              {concert.posterUrl ? <Image source={{ uri: concert.posterUrl }} style={s.poster} resizeMode="cover" /> : <View style={[s.icon, s.poster]}><Ionicons name="musical-notes-outline" size={22} color={colors.textMuted} /></View>}
+              <View style={s.copy}><Text style={s.name}>{concert.title}</Text><Text style={s.note}>{new Date(concert.startsAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}</Text></View>
+              <Ionicons name="chevron-forward" color={colors.textMuted} size={18} />
+            </Pressable>)}
+          </>}
+          <Text style={s.note}>공연 데이터: 공연예술통합전산망(KOPIS) · 현재 조회된 공연 중 위치가 확인된 장소만 표시해요.</Text>
+        </> : <View style={s.empty}><Text style={s.emptyTitle}>표시할 공연 장소가 없어요</Text><Text style={s.note}>현재 조회된 공연에 확인 가능한 위치 정보가 없어요.</Text></View>}
+    </ScrollView>
+  </SafeAreaView>;
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  content: {
-    padding: spacing.md,
-    paddingBottom: 100,
-  },
-  header: {
-    gap: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  brand: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  brandMark: {
-    height: 28,
-    width: 28,
-  },
-  identityCard: {
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.lg,
-    gap: spacing.md,
-    overflow: 'hidden',
-    padding: spacing.lg,
-    position: 'relative',
-  },
-  identityGlowLarge: {
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderRadius: radius.pill,
-    height: 190,
-    position: 'absolute',
-    right: -70,
-    top: -90,
-    width: 190,
-  },
-  identityGlowSmall: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.pill,
-    bottom: -45,
-    height: 110,
-    left: -25,
-    position: 'absolute',
-    width: 110,
-  },
-  identityEyebrow: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1.8,
-  },
-  identityContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  identityCopy: {
-    flex: 1,
-  },
-  hero: {
-    color: colors.text,
-    fontSize: typography.hero,
-    fontWeight: '900',
-    letterSpacing: -1,
-    lineHeight: 38,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    lineHeight: 19,
-    marginTop: spacing.sm,
-  },
-  radarPin: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    height: 58,
-    justifyContent: 'center',
-    width: 58,
-  },
-  vendorRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  vendorPill: {
-    backgroundColor: colors.button,
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  vendorPillText: {
-    color: colors.buttonText,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  searchBox: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  searchInput: {
-    color: colors.text,
-    flex: 1,
-    fontSize: typography.body,
-    paddingVertical: 14,
-  },
-  searchDropdown: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    marginTop: -spacing.md,
-    overflow: 'hidden',
-  },
-  searchDropdownRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    minHeight: 66,
-    paddingHorizontal: spacing.md,
-  },
-  searchDropdownContent: {
-    flex: 1,
-  },
-  searchDropdownTitle: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '800',
-  },
-  searchDropdownDescription: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    marginTop: 2,
-  },
-  searchIcon: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  performanceIcon: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  artistAvatar: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    height: 42,
-    width: 42,
-  },
-  section: {
-    gap: spacing.md,
-  },
-  interestCard: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  interestIcon: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  interestContent: {
-    flex: 1,
-  },
-  interestTitle: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  interestDescription: {
-    color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 3,
-  },
-  favoriteArtistList: {
-    gap: spacing.sm,
-    paddingRight: spacing.md,
-  },
-  favoriteArtistCard: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.sm,
-    width: 92,
-  },
-  favoriteArtistImage: {
-    borderRadius: radius.pill,
-    height: 52,
-    width: 52,
-  },
-  favoriteArtistFallback: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    height: 52,
-    justifyContent: 'center',
-    width: 52,
-  },
-  favoriteArtistName: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: '800',
-    maxWidth: '100%',
-  },
-  genreList: {
-    gap: spacing.sm,
-  },
-  genreChip: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-  },
-  genreChipSelected: {
-    backgroundColor: colors.buttonText,
-    borderColor: colors.buttonText,
-  },
-  genreLabel: {
-    color: colors.textMuted,
-    fontWeight: '800',
-  },
-  genreLabelSelected: {
-    color: colors.white,
-  },
-  classificationNote: {
-    color: colors.textMuted,
-    fontSize: 11,
-    marginTop: -spacing.md,
-  },
-  empty: {
-    color: colors.textMuted,
-    paddingVertical: spacing.xl,
-    textAlign: 'center',
-  },
-  sectionHeading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: typography.title,
-    fontWeight: '800',
-  },
-  sectionCaption: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    marginTop: spacing.xs,
-  },
-  count: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '800',
-    overflow: 'hidden',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  concertList: {
-    gap: spacing.md,
-    paddingRight: spacing.md,
-  },
-  centered: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  loadingText: {
-    color: colors.textMuted,
-    marginTop: spacing.md,
-  },
-  errorTitle: {
-    color: colors.text,
-    fontSize: typography.title,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  errorMessage: {
-    color: colors.textMuted,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    marginTop: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 12,
-  },
-  retryLabel: {
-    color: colors.white,
-    fontWeight: '800',
-  },
-  attribution: {
-    color: colors.textMuted,
-    fontSize: 11,
-    marginTop: spacing.md,
-    textAlign: 'center',
-  },
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
+  content: { padding: 20, paddingBottom: 32, gap: 20 },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text },
+  tabs: { flexDirection: 'row', gap: 8 },
+  tab: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: colors.button },
+  activeTab: { backgroundColor: colors.text },
+  tabText: { fontSize: 14, fontWeight: '700', color: colors.buttonText },
+  activeText: { color: colors.white },
+  heading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  sectionTitle: { flex: 1, fontSize: 19, fontWeight: '700', color: colors.text },
+  row: { flexDirection: 'row', gap: 14, alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+  copy: { flex: 1, gap: 6 },
+  name: { fontSize: 15, fontWeight: '700', color: colors.text },
+  note: { fontSize: 12, lineHeight: 19, color: colors.textMuted },
+  poster: { width: 52, height: 72, borderRadius: 8 },
+  icon: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
+  empty: { paddingVertical: 48, paddingHorizontal: 24, alignItems: 'center', gap: 16, backgroundColor: colors.surfaceMuted, borderRadius: 20 },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  button: { paddingHorizontal: 20, paddingVertical: 12, backgroundColor: colors.button, borderRadius: 999 },
+  buttonText: { fontSize: 13, fontWeight: '700', color: colors.text },
 });

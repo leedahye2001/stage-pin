@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { createElement, useState } from 'react';
+import { createElement, useMemo, useState } from 'react';
 import { CircleMarker, MapContainer, TileLayer, Tooltip } from 'react-leaflet';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -12,6 +12,8 @@ import 'leaflet/dist/leaflet.css';
 type ConcertMapProps = {
   concerts: Concert[];
   onSelect: (concertId: string) => void;
+  initialRealMap?: boolean;
+  height?: number;
 };
 
 function KoreaSilhouette() {
@@ -62,15 +64,15 @@ function KoreaSilhouette() {
 
 const clampPercent = (value: number) => Math.min(100, Math.max(0, value));
 
-export function ConcertMap({ concerts, onSelect }: ConcertMapProps) {
-  const [showRealMap, setShowRealMap] = useState(false);
-  const venues = Array.from(
+export function ConcertMap({ concerts, onSelect, initialRealMap = false, height = 300 }: ConcertMapProps) {
+  const [showRealMap, setShowRealMap] = useState(initialRealMap);
+  const venues = useMemo(() => Array.from(
     new Map(concerts.map((concert) => [concert.venue.name, concert])).values(),
-  ).slice(0, 30);
+  ).slice(0, 30), [concerts]);
   const useKakaoMap = Boolean(process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY);
 
   return (
-    <View style={styles.map}>
+    <View style={[styles.map, { height }]}>
       {showRealMap ? (
         useKakaoMap ? (
           <KakaoConcertMap concerts={venues} onSelect={onSelect} />

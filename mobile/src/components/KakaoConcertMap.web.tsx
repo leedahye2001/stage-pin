@@ -1,5 +1,5 @@
 import { createElement, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import type { Concert } from '@/api/concerts';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -79,14 +79,14 @@ export function KakaoConcertMap({ concerts, onSelect }: KakaoConcertMapProps) {
         });
         setReady(true);
       })
-      .catch(() => setFailed(true));
+      .catch(() => { if (!cancelled) setFailed(true); });
 
     return () => {
       cancelled = true;
     };
   }, [appKey, concerts, onSelect]);
 
-  if (!appKey || failed) return null;
+  if (!appKey || failed) return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}><Text>지도를 불러오지 못했어요. 아래 장소 목록에서 공연을 확인해 주세요.</Text></View>;
 
   return (
     <View style={styles.container}>

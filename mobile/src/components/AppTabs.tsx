@@ -48,7 +48,7 @@ export default function AppTabs() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: '공연장',
+          title: '지도',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons color={color as string} name={focused ? 'map' : 'map-outline'} size={21} />
           ),

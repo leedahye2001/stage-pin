@@ -5,7 +5,7 @@ import { useResponsiveLayout } from '@/lib/use-responsive-layout';
 import { colors } from '@/theme/tokens';
 
 const menus = [
-  { label: '공연장', path: '/explore' }, { label: '일정', path: '/schedule' },
+  { label: '지도', path: '/explore' }, { label: '일정', path: '/schedule' },
   { label: '홈', path: '/' }, { label: '굿즈', path: '/goods' }, { label: 'MY', path: '/my' },
 ] as const;
 
