@@ -39,10 +39,10 @@ export function HomeStageSchedule() {
 }
 
 const s = StyleSheet.create({
-  section: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border, padding: 17, borderRadius: 24, gap: 15 },
-  tabs: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, padding: 4, borderRadius: 15, gap: 4 },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 11, borderRadius: 12 }, activeTab: { backgroundColor: '#FFFFFF' },
-  tabText: { color: colors.textMuted, fontSize: 13, fontWeight: '800' }, activeText: { color: colors.primary },
+  section: { gap: 16 },
+  tabs: { flexDirection: 'row', gap: 8 },
+  tab: { alignItems: 'center', justifyContent: 'center', paddingVertical: 11, paddingHorizontal: 20, minHeight: 44, borderRadius: 999, backgroundColor: colors.surfaceMuted }, activeTab: { backgroundColor: colors.buttonText },
+  tabText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' }, activeText: { color: colors.white },
   scope: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 7, paddingVertical: 5 }, scopeText: { color: colors.textMuted, fontSize: 11 },
   empty: { backgroundColor: colors.surfaceMuted, borderRadius: 16, padding: 20, gap: 10 }, emptyTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
   source: { color: '#91859C', fontSize: 9, lineHeight: 15 },

@@ -54,7 +54,7 @@ export function GoodsCard({ item }: { item: DemoGoods }) {
 
 export const marketStyles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, paddingBottom: 110, gap: 24, width: '100%', maxWidth: 1000, alignSelf: 'center' },
+  content: { padding: 20, paddingBottom: 32, gap: 24, width: '100%', maxWidth: 1000, alignSelf: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1 },

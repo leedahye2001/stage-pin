@@ -8,7 +8,6 @@ import { HomeSearch } from '@/components/HomeSearch';
 import { HomeHeroCarousel } from '@/components/HomeHeroCarousel';
 import { HomeArtists } from '@/components/HomeArtists';
 import { HomeStageSchedule } from '@/components/HomeStageSchedule';
-import { GoodsFab } from '@/components/GoodsFab';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
 
@@ -26,7 +25,6 @@ export default function FanHomeScreen() {
       </View>
       <HomeSearch />
       <HomeHeroCarousel />
-      <View style={s.shortcuts}>{([{ icon: 'ticket-outline', title: '공연 찾기', copy: '다음 무대를 찾아요', path: '/explore' }, { icon: 'bag-handle-outline', title: '굿즈 거래', copy: '사고팔고 나눠요', path: '/goods' }, { icon: 'swap-horizontal', title: '현장 교환', copy: '같은 공연에서 만나요', path: '/goods' }] as const).map((item) => <Pressable key={item.title} accessibilityRole="button" onPress={() => item.title === '현장 교환' ? openGoods('전체', '교환', true) : item.title === '굿즈 거래' ? openGoods() : router.push(item.path)} style={s.shortcut}><Ionicons name={item.icon} size={24} color={colors.primary} /><Text style={s.shortcutTitle}>{item.title}</Text><Text style={s.shortcutCopy}>{item.copy}</Text></Pressable>)}</View>
       <HomeArtists />
       <HomeStageSchedule />
       <View style={m.section}>
@@ -43,7 +41,6 @@ export default function FanHomeScreen() {
       </View>
       <Text style={s.footer}>좋아하는 무대와 취향을 잇는, stagepin{`\n`}공연 정보와 사진의 원출처는 각 상세에서 확인할 수 있어요.{`\n`}굿즈는 미리보기이며 실제 거래 기능은 준비 중이에요.</Text>
     </ScrollView>
-    <GoodsFab />
   </SafeAreaView>;
 }
 
@@ -51,8 +48,6 @@ const s = StyleSheet.create({
   brandMark: { width: 31, height: 34, borderRadius: 11, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', transform: [{ rotate: '-8deg' }] },
   brand: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -1 },
   smallLabel: { fontSize: 10, color: colors.textMuted },
-  shortcuts: { flexDirection: 'row', gap: 9 }, shortcut: { flex: 1, backgroundColor: colors.button, borderWidth: 1, borderColor: colors.border, borderRadius: 18, paddingVertical: 17, paddingHorizontal: 8, alignItems: 'center', gap: 8 },
-  shortcutTitle: { color: colors.text, fontSize: 13, fontWeight: '800' }, shortcutCopy: { color: colors.textMuted, fontSize: 9, textAlign: 'center' },
   onsite: { backgroundColor: colors.surfaceMuted, borderRadius: 24, padding: 17, gap: 17 }, onsiteTag: { color: colors.textMuted, fontSize: 10, fontWeight: '800' },
   event: { fontSize: 9, color: colors.primary, paddingTop: 8, lineHeight: 15 },
   footer: { color: '#A59BAD', fontSize: 9, textAlign: 'center', lineHeight: 18 },

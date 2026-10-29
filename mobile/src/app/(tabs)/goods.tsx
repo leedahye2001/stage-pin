@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DemoNotice, GoodsCard, marketStyles as m } from '@/components/GoodsDemo';
 import { demoArtists, filterDemoGoods } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
-import { GoodsFab } from '@/components/GoodsFab';
 import { colors } from '@/theme/tokens';
 
 export default function GoodsScreen() {
@@ -22,7 +21,7 @@ export default function GoodsScreen() {
   const items = filterDemoGoods(listings, artist, kind, query, onsiteOnly);
   return <SafeAreaView edges={['top']} style={m.safe}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={m.content}>
-      <View style={m.between}><View style={{ gap: 7 }}><Text style={s.eyebrow}>FAN TO FAN</Text><Text style={m.title}>취향이 만나는 굿즈장터</Text><Text style={m.subtitle}>내 작은 보물이, 누군가의 최애가 되는 곳</Text></View><Ionicons name="bag-handle-outline" size={30} color={colors.primary} /></View>
+      <View style={m.between}><View style={{ gap: 7, flex: 1 }}><Text style={s.eyebrow}>FAN TO FAN</Text><Text style={[m.title, s.title]}>취향이 만나는 굿즈장터</Text><Text style={m.subtitle}>내 작은 보물이, 누군가의 최애가 되는 곳</Text></View><Pressable accessibilityRole="button" accessibilityLabel="굿즈 판매·교환 글 등록" onPress={() => router.push('/goods/create')} style={s.register}><Ionicons name="add" size={18} color={colors.buttonText} /><Text style={s.registerText}>등록</Text></Pressable></View>
       <DemoNotice />
       <View style={s.search}><Ionicons name="search" size={19} color="#92889F" /><TextInput accessibilityLabel="굿즈 검색" placeholder="아티스트, 멤버, 찾는 굿즈를 검색해요" placeholderTextColor="#948B9E" value={query} onChangeText={setQuery} style={s.input} />{query ? <Pressable accessibilityRole="button" accessibilityLabel="굿즈 검색어 지우기" onPress={() => setQuery('')}><Ionicons name="close-circle" color="#92889F" size={18} /></Pressable> : null}</View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={m.chips}>{['전체', ...artistNames].map((name) => <Pressable key={name} accessibilityRole="button" accessibilityLabel={`${name} 굿즈 필터`} accessibilityState={{ selected: artist === name }} onPress={() => setArtist(name)} style={[m.chip, artist === name && m.chipSelected]}><Text style={[m.chipText, artist === name && m.chipSelectedText]}>{name}</Text></Pressable>)}</ScrollView>
@@ -32,11 +31,13 @@ export default function GoodsScreen() {
       {items.length ? <View style={m.grid}>{items.map((item) => <View key={item.id} style={m.gridItem}><GoodsCard item={item} /></View>)}</View> : <View style={m.empty}><Ionicons name="search-outline" color={colors.primary} size={30} /><Text style={m.sectionTitle}>아직 이 굿즈는 없어요</Text><Text style={m.subtitle}>검색어나 아티스트 필터를 바꿔보세요.</Text><Pressable accessibilityRole="button" onPress={() => { setQuery(''); router.setParams({ artist: '전체', kind: '전체', method: '' }); }}><Text style={m.link}>필터 초기화</Text></Pressable></View>}
       <Text style={s.footer}>샘플과 로컬 등록 글을 보여드려요.{`\n`}새로고침 시 초기화 · 실제 게시·채팅·거래는 아직 연결되지 않았어요.</Text>
     </ScrollView>
-    <GoodsFab />
   </SafeAreaView>;
 }
 
 const s = StyleSheet.create({
+  title: { fontSize: 24, lineHeight: 32 },
+  register: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.button, borderRadius: 999, paddingHorizontal: 14, minHeight: 44 },
+  registerText: { color: colors.buttonText, fontSize: 12, fontWeight: '800' },
   eyebrow: { fontSize: 10, letterSpacing: 2, color: colors.primary, fontWeight: '900' },
   search: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: colors.surfaceMuted, paddingHorizontal: 18, borderRadius: 999, minHeight: 49 },
   input: { flex: 1, paddingVertical: 14, fontSize: 12, color: colors.text, minWidth: 0 },
