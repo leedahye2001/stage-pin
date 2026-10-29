@@ -51,12 +51,13 @@ export default function ConcertDetailScreen() {
   const { artists, isConcertFavorite, toggleConcert } = useFavorites();
   const { id, genre = 'POPULAR_MUSIC' } = useLocalSearchParams<{ id: string; genre: ConcertGenre }>();
   const concertQuery = useQuery({
-    queryKey: ['concert', id, genre],
+    queryKey: ['concert-detail', id, genre],
     queryFn: () => getConcert(id, genre),
     enabled: Boolean(id),
+    refetchOnMount: 'always',
   });
 
-  if (concertQuery.isPending) {
+  if (concertQuery.isPending || (concertQuery.isError && concertQuery.isFetching)) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <ScrollView contentContainerStyle={{ padding: 20 }}><LoadingSkeleton kind="detail" label="공연 상세 불러오는 중" /></ScrollView>
@@ -68,6 +69,10 @@ export default function ConcertDetailScreen() {
     return (
       <SafeAreaView style={styles.centered}>
         <Text style={styles.errorText}>공연 상세 정보를 불러오지 못했어요.</Text>
+        <Text style={styles.meta}>예매처가 없는 것이 아니라 상세 조회에 실패한 상태예요.</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="공연 상세 다시 불러오기" onPress={() => concertQuery.refetch()} style={styles.retryButton}>
+          <Text style={{ color: colors.buttonText, fontWeight: '700' }}>다시 불러오기</Text>
+        </Pressable>
       </SafeAreaView>
     );
   }
@@ -166,9 +171,9 @@ export default function ConcertDetailScreen() {
         </View>
       ) : (
         <View style={styles.emptySchedule}>
-          <Text style={styles.emptyScheduleTitle}>등록된 공식 예매처가 없어요.</Text>
+          <Text style={styles.emptyScheduleTitle}>KOPIS에서 제공하는 예매처 링크가 없어요.</Text>
           <Text style={styles.emptyScheduleDescription}>
-            KOPIS에 공식 예매 링크가 등록되면 이곳에 바로 표시할게요.
+            공연 상세 조회는 완료됐지만 예매처 링크가 제공되지 않았어요. 실제 예매처가 없다는 뜻은 아니에요.
           </Text>
         </View>
       )}
@@ -178,6 +183,7 @@ export default function ConcertDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  retryButton: { backgroundColor: colors.button, paddingVertical: 14, paddingHorizontal: 22, borderRadius: radius.pill, marginTop: 16 },
   content: {
     backgroundColor: colors.background,
     flexGrow: 1,

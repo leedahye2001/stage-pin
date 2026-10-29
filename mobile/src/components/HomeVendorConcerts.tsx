@@ -26,7 +26,7 @@ export function HomeVendorConcerts() {
   const searching = searches.some(query => query.isPending);
   const candidates = vendorConcertCandidates(searches.flatMap(query => query.data ?? []), now);
   const details = useQueries({ queries: candidates.map(concert => ({
-    queryKey: ['concert', concert.id, 'POPULAR_MUSIC'],
+    queryKey: ['concert-detail', concert.id, 'POPULAR_MUSIC'],
     queryFn: () => getConcert(concert.id, 'POPULAR_MUSIC'), enabled: !searching, staleTime: 1_800_000, retry: false,
   })) });
   const concerts = candidates.map((concert, index) => details[index]?.data ?? concert);
