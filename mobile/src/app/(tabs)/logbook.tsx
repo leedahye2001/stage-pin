@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { DemoNotice } from '@/components/GoodsDemo';
 
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -67,7 +66,6 @@ export default function LogbookScreen() {
           </View>
         </View>
 
-        <DemoNotice />
 
         <Pressable onPress={() => router.push('/pinlog/create')} style={styles.createCard}>
           <View style={styles.createIcon}>

@@ -6,7 +6,7 @@ import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layo
 
 import { ConcertCard } from '@/components/ConcertCard';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
-import { DemoNotice, GoodsCard, marketStyles } from '@/components/GoodsDemo';
+import { GoodsCard, marketStyles } from '@/components/GoodsDemo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -25,7 +25,6 @@ export default function MyScreen() {
           <Text style={styles.subtitle}>찜한 굿즈와 무대, 교환하고 싶은 마음까지.</Text>
         </View>
 
-        <DemoNotice />
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>데모 신청 내역 · {requested.length}</Text>
           <Text style={styles.emptyText}>상대방에게 전송되지 않으며 새로고침 시 초기화돼요.</Text>

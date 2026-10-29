@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { DemoNotice, GoodsArtwork, marketStyles as m } from '@/components/GoodsDemo';
+import { GoodsArtwork, marketStyles as m } from '@/components/GoodsDemo';
 import { goodsPrice } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
@@ -22,7 +22,6 @@ export default function GoodsDetailScreen() {
   const hasRequest = requested.includes(item.id);
   return <SafeAreaView edges={['bottom']} style={m.safe}>
     <ScrollView contentContainerStyle={[m.content, isWide && responsiveStyles.content, { paddingBottom: 24 }]}>
-      <DemoNotice />
       <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 24 }}>
       <View style={isDesktop ? { flex: 1 } : undefined}><GoodsArtwork item={item} large /></View>
       <View style={[{ gap: 24 }, isDesktop && { flex: 1, minWidth: 0 }]}>
