@@ -17,7 +17,8 @@ test('native icons publish default and selected images together at 21pt', async 
   assert.equal(published, false);
   release();
   const pairs = await result;
-  assert.equal(pairs.length, 4);
+  assert.equal(pairs.length, 5);
+  assert.deepEqual(pairs.map((pair) => pair.default.uri), ['map-outline', 'calendar-outline', 'home-outline', 'bag-handle-outline', 'person-outline'].map((name) => image(name).uri));
   assert.ok(pairs.every((pair) => pair.default.uri && pair.selected.uri));
 });
 

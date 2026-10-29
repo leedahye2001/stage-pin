@@ -26,8 +26,8 @@ export default function AppTabs() {
           borderTopWidth: 0,
           borderRadius: 32,
           height: 64,
-          width: '86%',
-          maxWidth: 360,
+          width: '92%',
+          maxWidth: 390,
           alignSelf: 'center',
           marginTop: 8,
           marginBottom: Math.max(insets.bottom, 12),
@@ -43,11 +43,11 @@ export default function AppTabs() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="explore"
         options={{
-          title: '홈',
+          title: '공연장',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons color={color as string} name={focused ? 'home' : 'home-outline'} size={21} />
+            <Ionicons color={color as string} name={focused ? 'map' : 'map-outline'} size={21} />
           ),
         }}
       />
@@ -57,6 +57,15 @@ export default function AppTabs() {
           title: '일정',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons color={color as string} name={focused ? 'calendar' : 'calendar-outline'} size={21} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: '홈',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons color={color as string} name={focused ? 'home' : 'home-outline'} size={21} />
           ),
         }}
       />

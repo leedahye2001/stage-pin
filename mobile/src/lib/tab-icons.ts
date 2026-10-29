@@ -1,4 +1,4 @@
-const names = [['home-outline', 'home'], ['calendar-outline', 'calendar'], ['bag-handle-outline', 'bag-handle'], ['person-outline', 'person']] as const;
+const names = [['map-outline', 'map'], ['calendar-outline', 'calendar'], ['home-outline', 'home'], ['bag-handle-outline', 'bag-handle'], ['person-outline', 'person']] as const;
 export type TabIconName = typeof names[number][number];
 type Image = { uri: string; width: number; height: number; scale: number };
 

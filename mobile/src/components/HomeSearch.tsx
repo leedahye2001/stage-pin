@@ -29,7 +29,6 @@ export function HomeSearch() {
         </View>) : <Text style={s.hint}>{results.isError ? '아티스트 조회에 실패했어요. 공연 검색은 아래에서 계속할 수 있어요.' : '일치하는 아티스트가 없어요. 공연명으로도 검색해보세요.'}</Text>}
       <Pressable accessibilityRole="button" onPress={searchConcerts} style={s.concertSearch}><Ionicons name="ticket-outline" size={19} color={colors.primary} /><Text style={s.link}>‘{query.trim()}’ 공연·공연장 검색</Text><Ionicons name="arrow-forward" size={17} color={colors.primary} /></Pressable>
     </View> : null}
-    <Pressable accessibilityRole="button" accessibilityLabel="공연과 공연장 지도 찾아보기" onPress={() => router.push('/explore')} style={s.explore}><Ionicons name="map-outline" size={16} color={colors.primary} /><Text style={s.link}>공연·공연장 지도 찾아보기</Text><Ionicons name="chevron-forward" size={15} color={colors.primary} /></Pressable>
   </View>;
 }
 
@@ -45,5 +44,4 @@ const s = StyleSheet.create({
   heart: { padding: 10 },
   concertSearch: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#EEE8F6' },
   link: { color: colors.primary, fontSize: 12, fontWeight: '700', flexShrink: 1 },
-  explore: { flexDirection: 'row', alignItems: 'center', gap: 7 },
 });

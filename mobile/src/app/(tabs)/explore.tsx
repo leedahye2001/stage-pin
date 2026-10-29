@@ -155,15 +155,15 @@ export default function ConcertDiscoveryScreen() {
               <View style={styles.brand}>
                 <Image
                   accessibilityIgnoresInvertColors
-                  source={require('../../assets/stagepin-mark.png')}
+                  source={require('../../../assets/stagepin-mark.png')}
                   style={styles.brandMark}
                 />
                 <Text style={styles.identityEyebrow}>STAGEPIN</Text>
               </View>
               <View style={styles.identityContent}>
                 <View style={styles.identityCopy}>
-                  <Text style={styles.hero}>흩어진 티켓팅 일정을{`\n`}한곳에 핀하세요.</Text>
-                  <Text style={styles.subtitle}>선예매부터 일반예매까지, 공식 공지를 확인한 일정만 모아드려요.</Text>
+                  <Text style={styles.hero}>좋아하는 공연,{`\n`}공연장까지 한눈에.</Text>
+                  <Text style={styles.subtitle}>아티스트와 공연을 검색하고, 지도에서 공연 장소를 찾아보세요.</Text>
                 </View>
                 <View style={styles.radarPin}>
                   <Ionicons color={colors.white} name="location" size={28} />
