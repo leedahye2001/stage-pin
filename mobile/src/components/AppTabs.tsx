@@ -47,7 +47,7 @@ export default function AppTabs() {
         options={{
           title: '홈',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons color={color as string} name={focused ? 'home' : 'home-outline'} size={23} />
+            <Ionicons color={color as string} name={focused ? 'home' : 'home-outline'} size={21} />
           ),
         }}
       />
@@ -56,7 +56,7 @@ export default function AppTabs() {
         options={{
           title: '일정',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons color={color as string} name={focused ? 'calendar' : 'calendar-outline'} size={23} />
+            <Ionicons color={color as string} name={focused ? 'calendar' : 'calendar-outline'} size={21} />
           ),
         }}
       />
@@ -65,7 +65,7 @@ export default function AppTabs() {
         options={{
           title: '굿즈',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons color={color as string} name={focused ? 'bag-handle' : 'bag-handle-outline'} size={23} />
+            <Ionicons color={color as string} name={focused ? 'bag-handle' : 'bag-handle-outline'} size={21} />
           ),
         }}
       />
@@ -81,7 +81,7 @@ export default function AppTabs() {
         options={{
           title: 'MY',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons color={color as string} name={focused ? 'person' : 'person-outline'} size={23} />
+            <Ionicons color={color as string} name={focused ? 'person' : 'person-outline'} size={21} />
           ),
         }}
       />

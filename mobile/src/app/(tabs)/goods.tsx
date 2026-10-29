@@ -38,7 +38,7 @@ export default function GoodsScreen() {
 
 const s = StyleSheet.create({
   eyebrow: { fontSize: 10, letterSpacing: 2, color: colors.primary, fontWeight: '900' },
-  search: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#F0EDF5', paddingHorizontal: 15, borderRadius: 15, minHeight: 49 },
+  search: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#F0EDF5', paddingHorizontal: 18, borderRadius: 999, minHeight: 49 },
   input: { flex: 1, paddingVertical: 14, fontSize: 12, color: colors.text, minWidth: 0 },
   tip: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#EDF3EC', borderRadius: 17, padding: 16 },
   tipTitle: { color: '#53715C', fontSize: 13, fontWeight: '800', marginBottom: 5 },
