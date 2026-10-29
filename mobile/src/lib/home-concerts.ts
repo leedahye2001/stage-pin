@@ -2,6 +2,23 @@ import type { ArtistSearchResult, Concert } from '@/api/concerts';
 
 const normalize = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 
+const seoulDay = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+export function concertPhase(concert: Pick<Concert, 'status' | 'startsAt' | 'endsAt' | 'source'>, now: number): '완료' | '진행 중' | '예정' | '취소' {
+  if (concert.status === 'CANCELLED') return '취소';
+  if (concert.status === 'COMPLETED') return '완료';
+  const start = Date.parse(concert.startsAt);
+  const end = Date.parse(concert.endsAt ?? concert.startsAt);
+  // KOPIS dates have no reliable showtime: keep the last performance day ongoing until Seoul midnight.
+  if (concert.source === 'KOPIS' && Number.isFinite(start) && Number.isFinite(end)) {
+    const today = seoulDay.format(now);
+    if (seoulDay.format(end) < today) return '완료';
+    return seoulDay.format(start) > today ? '예정' : '진행 중';
+  }
+  if (end < now) return '완료';
+  return start > now || !Number.isFinite(start) ? '예정' : '진행 중';
+}
+
 export function artistConcertKeywords(artists: ArtistSearchResult[]): string[] {
   const keywords = artists.flatMap(artist => [artist.searchName, artist.name,
     artist.aliases.find(alias => /[가-힣]/u.test(alias)) ?? '']);
@@ -20,10 +37,15 @@ export function homeConcerts(concerts: Concert[], favorites: ArtistSearchResult[
       : new RegExp(`(?:^|[^\\p{L}\\p{N}])${pattern}(?=$|[^\\p{L}\\p{N}])`, 'iu').test(title);
   });
   const matched = concerts.filter(concert => ['KOPIS', 'STAGEPIN'].includes(concert.source)
-    && concert.status !== 'CANCELLED' && concert.status !== 'COMPLETED'
-    && new Date(concert.endsAt ?? concert.startsAt).getTime() >= now
+    && concert.status !== 'CANCELLED'
     && (concert.artists.some(artist => ids.has(artist.id) || names.has(normalize(artist.name)))
       || matchesTitle(concert.title ?? '')));
   return [...new Map(matched.map(concert => [concert.id, concert])).values()]
-    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+    .sort((a, b) => {
+      const rank = { '진행 중': 0, '예정': 1, '완료': 2, '취소': 3 };
+      const phaseA = concertPhase(a, now);
+      const phaseB = concertPhase(b, now);
+      return rank[phaseA] - rank[phaseB]
+        || (phaseA === '완료' ? Date.parse(b.startsAt) - Date.parse(a.startsAt) : Date.parse(a.startsAt) - Date.parse(b.startsAt));
+    });
 }

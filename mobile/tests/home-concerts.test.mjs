@@ -1,18 +1,35 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { artistConcertKeywords, homeConcerts } from '../src/lib/home-concerts.ts';
+import { artistConcertKeywords, concertPhase, homeConcerts } from '../src/lib/home-concerts.ts';
 
-test('home only shows favorite artists, removes ended shows and sorts by date', () => {
+test('home includes favorite artist history, orders ongoing/upcoming/history, excludes cancelled and demo shows', () => {
   const now = Date.parse('2026-10-28T00:00:00Z');
   const concert = { id: 'late', source: 'KOPIS', status: 'UPCOMING', startsAt: '2026-11-10T00:00:00Z', endsAt: null, artists: [{ name: '데이식스' }] };
   const early = { ...concert, id: 'early', startsAt: '2026-10-29T00:00:00Z', artists: [{ name: 'IVE' }] };
-  const invalid = [{ ...concert, source: 'DEMO' }, { ...concert, status: 'CANCELLED' }, { ...concert, status: 'COMPLETED' }, { ...concert, startsAt: '2026-10-01T00:00:00Z' }];
-  const items = [concert, early, ...invalid];
+  const completed = { ...concert, id: 'completed', status: 'COMPLETED', startsAt: '2026-07-03T03:00:00Z' };
+  const old = { ...completed, id: 'old', startsAt: '2025-12-19T03:00:00Z' };
+  const ongoing = { ...concert, id: 'ongoing', startsAt: '2026-10-27T03:00:00Z', endsAt: '2026-10-30T03:00:00Z' };
+  const invalid = [{ ...concert, source: 'DEMO' }, { ...concert, status: 'CANCELLED' }];
+  const items = [old, concert, early, completed, ongoing, ...invalid];
   const favorites = [{ name: 'DAY6', searchName: 'DAY6', aliases: ['데이식스'] }];
-  assert.deepEqual(homeConcerts(items, favorites, now).map((item) => item.id), ['late']);
+  assert.deepEqual(homeConcerts(items, favorites, now).map((item) => item.id), ['ongoing', 'late', 'completed', 'old']);
   assert.equal(homeConcerts(items, [], now).length, 0);
   assert.equal(homeConcerts([{ ...concert, startsAt: '2026-10-27T00:00:00Z', endsAt: '2026-10-30T00:00:00Z' }], favorites, now).length, 1);
   assert.deepEqual(homeConcerts([concert, {...early, artists: concert.artists}], favorites, now).map(item => item.id), ['early', 'late']);
+});
+
+test('status badges respect explicit states and Seoul date boundaries for KOPIS', () => {
+  const show = { source: 'KOPIS', status: 'ON_SALE', startsAt: '2026-10-29T03:00:00Z', endsAt: '2026-10-30T03:00:00Z' };
+  assert.equal(concertPhase(show, Date.parse('2026-10-28T14:59:59Z')), '예정');
+  assert.equal(concertPhase(show, Date.parse('2026-10-28T15:00:00Z')), '진행 중');
+  assert.equal(concertPhase(show, Date.parse('2026-10-30T14:59:59Z')), '진행 중');
+  assert.equal(concertPhase(show, Date.parse('2026-10-30T15:00:00Z')), '완료');
+  assert.equal(concertPhase({ ...show, endsAt: null }, Date.parse('2026-10-29T14:59:59Z')), '진행 중');
+  assert.equal(concertPhase({ ...show, endsAt: null }, Date.parse('2026-10-29T15:00:00Z')), '완료');
+  assert.equal(concertPhase({ ...show, status: 'COMPLETED' }, Date.parse('2026-10-28T00:00:00Z')), '완료');
+  assert.equal(concertPhase({ ...show, status: 'CANCELLED' }, Date.parse('2026-10-31T00:00:00Z')), '취소');
+  assert.equal(concertPhase({ ...show, source: 'STAGEPIN' }, Date.parse('2026-10-29T02:59:59Z')), '예정');
+  assert.equal(concertPhase({ ...show, source: 'STAGEPIN' }, Date.parse('2026-10-29T03:00:00Z')), '진행 중');
 });
 
 test('matches artist names in titles when KOPIS has no cast, without matching IVE inside LIVE', () => {

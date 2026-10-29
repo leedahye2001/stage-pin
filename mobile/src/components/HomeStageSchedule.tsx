@@ -38,7 +38,7 @@ export function HomeStageSchedule({ showAll = false }: { showAll?: boolean }) {
       : pending && (tab !== 'SHOW' || !shows.length) ? <LoadingSkeleton kind={tab === 'SHOW' ? 'concerts' : 'schedule'} label="좋아하는 아티스트의 일정 불러오는 중" />
       : failed && (tab !== 'SHOW' || !shows.length) ? <View style={s.empty}><Text style={m.subtitle}>일정을 불러오지 못했어요.</Text><Pressable accessibilityRole="button" onPress={retry}><Text style={m.sectionLink}>다시 불러오기</Text></Pressable></View>
       : tab === 'SHOW' ? shows.length ? showAll ? <View style={s.grid}>{cards}</View> : <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>{cards}</ScrollView>
-        : <View style={s.empty}><Ionicons name="calendar-outline" size={25} color={colors.textMuted} /><Text style={s.emptyTitle}>찜한 아티스트의 확인된 예정 공연이 없어요</Text></View>
+        : <View style={s.empty}><Ionicons name="calendar-outline" size={25} color={colors.textMuted} /><Text style={s.emptyTitle}>찜한 아티스트의 확인된 공연이 없어요</Text></View>
       : <TicketingCarousel openings={tickets} scheduleType={tab} title={tab === 'FAN_PRESALE' ? '선예매 일정' : '일반예매 일정'} compact />}
     {artists.length > 0 && tab === 'SHOW' && shows.length > 0 && failed ? <Pressable accessibilityRole="button" onPress={retry}><Text style={m.subtitle}>일부 아티스트 조회 실패 · 다시 불러오기</Text></Pressable> : null}
     {artists.length > 0 ? <Text style={s.source}>{tab === 'SHOW' ? '공연 정보 · 공연예술통합전산망 KOPIS' : '공식 출처와 예매처 링크가 확인된 일정만 표시해요.'}</Text> : null}
