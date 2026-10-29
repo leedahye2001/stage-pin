@@ -40,14 +40,14 @@ export default function MapScreen() {
       {mode === 'exchange' ? <View style={s.empty}>
         <Ionicons name="swap-horizontal-outline" size={32} color={colors.textMuted} />
         <Text style={s.emptyTitle}>현장 교환 지도는 준비 중이에요</Text>
-        <Text style={s.note}>공연과 날짜별 교환 글을 연결할 예정이에요. 현재 위치를 수집하거나 공개하지 않아요.</Text>
+        <Text style={s.note}>공연과 날짜별 교환 글을 연결할 예정이에요. 다른 사용자에게 내 위치를 공개하지 않아요.</Text>
         <Pressable accessibilityRole="link" onPress={() => router.push('/goods')} style={s.button}><Text style={s.buttonText}>굿즈 보기 →</Text></Pressable>
       </View> : query.isPending ? <LoadingSkeleton kind="map" label="공연 장소 불러오는 중" />
         : query.isError ? <View style={s.empty}>
           <Text style={s.emptyTitle}>공연 장소를 불러오지 못했어요</Text>
           <Pressable accessibilityRole="button" onPress={() => query.refetch()} style={s.button}><Text style={s.buttonText}>다시 시도</Text></Pressable>
         </View> : venues.length ? <>
-          <ConcertMap concerts={markers} onSelect={selectMarker} initialRealMap height={isWide ? 460 : 370} />
+          <ConcertMap concerts={markers} onSelect={selectMarker} initialRealMap autoLocate height={isWide ? 460 : 370} />
           <View style={s.heading}>
             <Text style={s.sectionTitle}>{selected ? selected.venue.name : '공연 장소'}</Text>
             {selected ? <Pressable accessibilityRole="button" onPress={() => setSelectedVenue(null)}><Text style={s.buttonText}>전체 장소 보기</Text></Pressable> : <Text style={s.note}>{venues.length}곳</Text>}

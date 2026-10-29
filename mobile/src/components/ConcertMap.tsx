@@ -9,6 +9,7 @@ type ConcertMapProps = {
   onSelect: (concertId: string) => void;
   initialRealMap?: boolean;
   height?: number;
+  autoLocate?: boolean;
 };
 
 const cameraPosition = {

@@ -3,11 +3,15 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import type { Concert } from '@/api/concerts';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import type { MapLocation } from '@/lib/current-location';
+
+type KakaoMap = { setCenter: (position: unknown) => void; setLevel: (level: number) => void };
+type KakaoMarker = { setMap: (map: KakaoMap | null) => void };
 
 type KakaoMapsApi = {
   LatLng: new (latitude: number, longitude: number) => unknown;
-  Map: new (container: HTMLElement, options: { center: unknown; level: number }) => unknown;
-  Marker: new (options: { map: unknown; position: unknown; title: string }) => unknown;
+  Map: new (container: HTMLElement, options: { center: unknown; level: number }) => KakaoMap;
+  Marker: new (options: { map: KakaoMap; position: unknown; title: string }) => KakaoMarker;
   event: {
     addListener: (target: unknown, event: string, listener: () => void) => void;
   };
@@ -23,6 +27,7 @@ declare global {
 type KakaoConcertMapProps = {
   concerts: Concert[];
   onSelect: (concertId: string) => void;
+  currentLocation?: MapLocation | null;
 };
 
 const scriptId = 'stagepin-kakao-map-sdk';
@@ -52,14 +57,16 @@ function loadKakaoMapSdk(appKey: string) {
   });
 }
 
-export function KakaoConcertMap({ concerts, onSelect }: KakaoConcertMapProps) {
+export function KakaoConcertMap({ concerts, onSelect, currentLocation }: KakaoConcertMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<KakaoMap | null>(null);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const appKey = process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY;
 
   useEffect(() => {
     if (!appKey || !containerRef.current) return;
+    const container = containerRef.current;
     let cancelled = false;
 
     loadKakaoMapSdk(appKey)
@@ -69,6 +76,7 @@ export function KakaoConcertMap({ concerts, onSelect }: KakaoConcertMapProps) {
           center: new maps.LatLng(36.4, 127.8),
           level: 13,
         });
+        mapRef.current = map;
         concerts.forEach((concert) => {
           const marker = new maps.Marker({
             map,
@@ -83,8 +91,21 @@ export function KakaoConcertMap({ concerts, onSelect }: KakaoConcertMapProps) {
 
     return () => {
       cancelled = true;
+      mapRef.current = null;
+      container.replaceChildren();
     };
   }, [appKey, concerts, onSelect]);
+
+  useEffect(() => {
+    const maps = window.kakao?.maps;
+    const map = mapRef.current;
+    if (!ready || !currentLocation || !maps || !map) return;
+    const position = new maps.LatLng(currentLocation.latitude, currentLocation.longitude);
+    map.setCenter(position);
+    map.setLevel(5);
+    const marker = new maps.Marker({ map, position, title: '현재 위치' });
+    return () => marker.setMap(null);
+  }, [currentLocation, ready]);
 
   if (!appKey || failed) return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}><Text>지도를 불러오지 못했어요. 아래 장소 목록에서 공연을 확인해 주세요.</Text></View>;
 
