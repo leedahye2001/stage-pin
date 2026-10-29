@@ -24,8 +24,7 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: ConcertCardProps) {
   const [now] = useState(Date.now);
   const phase = concertPhase(concert, now);
-  const artistNames = concert.artists.map((artist) => artist.name).join(', ')
-    || '출연진 미등록';
+  const artistNames = concert.artists.map((artist) => artist.name.trim()).filter(Boolean).join(', ');
   const isKopis = concert.source === 'KOPIS';
 
   return (
@@ -56,12 +55,12 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: Co
 
         <View style={styles.content}>
           <View style={styles.artistRow}>
-            <Text style={[styles.liveBadge, phase === '진행 중' ? styles.ongoingBadge : phase === '예정' ? styles.upcomingBadge : styles.completedBadge]}>{phase}</Text>
+            <Text style={[styles.statusBadge, phase === '진행 중' ? styles.ongoingBadge : phase === '예정' ? styles.upcomingBadge : styles.completedBadge]}>{phase}</Text>
             {isKopis ? <Text style={styles.liveBadge}>KOPIS</Text> : null}
           </View>
-          <View style={styles.artistRow}>
+          {artistNames ? <View style={styles.artistRow}>
             <Text style={styles.artist}>{artistNames}</Text>
-          </View>
+          </View> : null}
           <Text numberOfLines={2} style={styles.title}>
             {concert.title}
           </Text>
@@ -102,6 +101,7 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: Co
 }
 
 const styles = StyleSheet.create({
+  statusBadge: { borderRadius: 8, overflow: 'hidden', fontSize: 12, lineHeight: 18, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 4 },
   completedBadge: { backgroundColor: colors.surfaceMuted, color: colors.textMuted },
   ongoingBadge: { backgroundColor: '#E7F4ED', color: colors.success },
   upcomingBadge: { backgroundColor: colors.primarySoft, color: colors.primary },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 3,
-    minHeight: 152,
+    minHeight: 130,
     padding: spacing.md,
   },
   artist: {

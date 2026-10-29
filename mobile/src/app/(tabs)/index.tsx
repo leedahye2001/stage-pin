@@ -22,7 +22,7 @@ export default function FanHomeScreen() {
   return <SafeAreaView edges={['top']} style={m.safe}>
     <ScrollView contentContainerStyle={[m.content, layout.isWide && responsiveStyles.content]} stickyHeaderIndices={layout.isWide ? [] : [1]} keyboardShouldPersistTaps="handled">
       <View style={[m.between, layout.isWide && { display: 'none' }]}>
-        <View style={m.row}><Image source={require('../../../assets/stagepin-mark.png')} accessibilityLabel="스테이지핀 로고" style={s.brandMark} /><Text style={s.brand}>stagepin<Text style={{ color: colors.primary }}>✦</Text></Text></View>
+        <View style={m.row}><Image source={require('../../../assets/stagepin-mark.png')} accessibilityLabel="스테이지핀 로고" style={s.brandMark} /><Text style={s.brand}>stagepin</Text></View>
         <Text style={s.smallLabel}>공연과 굿즈가 만나는 곳</Text>
       </View>
       {!layout.isWide ? <HomeSearch /> : null}

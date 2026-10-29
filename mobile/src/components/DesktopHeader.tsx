@@ -16,7 +16,7 @@ export function DesktopHeader() {
   return <View style={s.header}>
     <View style={s.top}>
       <Pressable accessibilityRole="link" accessibilityLabel="StagePin 홈" onPress={() => router.push('/')} style={s.brand}>
-        <Image source={require('../../assets/stagepin-mark.png')} style={s.mark} /><Text style={s.name}>stagepin<Text style={{ color: colors.primary }}>✦</Text></Text>
+        <Image source={require('../../assets/stagepin-mark.png')} style={s.mark} /><Text style={s.name}>stagepin</Text>
       </Pressable>
       <View style={[s.search, !isDesktop && { maxWidth: 400 }]}><HomeSearch /></View>
       <Pressable accessibilityRole="link" onPress={() => router.push('/goods/create')} style={s.register}><Text style={s.registerText}>＋ 굿즈 등록</Text></Pressable>
