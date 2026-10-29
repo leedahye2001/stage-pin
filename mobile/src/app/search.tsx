@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getConcerts } from '@/api/concerts';
@@ -33,10 +34,7 @@ export default function PerformanceSearchScreen() {
         </View>
 
         {concertsQuery.isPending ? (
-          <View style={styles.centered}>
-            <ActivityIndicator color={colors.primary} size="large" />
-            <Text style={styles.muted}>KOPIS 공연을 찾는 중이에요.</Text>
-          </View>
+          <LoadingSkeleton kind="concerts" label="공연 검색 중" />
         ) : concertsQuery.isError ? (
           <Text style={styles.empty}>공연 검색 결과를 불러오지 못했어요.</Text>
         ) : concerts.length ? (

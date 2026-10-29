@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getConcert, type ConcertGenre, type FanCategory } from '@/api/concerts';
@@ -54,8 +55,8 @@ export default function ConcertDetailScreen() {
 
   if (concertQuery.isPending) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <ActivityIndicator color={colors.primary} size="large" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScrollView contentContainerStyle={{ padding: 20 }}><LoadingSkeleton kind="detail" label="공연 상세 불러오는 중" /></ScrollView>
       </SafeAreaView>
     );
   }

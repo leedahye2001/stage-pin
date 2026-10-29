@@ -2,7 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getHomeConcerts, getTicketOpenings } from '@/api/concerts';
 import { ConcertCard } from '@/components/ConcertCard';
 import { TicketingCarousel } from '@/components/TicketingCarousel';
@@ -32,7 +33,7 @@ export function HomeStageSchedule() {
       <Pressable accessibilityRole="button" accessibilityLabel="찜한 아티스트 일정 보기" accessibilityState={{ selected: favoritesOnly }} onPress={() => setFavoritesOnly(true)} style={s.scopeOption}><Text style={[s.scopeText, favoritesOnly && s.scopeActive]}>찜한 아티스트</Text></Pressable>
     </View>
     {favoritesOnly && !artists.length ? <View style={s.empty}><Text style={s.emptyTitle}>먼저 좋아하는 아티스트를 찜해보세요</Text><Text style={m.subtitle}>위의 하트를 누르면 이곳에서 일정을 모아볼 수 있어요.</Text></View>
-      : active.isPending ? <ActivityIndicator color={colors.primary} />
+      : active.isPending ? <LoadingSkeleton kind={tab === 'SHOW' ? 'concerts' : 'schedule'} label="공연·예매 일정 불러오는 중" />
       : active.isError ? <View style={s.empty}><Text style={m.subtitle}>일정을 불러오지 못했어요.</Text><Pressable accessibilityRole="button" onPress={() => active.refetch()}><Text style={m.link}>다시 불러오기</Text></Pressable></View>
       : tab === 'SHOW' ? shows.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>{shows.slice(0, 8).map((concert) => <ConcertCard key={concert.id} concert={concert} favorite={isConcertFavorite(concert.id)} onFavoriteToggle={() => toggleConcert(concert)} onPress={() => router.push({ pathname: '/concerts/[id]', params: { id: concert.id, genre: 'POPULAR_MUSIC' } })} />)}</ScrollView>
         : <View style={s.empty}><Ionicons name="calendar-outline" size={25} color={colors.primary} /><Text style={s.emptyTitle}>{favoritesOnly ? '찜한 아티스트의 등록된 공연이 없어요' : '지금 확인된 공연이 없어요'}</Text><Pressable accessibilityRole="button" onPress={() => router.push('/explore')}><Text style={m.link}>공연·아티스트 검색하기 ↗</Text></Pressable></View>

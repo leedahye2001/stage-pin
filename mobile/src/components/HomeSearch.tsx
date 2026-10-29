@@ -2,7 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getArtists } from '@/api/concerts';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { useFavorites } from '@/lib/favorites';
@@ -15,13 +16,13 @@ export function HomeSearch() {
   useEffect(() => { const timer = setTimeout(() => setKeyword(query.trim()), 450); return () => clearTimeout(timer); }, [query]);
   const results = useQuery({ queryKey: ['artists', keyword], queryFn: () => getArtists(keyword), enabled: keyword.length >= 1, retry: false, staleTime: 3600000 });
   const searching = query.trim().length >= 1;
-  const pending = keyword !== query.trim() || results.isFetching;
+  const pending = keyword !== query.trim() || results.isPending;
   const searchConcerts = () => { if (query.trim()) router.push({ pathname: '/search', params: { query: query.trim() } }); };
   return <View style={s.container}>
     <View style={s.search}><Ionicons name="search" size={20} color={colors.primary} /><TextInput accessibilityLabel="아티스트 또는 공연 검색" placeholder="아티스트, 공연명을 검색해보세요" placeholderTextColor="#94899D" value={query} onChangeText={setQuery} onSubmitEditing={searchConcerts} returnKeyType="search" autoCapitalize="none" autoCorrect={false} style={s.input} />{query ? <Pressable accessibilityRole="button" accessibilityLabel="홈 검색어 지우기" onPress={() => setQuery('')}><Ionicons name="close-circle" size={19} color="#A398AF" /></Pressable> : null}</View>
     {searching ? <View style={s.dropdown}>
       <Text style={s.caption}>아티스트를 찜하면 홈에서 예매 일정을 모아봐요</Text>
-      {pending ? <View style={s.row}><ActivityIndicator size="small" color={colors.primary} /><Text style={s.hint}>아티스트 프로필을 찾고 있어요</Text></View>
+      {pending ? <LoadingSkeleton kind="search" label="아티스트 검색 중" />
         : results.data?.length ? results.data.map((artist) => <View key={artist.id} style={s.row}>
           <ArtistPhoto artist={artist} size={43} />
           <Pressable accessibilityRole="button" accessibilityLabel={`${artist.name} 아티스트 보기`} onPress={() => { setQuery(''); router.push({ pathname: '/artists/[id]', params: { id: artist.id, query: artist.searchName } }); }} style={{ flex: 1 }}><Text style={s.name}>{artist.name}</Text><Text style={s.hint} numberOfLines={1}>{artist.aliases.slice(0, 3).join(' · ')}</Text></Pressable>

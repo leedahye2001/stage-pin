@@ -3,7 +3,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Pressable,
@@ -26,6 +25,7 @@ import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { TicketingCarousel } from '@/components/TicketingCarousel';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -79,9 +79,8 @@ export default function ConcertDiscoveryScreen() {
 
   if (upcomingQuery.isPending) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <ActivityIndicator color={colors.primary} size="large" />
-        <Text style={styles.loadingText}>예정 공연을 불러오는 중이에요.</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScrollView contentContainerStyle={{ padding: 20 }}><LoadingSkeleton kind="explore" label="공연장과 공연 불러오는 중" /></ScrollView>
       </SafeAreaView>
     );
   }
@@ -203,10 +202,7 @@ export default function ConcertDiscoveryScreen() {
             {showSearchDropdown ? (
               <View style={styles.searchDropdown}>
                 {searchIsLoading ? (
-                  <View style={styles.searchDropdownRow}>
-                    <ActivityIndicator color={colors.primary} size="small" />
-                    <Text style={styles.searchDropdownDescription}>KOPIS 공연 기록을 찾는 중이에요.</Text>
-                  </View>
+                  <LoadingSkeleton kind="search" label="공연·아티스트 검색 중" />
                 ) : artistSuggestionsQuery.data?.length || performanceSuggestionsQuery.data?.length ? (
                   <>
                   {artistSuggestionsQuery.data?.map((artist) => (

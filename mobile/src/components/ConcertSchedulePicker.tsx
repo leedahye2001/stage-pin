@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { getTicketOpenings, type Concert } from '@/api/concerts';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { concertScheduleOptions, scheduleLabels, seoulDay } from '@/lib/saved-schedules';
 import { useSavedSchedules } from '@/lib/saved-schedules-state';
 import { colors } from '@/theme/tokens';
@@ -43,7 +44,7 @@ export function ConcertSchedulePicker({ concert }: { concert: Concert }) {
       </Pressable>;
     })}
     <Text style={s.hint}>KOPIS 공연은 기간 시작일을 담아요. 종료일: {concert.endsAt ? seoulDay(concert.endsAt) : '미등록'}.{ '\n' }정확한 관람일·회차·시간은 공식 예매처에서 확인해 주세요.</Text>
-    {tickets.isPending ? <Text style={s.hint}>확인된 예매 일정을 불러오고 있어요…</Text> : tickets.isError ? <Pressable accessibilityRole="button" onPress={() => tickets.refetch()}><Text style={s.link}>예매 일정 조회 실패 · 다시 불러오기</Text></Pressable> : options.length === 1 ? <Text style={s.hint}>이 공연과 연결된 확인된 선예매·일반예매 일정은 아직 없어요. 날짜를 추정해서 추가하지 않아요.</Text> : null}
+    {tickets.isPending ? <LoadingSkeleton kind="schedule" label="예매 일정 불러오는 중" /> : tickets.isError ? <Pressable accessibilityRole="button" onPress={() => tickets.refetch()}><Text style={s.link}>예매 일정 조회 실패 · 다시 불러오기</Text></Pressable> : options.length === 1 ? <Text style={s.hint}>이 공연과 연결된 확인된 선예매·일반예매 일정은 아직 없어요. 날짜를 추정해서 추가하지 않아요.</Text> : null}
     <Text style={s.notice}>일정 저장은 티켓 예매가 아니에요. 실제 예매는 예매처에서 진행해 주세요.</Text>
     {saved.loadError || error ? <Text accessibilityRole="alert" style={s.error}>{saved.loadError || error}</Text> : null}
     <Pressable accessibilityRole="button" accessibilityLabel="선택한 일정 담기" disabled={!saved.ready || busy || !additions.length} onPress={save} style={[s.button, (!saved.ready || busy || !additions.length) && { opacity: 0.45 }]}><Text style={s.buttonText}>{busy ? '저장 중…' : `선택한 일정 ${additions.length}개 담기`}</Text></Pressable>

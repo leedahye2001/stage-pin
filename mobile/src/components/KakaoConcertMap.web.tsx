@@ -1,8 +1,8 @@
 import { createElement, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { Concert } from '@/api/concerts';
-import { colors, spacing } from '@/theme/tokens';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
 type KakaoMapsApi = {
   LatLng: new (latitude: number, longitude: number) => unknown;
@@ -55,6 +55,7 @@ function loadKakaoMapSdk(appKey: string) {
 export function KakaoConcertMap({ concerts, onSelect }: KakaoConcertMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
   const appKey = process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY;
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export function KakaoConcertMap({ concerts, onSelect }: KakaoConcertMapProps) {
           });
           maps.event.addListener(marker, 'click', () => onSelect(concert.id));
         });
+        setReady(true);
       })
       .catch(() => setFailed(true));
 
@@ -88,10 +90,7 @@ export function KakaoConcertMap({ concerts, onSelect }: KakaoConcertMapProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.loading}>
-        <ActivityIndicator color={colors.primary} size="small" />
-        <Text style={styles.loadingText}>카카오맵을 불러오는 중이에요.</Text>
-      </View>
+      {!ready ? <LoadingSkeleton kind="map" label="카카오맵 불러오는 중" /> : null}
       {createElement('div', {
         ref: containerRef,
         style: { height: '100%', inset: 0, position: 'absolute', width: '100%' },
@@ -103,15 +102,5 @@ export function KakaoConcertMap({ concerts, onSelect }: KakaoConcertMapProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loading: {
-    alignItems: 'center',
-    flex: 1,
-    gap: spacing.sm,
-    justifyContent: 'center',
-  },
-  loadingText: {
-    color: colors.textMuted,
-    fontSize: 12,
   },
 });
