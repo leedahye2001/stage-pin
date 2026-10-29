@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   sectionHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   sectionTitle: { color: colors.text, fontSize: typography.title, fontWeight: '800' },
   count: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: radius.pill,
     color: colors.primary,
     fontSize: 12,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   artistName: { color: colors.text, fontWeight: '800', maxWidth: '100%' },
   removeButton: {
     alignItems: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.button,
     borderRadius: radius.pill,
     height: 32,
     justifyContent: 'center',

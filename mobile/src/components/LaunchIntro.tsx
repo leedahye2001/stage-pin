@@ -62,7 +62,7 @@ export function LaunchIntro({ children }: { children: ReactNode }) {
 
 const s = StyleSheet.create({
   root: { flex: 1 },
-  overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 1000, backgroundColor: '#F8F5FF', alignItems: 'center', justifyContent: 'center' },
+  overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 1000, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
   art: { width: 240, height: 240, alignItems: 'center', justifyContent: 'center' },
   wave: { position: 'absolute', width: 210, height: 210, borderRadius: 105, borderWidth: 2, borderColor: '#BAA5F6' },
   halo: { position: 'absolute', width: 180, height: 180, borderRadius: 90, backgroundColor: '#EDE5FF' },

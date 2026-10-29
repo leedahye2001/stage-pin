@@ -52,10 +52,10 @@ export function ConcertSchedulePicker({ concert }: { concert: Concert }) {
 }
 
 const s = StyleSheet.create({
-  card: { backgroundColor: '#FFFFFF', padding: 18, borderRadius: 22, borderWidth: 1, borderColor: '#E1D7F8', marginTop: 24, gap: 13 },
+  card: { backgroundColor: '#FFFFFF', padding: 18, borderRadius: 22, borderWidth: 1, borderColor: colors.border, marginTop: 24, gap: 13 },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 10 }, title: { color: colors.text, fontSize: 18, fontWeight: '900' },
   hint: { color: colors.textMuted, fontSize: 11, lineHeight: 19 }, label: { fontSize: 13, color: colors.text, fontWeight: '800' },
-  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15, borderRadius: 15, backgroundColor: '#F8F7FB', borderWidth: 1, borderColor: '#EAE5F2', minHeight: 68 },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15, borderRadius: 15, backgroundColor: colors.surfaceMuted, borderWidth: 1, borderColor: colors.border, minHeight: 68 },
   selected: { backgroundColor: '#F1ECFF', borderColor: '#B8A4EE' }, date: { color: colors.textMuted, fontSize: 12 },
   notice: { fontSize: 11, color: '#756589', lineHeight: 19 }, error: { color: '#B34058', fontSize: 12 },
   button: { backgroundColor: colors.primary, padding: 15, alignItems: 'center', borderRadius: 15 }, buttonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },

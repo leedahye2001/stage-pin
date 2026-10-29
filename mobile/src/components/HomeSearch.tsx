@@ -34,8 +34,8 @@ export function HomeSearch() {
 }
 
 const s = StyleSheet.create({
-  container: { gap: 12, backgroundColor: '#FAF9FC', paddingBottom: 10 },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#D5C9F6', borderRadius: 999, minHeight: 51 },
+  container: { gap: 12, backgroundColor: colors.background, paddingBottom: 10 },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, backgroundColor: colors.surfaceMuted, borderWidth: 1, borderColor: colors.border, borderRadius: 999, minHeight: 51 },
   input: { flex: 1, minWidth: 0, paddingVertical: 15, fontSize: 13, color: colors.text },
   dropdown: { backgroundColor: '#FFFFFF', padding: 14, gap: 15, borderRadius: 18, borderWidth: 1, borderColor: '#E6DFF1' },
   caption: { color: colors.primary, fontSize: 10, lineHeight: 17 },

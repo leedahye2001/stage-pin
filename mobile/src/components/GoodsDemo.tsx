@@ -53,7 +53,7 @@ export function GoodsCard({ item }: { item: DemoGoods }) {
 }
 
 export const marketStyles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAF9FC' },
+  safe: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingBottom: 110, gap: 24, width: '100%', maxWidth: 1000, alignSelf: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
@@ -63,18 +63,18 @@ export const marketStyles = StyleSheet.create({
   link: { color: colors.primary, fontWeight: '700', fontSize: 12 },
   section: { gap: 14 },
   chips: { gap: 8 },
-  chip: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E9E5F0', borderRadius: 24 },
-  chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chip: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.button, borderWidth: 1, borderColor: colors.button, borderRadius: 24 },
+  chipSelected: { backgroundColor: colors.buttonText, borderColor: colors.buttonText },
   chipText: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
   chipSelectedText: { color: '#FFFFFF' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   gridItem: { width: '47%', flexGrow: 1, maxWidth: '49%' },
-  empty: { padding: 32, gap: 12, backgroundColor: '#F0EDF7', borderRadius: 20, alignItems: 'center' },
+  empty: { padding: 32, gap: 12, backgroundColor: colors.surfaceMuted, borderRadius: 20, alignItems: 'center' },
 });
 
 const s = StyleSheet.create({
-  notice: { flexDirection: 'row', gap: 7, alignItems: 'center', backgroundColor: '#EEE8FF', borderRadius: 10, padding: 10 },
-  noticeText: { color: '#6B53A1', fontSize: 10, lineHeight: 16, flex: 1 },
+  notice: { flexDirection: 'row', gap: 7, alignItems: 'center', backgroundColor: colors.surfaceMuted, borderRadius: 10, padding: 10 },
+  noticeText: { color: colors.textMuted, fontSize: 10, lineHeight: 16, flex: 1 },
   art: { height: 175, borderRadius: 17, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   artLarge: { height: 320, borderRadius: 24 },
   artStar: { position: 'absolute', top: 10, left: 15, fontSize: 42, opacity: 0.7 },
@@ -91,8 +91,8 @@ const s = StyleSheet.create({
   card: { position: 'relative' },
   cardCopy: { paddingTop: 10, gap: 7 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  badge: { backgroundColor: '#F0EBFA', paddingHorizontal: 6, paddingVertical: 3, fontSize: 9, color: '#7858AB', fontWeight: '800', borderRadius: 5 },
-  exchange: { backgroundColor: '#E5F1E9', color: '#4F8062' },
+  badge: { backgroundColor: colors.surfaceMuted, paddingHorizontal: 6, paddingVertical: 3, fontSize: 9, color: colors.textMuted, fontWeight: '800', borderRadius: 5 },
+  exchange: { backgroundColor: colors.surfaceMuted, color: colors.buttonText },
   artist: { fontSize: 9, color: colors.textMuted, fontWeight: '700' },
   cardTitle: { color: colors.text, fontSize: 13, fontWeight: '700', lineHeight: 19, minHeight: 38 },
   price: { fontWeight: '900', color: colors.text, fontSize: 15 },

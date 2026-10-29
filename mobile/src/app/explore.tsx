@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     width: 28,
   },
   identityCard: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: radius.lg,
     gap: spacing.md,
     overflow: 'hidden',
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
     width: 110,
   },
   identityEyebrow: {
-    color: colors.white,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 1.8,
@@ -462,22 +462,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   hero: {
-    color: colors.white,
+    color: colors.text,
     fontSize: typography.hero,
     fontWeight: '900',
     letterSpacing: -1,
     lineHeight: 38,
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.82)',
+    color: colors.textMuted,
     fontSize: typography.caption,
     lineHeight: 19,
     marginTop: spacing.sm,
   },
   radarPin: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderColor: 'rgba(255,255,255,0.32)',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
     borderRadius: radius.pill,
     borderWidth: 1,
     height: 58,
@@ -490,13 +490,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   vendorPill: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: colors.button,
     borderRadius: radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   vendorPillText: {
-    color: colors.white,
+    color: colors.buttonText,
     fontSize: 10,
     fontWeight: '800',
   },
@@ -647,8 +647,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   genreChipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.buttonText,
+    borderColor: colors.buttonText,
   },
   genreLabel: {
     color: colors.textMuted,

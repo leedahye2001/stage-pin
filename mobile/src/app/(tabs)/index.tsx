@@ -51,9 +51,9 @@ const s = StyleSheet.create({
   brandMark: { width: 31, height: 34, borderRadius: 11, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', transform: [{ rotate: '-8deg' }] },
   brand: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -1 },
   smallLabel: { fontSize: 10, color: colors.textMuted },
-  shortcuts: { flexDirection: 'row', gap: 9 }, shortcut: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#EEE8F4', borderRadius: 18, paddingVertical: 17, paddingHorizontal: 8, alignItems: 'center', gap: 8 },
+  shortcuts: { flexDirection: 'row', gap: 9 }, shortcut: { flex: 1, backgroundColor: colors.button, borderWidth: 1, borderColor: colors.border, borderRadius: 18, paddingVertical: 17, paddingHorizontal: 8, alignItems: 'center', gap: 8 },
   shortcutTitle: { color: colors.text, fontSize: 13, fontWeight: '800' }, shortcutCopy: { color: colors.textMuted, fontSize: 9, textAlign: 'center' },
-  onsite: { backgroundColor: '#EFF4ED', borderRadius: 24, padding: 17, gap: 17 }, onsiteTag: { color: '#5B8065', fontSize: 10, fontWeight: '800' },
+  onsite: { backgroundColor: colors.surfaceMuted, borderRadius: 24, padding: 17, gap: 17 }, onsiteTag: { color: colors.textMuted, fontSize: 10, fontWeight: '800' },
   event: { fontSize: 9, color: colors.primary, paddingTop: 8, lineHeight: 15 },
   footer: { color: '#A59BAD', fontSize: 9, textAlign: 'center', lineHeight: 18 },
 });
