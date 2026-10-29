@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getConcert, type ConcertGenre, type FanCategory } from '@/api/concerts';
@@ -45,6 +46,7 @@ const ticketVendor = (url: string) => {
 };
 
 export default function ConcertDetailScreen() {
+  const { isWide, isDesktop } = useResponsiveLayout();
   const { isConcertFavorite, toggleConcert } = useFavorites();
   const { id, genre = 'POPULAR_MUSIC' } = useLocalSearchParams<{ id: string; genre: ConcertGenre }>();
   const concertQuery = useQuery({
@@ -89,16 +91,20 @@ export default function ConcertDetailScreen() {
     : dateFormatter.format(new Date(concert.startsAt));
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}>
+      <View style={isDesktop ? { flexDirection: 'row', gap: 40, alignItems: 'flex-start' } : undefined}>
       {concert.posterUrl ? (
+        <View style={isDesktop ? { width: 340 } : undefined}>
         <Image
           accessibilityIgnoresInvertColors
           accessibilityLabel={`${concert.title} 포스터`}
-          resizeMode="cover"
+          resizeMode={isDesktop ? 'contain' : 'cover'}
           source={{ uri: concert.posterUrl }}
-          style={styles.poster}
+          style={[styles.poster, isDesktop && { height: 480 }]}
         />
+        </View>
       ) : null}
+      <View style={isDesktop ? { flex: 1, minWidth: 0 } : undefined}>
       <View style={styles.titleRow}>
         <Text style={styles.artist}>{artistNames}</Text>
         <Pressable
@@ -165,6 +171,7 @@ export default function ConcertDetailScreen() {
           </Text>
         </View>
       )}
+      </View></View>
     </ScrollView>
   );
 }

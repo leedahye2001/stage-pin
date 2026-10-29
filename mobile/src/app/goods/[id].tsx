@@ -7,8 +7,10 @@ import { DemoNotice, GoodsArtwork, marketStyles as m } from '@/components/GoodsD
 import { goodsPrice } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 
 export default function GoodsDetailScreen() {
+  const { isWide, isDesktop } = useResponsiveLayout();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { items, saved, requested, toggleSaved, request } = useGoodsDemo();
   const item = items.find((value) => value.id === id);
@@ -19,9 +21,11 @@ export default function GoodsDetailScreen() {
   const isOwnPreview = item.id.startsWith('local-');
   const hasRequest = requested.includes(item.id);
   return <SafeAreaView edges={['bottom']} style={m.safe}>
-    <ScrollView contentContainerStyle={[m.content, { paddingBottom: 24 }]}>
+    <ScrollView contentContainerStyle={[m.content, isWide && responsiveStyles.content, { paddingBottom: 24 }]}>
       <DemoNotice />
-      <GoodsArtwork item={item} large />
+      <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 24 }}>
+      <View style={isDesktop ? { flex: 1 } : undefined}><GoodsArtwork item={item} large /></View>
+      <View style={[{ gap: 24 }, isDesktop && { flex: 1, minWidth: 0 }]}>
       <View style={m.section}>
         <View style={m.between}><Text style={s.artist}>{item.artist} · {item.member} · {item.category}</Text><Text style={s.status}>{item.status}</Text></View>
         <Text style={s.title}>{item.title}</Text><Text style={s.price}>{goodsPrice(item)}</Text>
@@ -32,8 +36,9 @@ export default function GoodsDetailScreen() {
       {item.event ? <View style={s.event}><Ionicons name="location-outline" color={colors.primary} size={23} /><View style={{ flex: 1, gap: 5 }}><Text style={s.eventTitle}>이 무대에서 만나요</Text><Text style={s.eventCopy}>{item.event}</Text><Text style={m.subtitle}>가상 공연 · 만남 장소는 추후 거래 대화에서 결정</Text></View></View> : null}
       <View style={s.seller}><View style={s.avatar}><Ionicons name="person-outline" size={22} color="#8B7D9D" /></View><View><Text style={s.sellerName}>{item.seller}</Text><Text style={m.subtitle}>가상 사용자 · 실제 계정·거래 이력 없음</Text></View></View>
       <View style={s.safety}><Ionicons name="shield-checkmark-outline" size={18} color="#7D718F" /><Text style={s.safetyText}>공개 글에 연락처·주소를 남기지 마세요. 이 화면은 데모이며 상대에게 메시지를 보내거나 상품을 예약하지 않습니다.</Text></View>
+      </View></View>
     </ScrollView>
-    <View style={s.bottom}>
+    <View style={[s.bottom, isWide && { width: '100%', maxWidth: 900, alignSelf: 'center' }]}>
       <Pressable accessibilityRole="button" accessibilityLabel="이 굿즈 찜" accessibilityState={{ selected: saved.includes(item.id) }} onPress={() => toggleSaved(item.id)} style={s.heart}><Ionicons name={saved.includes(item.id) ? 'heart' : 'heart-outline'} color={colors.primary} size={24} /></Pressable>
       <Pressable accessibilityRole="button" disabled={isOwnPreview || item.status === '예약 중' || hasRequest} onPress={() => { setSent(false); setPreview(true); }} style={[s.cta, (isOwnPreview || item.status === '예약 중' || hasRequest) && s.disabled]}><Text style={s.ctaText}>{isOwnPreview ? '내가 등록한 미리보기예요' : hasRequest ? '데모 신청을 남겼어요' : item.status === '예약 중' ? '예약 중인 굿즈예요' : `${isExchange ? '교환' : '구매'} 신청 미리보기`}</Text><Ionicons name="arrow-forward" color="#FFFFFF" size={17} /></Pressable>
     </View>

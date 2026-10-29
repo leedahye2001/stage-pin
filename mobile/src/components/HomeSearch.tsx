@@ -8,8 +8,10 @@ import { getArtists } from '@/api/concerts';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { useFavorites } from '@/lib/favorites';
 import { colors } from '@/theme/tokens';
+import { useResponsiveLayout } from '@/lib/use-responsive-layout';
 
 export function HomeSearch() {
+  const { isWide } = useResponsiveLayout();
   const [query, setQuery] = useState('');
   const [keyword, setKeyword] = useState('');
   const { isArtistFavorite, toggleArtist } = useFavorites();
@@ -18,9 +20,9 @@ export function HomeSearch() {
   const searching = query.trim().length >= 1;
   const pending = keyword !== query.trim() || results.isPending;
   const searchConcerts = () => { if (query.trim()) router.push({ pathname: '/search', params: { query: query.trim() } }); };
-  return <View style={s.container}>
+  return <View style={[s.container, isWide && { paddingBottom: 0, zIndex: 30 }]}>
     <View style={s.search}><Ionicons name="search" size={20} color={colors.primary} /><TextInput accessibilityLabel="아티스트 또는 공연 검색" placeholder="아티스트, 공연명을 검색해보세요" placeholderTextColor="#94899D" value={query} onChangeText={setQuery} onSubmitEditing={searchConcerts} returnKeyType="search" autoCapitalize="none" autoCorrect={false} style={s.input} />{query ? <Pressable accessibilityRole="button" accessibilityLabel="홈 검색어 지우기" onPress={() => setQuery('')}><Ionicons name="close-circle" size={19} color="#A398AF" /></Pressable> : null}</View>
-    {searching ? <View style={s.dropdown}>
+    {searching ? <View style={[s.dropdown, isWide && { position: 'absolute', top: 60, left: 0, right: 0, zIndex: 30 }]}>
       <Text style={s.caption}>아티스트를 찜하면 홈에서 예매 일정을 모아봐요</Text>
       {pending ? <LoadingSkeleton kind="search" label="아티스트 검색 중" />
         : results.data?.length ? results.data.map((artist) => <View key={artist.id} style={s.row}>

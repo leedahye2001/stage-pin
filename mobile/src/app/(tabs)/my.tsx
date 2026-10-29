@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 
 import { ConcertCard } from '@/components/ConcertCard';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
@@ -11,12 +12,13 @@ import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function MyScreen() {
+  const { isWide } = useResponsiveLayout();
   const { artists, concerts, isConcertFavorite, toggleArtist, toggleConcert } = useFavorites();
   const { items, saved, requested } = useGoodsDemo();
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.reading]}>
         <View>
           <Text style={styles.eyebrow}>MY STAGEPIN</Text>
           <Text style={styles.title}>나의 덕질 보관함</Text>

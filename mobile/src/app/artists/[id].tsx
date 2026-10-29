@@ -17,12 +17,14 @@ import { ConcertCard } from '@/components/ConcertCard';
 import { ConcertMap } from '@/components/ConcertMap';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const cleanHtml = (value: string) => value.replace(/<[^>]*>/g, '');
 
 export default function ArtistScreen() {
+  const { isWide } = useResponsiveLayout();
   const { id, query } = useLocalSearchParams<{ id: string; query: string }>();
   const searchName = Array.isArray(query) ? query[0] : query;
   const artistId = Array.isArray(id) ? id[0] : id;
@@ -61,7 +63,7 @@ export default function ArtistScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}>
         {artistQuery.isPending ? (
           <LoadingSkeleton kind="profile" label="아티스트 프로필 불러오는 중" />
         ) : artist ? (

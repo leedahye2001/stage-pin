@@ -26,6 +26,7 @@ import { ConcertMap } from '@/components/ConcertMap';
 import { TicketingCarousel } from '@/components/TicketingCarousel';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -39,6 +40,7 @@ const fanFilters: { value: FanFilter; label: string }[] = [
 ];
 
 export default function ConcertDiscoveryScreen() {
+  const { isWide } = useResponsiveLayout();
   const {
     artists: favoriteArtists,
     isConcertFavorite,
@@ -133,7 +135,7 @@ export default function ConcertDiscoveryScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <FlatList
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}
         data={[]}
         keyboardShouldPersistTaps="handled"
         ListFooterComponent={

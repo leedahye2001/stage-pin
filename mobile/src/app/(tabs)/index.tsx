@@ -10,27 +10,29 @@ import { HomeArtists } from '@/components/HomeArtists';
 import { HomeStageSchedule } from '@/components/HomeStageSchedule';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 
 export default function FanHomeScreen() {
+  const layout = useResponsiveLayout();
   const [kind, setKind] = useState('전체');
   const { items } = useGoodsDemo();
-  const goods = items.filter((item) => kind === '전체' || item.kind === kind).slice(0, 6);
+  const goods = items.filter((item) => kind === '전체' || item.kind === kind).slice(0, layout.isDesktop ? 8 : 6);
   const exchanges = items.filter((item) => item.kind === '교환' && item.event && item.methods.includes('현장'));
   const openGoods = (artistFilter = '전체', kindFilter = '전체', onsite = false) => router.push({ pathname: '/goods', params: { artist: artistFilter, kind: kindFilter, method: onsite ? '현장' : '' } });
   return <SafeAreaView edges={['top']} style={m.safe}>
-    <ScrollView contentContainerStyle={m.content} stickyHeaderIndices={[1]} keyboardShouldPersistTaps="handled">
-      <View style={m.between}>
+    <ScrollView contentContainerStyle={[m.content, layout.isWide && responsiveStyles.content]} stickyHeaderIndices={layout.isWide ? [] : [1]} keyboardShouldPersistTaps="handled">
+      <View style={[m.between, layout.isWide && { display: 'none' }]}>
         <View style={m.row}><Image source={require('../../../assets/stagepin-mark.png')} accessibilityLabel="스테이지핀 로고" style={s.brandMark} /><Text style={s.brand}>stagepin<Text style={{ color: colors.primary }}>✦</Text></Text></View>
         <Text style={s.smallLabel}>공연과 굿즈가 만나는 곳</Text>
       </View>
-      <HomeSearch />
+      {!layout.isWide ? <HomeSearch /> : null}
       <HomeHeroCarousel />
       <HomeArtists />
       <HomeStageSchedule />
       <View style={m.section}>
         <View style={m.between}><Text style={m.sectionTitle}>새로 올라온 굿즈</Text><Pressable accessibilityRole="button" accessibilityLabel="굿즈 전체 보기" onPress={() => openGoods('전체', kind)}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
         <View style={m.row}>{['전체', '판매', '교환'].map((value) => <Pressable key={value} accessibilityRole="button" accessibilityLabel={`홈 ${value} 굿즈 보기`} accessibilityState={{ selected: kind === value }} onPress={() => setKind(value)} style={[m.chip, kind === value && m.chipSelected]}><Text style={[m.chipText, kind === value && m.chipSelectedText]}>{value}</Text></Pressable>)}</View>
-        <View style={m.grid}>{goods.map((item) => <View key={item.id} style={m.gridItem}><GoodsCard item={item} /></View>)}</View>
+        <View style={m.grid}>{goods.map((item) => <View key={item.id} style={[m.gridItem, layout.isWide && { width: layout.cardWidth, maxWidth: layout.cardWidth, flexGrow: 0 }]}><GoodsCard item={item} /></View>)}</View>
       </View>
       <View style={s.onsite}>
         <View style={m.between}><Text style={m.sectionTitle}>공연 가는 날, 여기서 만나요</Text><Pressable accessibilityRole="button" accessibilityLabel="현장 교환 전체 보기" onPress={() => openGoods('전체', '교환', true)}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>

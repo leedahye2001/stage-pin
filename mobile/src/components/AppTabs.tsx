@@ -4,12 +4,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TabBarGlass } from '@/components/TabBarGlass';
 import { colors } from '@/theme/tokens';
+import { useResponsiveLayout } from '@/lib/use-responsive-layout';
 
 export default function AppTabs() {
   const insets = useSafeAreaInsets();
+  const { isWide } = useResponsiveLayout();
 
   return (
     <Tabs
+      tabBar={isWide ? () => null : undefined}
       safeAreaInsets={{ bottom: 0 }}
       screenOptions={{
         headerShown: false,

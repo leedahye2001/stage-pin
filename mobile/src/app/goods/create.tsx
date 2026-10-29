@@ -7,8 +7,10 @@ import { marketStyles as m } from '@/components/GoodsDemo';
 import { createDemoListing, digitsOnly, goodsConditions, MAX_GOODS_PHOTOS, validateGoodsPhotos, type GoodsDraft } from '@/lib/goods-demo';
 import { useGoodsDemo } from '@/lib/goods-demo-state';
 import { colors } from '@/theme/tokens';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 
 export default function GoodsCreateScreen() {
+  const { isWide } = useResponsiveLayout();
   const { addListing } = useGoodsDemo();
   const [draft, setDraft] = useState<GoodsDraft>({ artist: '', title: '', kind: '판매', price: '', wanted: '', condition: '', photos: [], description: '', onsite: false, delivery: true, event: '' });
   const [error, setError] = useState('');
@@ -34,7 +36,7 @@ export default function GoodsCreateScreen() {
       router.replace({ pathname: '/goods/[id]', params: { id: item.id } });
     } catch (exception) { setError(exception instanceof Error ? exception.message : '입력 내용을 확인해 주세요.'); }
   };
-  return <SafeAreaView edges={['bottom']} style={m.safe}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={m.content}>
+  return <SafeAreaView edges={['bottom']} style={m.safe}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[m.content, isWide && responsiveStyles.form]}>
     <View style={{ gap: 8 }}><Text style={m.title}>다음 주인을 찾아요</Text><Text style={m.subtitle}>판매할 굿즈도, 교환하고 싶은 마음도.</Text></View>
     <View style={s.notice}><Text style={s.noticeTitle}>등록 흐름 미리보기</Text><Text style={m.subtitle}>글과 첨부 사진은 이 앱 안에만 추가되며 새로고침하면 사라져요. 서버 업로드·실제 게시·결제·상대방 전송은 하지 않아요.</Text></View>
     <View style={m.row}>{(['판매', '교환'] as const).map((kind) => <Pressable key={kind} accessibilityRole="button" accessibilityLabel={`${kind} 글 작성`} accessibilityState={{ selected: draft.kind === kind }} onPress={() => setDraft({ ...draft, kind })} style={[m.chip, draft.kind === kind && m.chipSelected]}><Text style={[m.chipText, draft.kind === kind && m.chipSelectedText]}>{kind}</Text></Pressable>)}</View>

@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { WebAnalytics } from '@/components/WebAnalytics';
 import { LaunchIntro } from '@/components/LaunchIntro';
+import { DesktopHeader } from '@/components/DesktopHeader';
 
 import { FavoritesProvider } from '@/lib/favorites';
 import { GoodsDemoProvider } from '@/lib/goods-demo-state';
@@ -22,6 +23,7 @@ export default function RootLayout() {
             <StatusBar style="dark" />
             <WebAnalytics />
             <LaunchIntro>
+            <DesktopHeader />
             <Stack
               screenOptions={{
                 contentStyle: { backgroundColor: colors.background },

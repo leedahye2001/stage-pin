@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTicketOpenings } from '@/api/concerts';
 import { favoriteOpenings } from '@/lib/favorite-openings';
@@ -31,6 +32,7 @@ export default function ScheduleScreen() {
 }
 
 function PersonalSchedule({ initialDay }: { initialDay: string }) {
+  const { isWide, isDesktop } = useResponsiveLayout();
   const saved = useSavedSchedules();
   const { artists } = useFavorites();
   const today = seoulDay(new Date());
@@ -62,20 +64,22 @@ function PersonalSchedule({ initialDay }: { initialDay: string }) {
   };
   const open = (url: string) => run(async () => { await Linking.openURL(url); });
 
-  return <SafeAreaView edges={['top']} style={s.safe}><ScrollView contentContainerStyle={s.content}>
+  return <SafeAreaView edges={['top']} style={s.safe}><ScrollView contentContainerStyle={[s.content, isWide && responsiveStyles.content]}>
     <View style={s.header}><View><Text style={s.eyebrow}>MY STAGE, MY PLAN</Text><Text style={s.title}>내가 챙길 덕질 일정</Text></View><View style={s.headerIcon}><Ionicons name="calendar" size={25} color={colors.primary} /></View></View>
     <Text style={s.description}>공연을 발견하고, 필요한 날짜만 쏙 담아두세요.{ '\n' }아티스트 찜만으로 달력에 자동 추가되지는 않아요.</Text>
     <View style={s.summary}><View><Text style={s.summaryNumber}>{saved.items.length}<Text style={s.summaryUnit}>개의 내 일정</Text></Text><Text style={s.hint}>이 기기에 저장돼요 · 자동 예매·알림 아님</Text></View><Pressable accessibilityRole="button" onPress={() => router.push('/explore')} style={s.findButton}><Text style={s.link}>공연 찾기 ↗</Text></Pressable></View>
     {saved.loadError || error ? <Text accessibilityRole="alert" style={s.error}>{saved.loadError || error}</Text> : null}
     {!saved.ready && !saved.loadError ? <LoadingSkeleton kind="schedule" label="내 일정 불러오는 중" /> : null}
 
-    <View style={s.calendar}>
+    <View style={{ flexDirection: isDesktop ? 'row' : 'column', alignItems: isDesktop ? 'flex-start' : 'stretch', gap: isDesktop ? 32 : 18 }}>
+    <View style={[s.calendar, isDesktop && { flex: 1 }]}>
       <View style={s.between}><Text style={s.month}>{month.split('-')[0]}년 {Number(month.split('-')[1])}월</Text><View style={s.row}><Pressable accessibilityRole="button" accessibilityLabel="오늘 날짜 보기" onPress={() => jump(today)} style={s.todayButton}><Text style={s.link}>오늘</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="이전 달" onPress={() => jump(`${moveMonth(month, -1)}-01`)} style={s.arrow}><Ionicons name="chevron-back" size={19} color={colors.text} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel="다음 달" onPress={() => jump(`${moveMonth(month, 1)}-01`)} style={s.arrow}><Ionicons name="chevron-forward" size={19} color={colors.text} /></Pressable></View></View>
       <View style={s.grid}>{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <View key={day} style={s.weekday}><Text style={[s.weekdayText, index === 0 && { color: '#CB718B' }, index === 6 && { color: '#7C7FC1' }]}>{day}</Text></View>)}</View>
       <View style={s.grid}>{calendarDays(month).map((day, index) => day ? <Pressable key={day} accessibilityRole="button" accessibilityLabel={`${day}${marked.has(day) ? ` ${scheduleTypes.filter((type) => dayTypes.get(day)?.has(type)).map((type) => scheduleLabels[type]).join(', ')} 일정 있음` : ''}`} accessibilityState={{ selected: day === selected }} onPress={() => { setSelected(day); setRemoving(null); }} style={s.cell}><View style={[s.dayCircle, day === today && s.todayCircle, day === selected && s.selectedDay]}><Text style={[s.dayText, day === today && { color: colors.primary }, day === selected && { color: '#FFFFFF' }]}>{Number(day.slice(-2))}</Text><View style={[s.dots, day === selected && marked.has(day) && s.selectedDots]}>{scheduleTypes.filter((type) => dayTypes.get(day)?.has(type)).map((type) => <View key={type} style={[s.dot, { backgroundColor: scheduleTones[type].color }]} />)}</View></View></Pressable> : <View key={`blank-${index}`} style={s.cell} />)}</View>
       <View style={s.legendRow}>{scheduleTypes.map((type) => <View key={type} style={s.legendItem}><View style={[s.dot, { backgroundColor: scheduleTones[type].color }]} /><Text style={s.legend}>{scheduleLabels[type]}</Text></View>)}<Text style={s.legend}>한국 시간 기준</Text></View>
     </View>
 
+    <View style={[{ gap: 18 }, isDesktop && { flex: 1, minWidth: 0 }]}>
     <View style={s.row}>{filters.map((item) => <Pressable key={item.value} accessibilityRole="button" accessibilityLabel={`${item.label} 일정 필터`} accessibilityState={{ selected: filter === item.value }} onPress={() => setFilter(item.value)} style={[s.chip, filter === item.value && s.activeChip]}><Text style={[s.chipText, filter === item.value && { color: '#FFFFFF' }]}>{item.label}</Text></Pressable>)}</View>
     <View style={s.between}><Text style={s.sectionTitle}>{dayFormat.format(new Date(`${selected}T12:00:00+09:00`))}</Text><Text style={s.hint}>{dayItems.length}개 일정</Text></View>
     {dayItems.length ? dayItems.map((item) => <View key={item.id} style={[s.card, { borderLeftColor: scheduleTones[item.type].color, borderLeftWidth: 4 }]}>
@@ -96,6 +100,7 @@ function PersonalSchedule({ initialDay }: { initialDay: string }) {
     <View style={s.recommendations}><Text style={s.sectionTitle}>찜한 아티스트의 예매 일정</Text><Text style={s.hint}>추천만 보여드려요. 직접 담은 일정만 달력에 표시돼요.</Text>
       {!artists.length ? <Pressable accessibilityRole="button" onPress={() => router.push('/')} style={s.secondary}><Text style={s.link}>홈에서 내 최애를 찜해보세요 →</Text></Pressable> : tickets.isPending ? <LoadingSkeleton kind="schedule" label="예매 일정 불러오는 중" /> : tickets.isError ? <Pressable accessibilityRole="button" onPress={() => tickets.refetch()} style={s.secondary}><Text style={s.link}>예매 일정 조회 실패 · 다시 시도</Text></Pressable> : recommendations.length ? recommendations.map((item) => <View key={item.id} style={s.recommend}><View style={{ flex: 1, gap: 5 }}><Text style={s.artist}>{item.artistName} · {scheduleLabels[item.type]}</Text><Text style={s.label}>{item.title}</Text><Text style={s.hint}>{seoulDay(item.startsAt)} {timeFormat.format(new Date(item.startsAt))} · {item.vendor}</Text></View><Pressable disabled={busy || !saved.ready} accessibilityRole="button" accessibilityLabel={`${item.title} ${scheduleLabels[item.type]} 담기`} onPress={() => run(async () => { await saved.save([item]); jump(seoulDay(item.startsAt)); setFilter('ALL'); })} style={s.findButton}><Text style={s.link}>＋ 담기</Text></Pressable></View>) : <Text style={s.hint}>확인된 새 예매 일정이 아직 없어요. 이미 담은 일정은 추천에서 제외돼요.</Text>}
     </View>
+    </View></View>
     <Text style={s.footer}>이 기기에만 저장돼요. 삭제·기기 변경 시 복원이나 계정 동기화는 지원하지 않아요.{ '\n' }현장 거래 일정은 실제 거래 확정 기능과 함께 연결할 예정이에요.</Text>
   </ScrollView></SafeAreaView>;
 }
