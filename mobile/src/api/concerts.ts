@@ -115,6 +115,20 @@ const localApiUrl = Platform.select({
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? localApiUrl;
 
+export type PopularSearchResponse = { initial: boolean; items: { term: string; count: number }[] };
+
+export function getPopularSearches(): Promise<PopularSearchResponse> {
+  return request('/api/v1/search/popular');
+}
+
+// Best-effort aggregate counts only. A failed counter must never interrupt search.
+export async function recordPopularSearch(query: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/v1/search/popular`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }),
+  });
+  if (!response.ok) throw new Error('Search count unavailable');
+}
+
 export type NoticeField = { value: string; evidence: string };
 export type NoticeExtraction = Record<
   'artistName' | 'concertTitle' | 'venue' | 'performancePeriod' | 'fanVerificationPeriod'
