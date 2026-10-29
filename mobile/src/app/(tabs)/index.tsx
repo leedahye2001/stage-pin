@@ -28,18 +28,17 @@ export default function FanHomeScreen() {
       <HomeArtists />
       <HomeStageSchedule />
       <View style={m.section}>
-        <View style={m.between}><View style={{ gap: 6 }}><Text style={m.sectionTitle}>새로 올라온 굿즈</Text><Text style={m.subtitle}>누군가의 보물이 내 최애가 되는 순간</Text></View><Pressable accessibilityRole="button" accessibilityLabel="굿즈 전체 보기" onPress={() => openGoods('전체', kind)}><Text style={m.link}>전체 보기 ↗</Text></Pressable></View>
+        <View style={m.between}><Text style={m.sectionTitle}>새로 올라온 굿즈</Text><Pressable accessibilityRole="button" accessibilityLabel="굿즈 전체 보기" onPress={() => openGoods('전체', kind)}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
         <View style={m.row}>{['전체', '판매', '교환'].map((value) => <Pressable key={value} accessibilityRole="button" accessibilityLabel={`홈 ${value} 굿즈 보기`} accessibilityState={{ selected: kind === value }} onPress={() => setKind(value)} style={[m.chip, kind === value && m.chipSelected]}><Text style={[m.chipText, kind === value && m.chipSelectedText]}>{value}</Text></Pressable>)}</View>
         <View style={m.grid}>{goods.map((item) => <View key={item.id} style={m.gridItem}><GoodsCard item={item} /></View>)}</View>
       </View>
       <View style={s.onsite}>
-        <View style={m.between}><View style={{ flex: 1, gap: 6 }}><Text style={s.onsiteTag}>같은 무대에서, 가볍게 교환</Text><Text style={m.sectionTitle}>공연 가는 날, 여기서 만나요</Text></View><Ionicons name="swap-horizontal" size={29} color="#5B8065" /></View>
+        <View style={m.between}><Text style={m.sectionTitle}>현장 교환</Text><Pressable accessibilityRole="button" accessibilityLabel="현장 교환 전체 보기" onPress={() => openGoods('전체', '교환', true)}><Text style={m.sectionLink}>{'전체 보기 >'}</Text></Pressable></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
           {exchanges.map((item) => <View key={item.id} style={{ width: 174 }}><GoodsCard item={item} /><Text style={s.event}><Ionicons name="location-outline" size={10} /> {item.event}</Text></View>)}
         </ScrollView>
-        <Pressable accessibilityRole="button" accessibilityLabel="현장 교환 전체 보기" onPress={() => openGoods('전체', '교환', true)}><Text style={m.link}>교환 글 더 보기 ↗</Text></Pressable>
       </View>
-      <Text style={s.footer}>좋아하는 무대와 취향을 잇는, stagepin{`\n`}공연 정보와 사진의 원출처는 각 상세에서 확인할 수 있어요.{`\n`}굿즈는 미리보기이며 실제 거래 기능은 준비 중이에요.</Text>
+      <Text style={s.footer}>공연 정보와 사진의 원출처는 각 상세에서 확인할 수 있어요.{`\n`}굿즈는 미리보기이며 실제 거래 기능은 준비 중이에요.</Text>
     </ScrollView>
   </SafeAreaView>;
 }
@@ -48,7 +47,7 @@ const s = StyleSheet.create({
   brandMark: { width: 31, height: 34, borderRadius: 11, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', transform: [{ rotate: '-8deg' }] },
   brand: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -1 },
   smallLabel: { fontSize: 10, color: colors.textMuted },
-  onsite: { backgroundColor: colors.surfaceMuted, borderRadius: 24, padding: 17, gap: 17 }, onsiteTag: { color: colors.textMuted, fontSize: 10, fontWeight: '800' },
+  onsite: { backgroundColor: colors.surfaceMuted, borderRadius: 24, padding: 17, gap: 17 },
   event: { fontSize: 9, color: colors.primary, paddingTop: 8, lineHeight: 15 },
   footer: { color: '#A59BAD', fontSize: 9, textAlign: 'center', lineHeight: 18 },
 });

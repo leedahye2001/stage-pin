@@ -5,8 +5,8 @@ import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { colors } from '@/theme/tokens';
 
 const banners = [
-  { title: '무대를 찾고,\n취향을 나누는 곳.', copy: '공연 일정부터 굿즈, 현장 교환까지 한 번에.', tag: '나의 다음 덕질을 핀!', cta: '다음 공연 찾아보기', route: '/explore', color: '#F5F5F6', accent: '#6C4CF1', mark: '✦' },
-  { title: '같은 공연,\n새로운 굿즈 친구.', copy: '갖고 싶은 굿즈를 찾고, 현장에서 마음을 교환해요.', tag: '팬과 팬 사이, stagepin', cta: '굿즈장터 둘러보기', route: '/goods', color: '#F5F5F6', accent: '#6C4CF1', mark: '♡' },
+  { title: '공연 일정', cta: '공연 찾아보기', route: '/explore', color: '#F5F5F6', accent: '#6C4CF1', mark: '✦' },
+  { title: '굿즈 판매·교환', cta: '굿즈장터 둘러보기', route: '/goods', color: '#F5F5F6', accent: '#6C4CF1', mark: '♡' },
 ] as const;
 
 export function HomeHeroCarousel() {
@@ -16,7 +16,7 @@ export function HomeHeroCarousel() {
   return <View style={{ gap: 11 }} onLayout={(event) => { const nextWidth = event.nativeEvent.layout.width; setWidth(nextWidth); scroll.current?.scrollTo({ x: page * nextWidth, animated: false }); }}>
     <ScrollView ref={scroll} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={(event) => { if (width) setPage(Math.round(event.nativeEvent.contentOffset.x / width)); }}>
       {banners.map((item) => <View key={item.title} style={[s.hero, { width: width || 320, backgroundColor: item.color }]}>
-        <Text style={[s.tag, { color: item.accent }]}>{item.tag}</Text><Text style={s.title}>{item.title}</Text><Text style={s.copy}>{item.copy}</Text>
+        <Text style={s.title}>{item.title}</Text>
         <View style={s.art}><Text style={[s.mark, { color: item.accent }]}>{item.mark}</Text><View style={[s.card, { borderColor: item.accent }]}><Text style={[s.cardText, { color: item.accent }]}>MY{`\n`}FAVE</Text></View></View>
         <Pressable accessibilityRole="button" onPress={() => router.push(item.route)} style={s.cta}><Text style={s.ctaText}>{item.cta}</Text><Ionicons name="arrow-forward" size={16} color={colors.buttonText} /></Pressable>
       </View>)}
@@ -27,9 +27,7 @@ export function HomeHeroCarousel() {
 
 const s = StyleSheet.create({
   hero: { borderRadius: 24, padding: 20, gap: 10, overflow: 'hidden' },
-  tag: { alignSelf: 'flex-start', fontSize: 10, fontWeight: '800', backgroundColor: '#FFFFFFAA', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 18, zIndex: 1 },
   title: { color: colors.text, fontSize: 24, fontWeight: '900', lineHeight: 32, letterSpacing: -1, zIndex: 1 },
-  copy: { color: colors.textMuted, fontSize: 12, lineHeight: 21, zIndex: 1 },
   cta: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 15, borderRadius: 20, zIndex: 1, backgroundColor: '#E8E8EB' },
   ctaText: { fontSize: 11, fontWeight: '800', color: colors.buttonText },
   art: { position: 'absolute', width: 130, height: 180, right: -15, top: 70, opacity: 0.16 },

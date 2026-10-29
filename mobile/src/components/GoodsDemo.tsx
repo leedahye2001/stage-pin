@@ -61,6 +61,7 @@ export const marketStyles = StyleSheet.create({
   subtitle: { color: colors.textMuted, fontSize: 12, lineHeight: 20 },
   sectionTitle: { fontSize: 19, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
   link: { color: colors.primary, fontWeight: '700', fontSize: 12 },
+  sectionLink: { color: '#202124', fontWeight: '700', fontSize: 12 },
   section: { gap: 14 },
   chips: { gap: 8 },
   chip: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.button, borderWidth: 1, borderColor: colors.button, borderRadius: 24 },
