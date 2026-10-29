@@ -1,12 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius } from '@/theme/tokens';
 
 export function GoodsFab() {
+  const insets = useSafeAreaInsets();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel="굿즈 판매·교환 글 등록"
-      onPress={() => router.push('/goods/create')} style={({ pressed }) => [styles.fab, pressed && { opacity: 0.8 }]}>
+      onPress={() => router.push('/goods/create')} style={({ pressed }) => [styles.fab, Platform.OS === 'ios' && { bottom: Math.max(insets.bottom, 84) + 12 }, pressed && { opacity: 0.8 }]}>
       <Ionicons name="add" color={colors.white} size={24} />
       <Text style={styles.label}>굿즈 등록</Text>
     </Pressable>
