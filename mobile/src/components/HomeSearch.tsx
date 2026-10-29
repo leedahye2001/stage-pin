@@ -2,13 +2,16 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View, type TextStyle } from 'react-native';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getArtists, getPopularSearches, recordPopularSearch } from '@/api/concerts';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { useFavorites } from '@/lib/favorites';
 import { colors } from '@/theme/tokens';
 import { useResponsiveLayout } from '@/lib/use-responsive-layout';
+
+// RN's native types omit CSS 'none'; WebKit's auto outline ignores width: 0 alone.
+const webInputFocusStyle = { outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle;
 
 export function HomeSearch() {
   const { isWide } = useResponsiveLayout();
@@ -27,7 +30,7 @@ export function HomeSearch() {
   const search = (term: string) => { if (term.trim()) { record(term.trim()); setOpen(false); router.push({ pathname: '/search', params: { query: term.trim() } }); } };
   const searchConcerts = () => search(query);
   return <View style={[s.container, isWide && { paddingBottom: 0, zIndex: 30 }]}>
-    <View style={[s.search, focused && { borderColor: '#8B8B92' }]}><Ionicons name="search" size={20} color={colors.primary} /><TextInput accessibilityLabel="아티스트 또는 공연 검색" placeholder="아티스트, 공연명을 검색해보세요" placeholderTextColor="#94899D" value={query} onFocus={() => { setOpen(true); setFocused(true); }} onBlur={() => setFocused(false)} onKeyPress={({ nativeEvent }) => { if (nativeEvent.key === 'Escape') setOpen(false); }} onChangeText={(text) => { setQuery(text); setOpen(true); }} onSubmitEditing={searchConcerts} returnKeyType="search" autoCapitalize="none" autoCorrect={false} style={[s.input, Platform.OS === 'web' && { outlineWidth: 0 }]} />{query ? <Pressable accessibilityRole="button" accessibilityLabel="홈 검색어 지우기" onPress={() => { setQuery(''); setOpen(true); }}><Ionicons name="close-circle" size={19} color="#A398AF" /></Pressable> : null}</View>
+    <View style={[s.search, focused && { borderColor: '#8B8B92' }]}><Ionicons name="search" size={20} color={colors.primary} /><TextInput accessibilityLabel="아티스트 또는 공연 검색" placeholder="아티스트, 공연명을 검색해보세요" placeholderTextColor="#94899D" value={query} onFocus={() => { setOpen(true); setFocused(true); }} onBlur={() => setFocused(false)} onKeyPress={({ nativeEvent }) => { if (nativeEvent.key === 'Escape') setOpen(false); }} onChangeText={(text) => { setQuery(text); setOpen(true); }} onSubmitEditing={searchConcerts} returnKeyType="search" autoCapitalize="none" autoCorrect={false} style={[s.input, Platform.OS === 'web' && webInputFocusStyle]} />{query ? <Pressable accessibilityRole="button" accessibilityLabel="홈 검색어 지우기" onPress={() => { setQuery(''); setOpen(true); }}><Ionicons name="close-circle" size={19} color="#A398AF" /></Pressable> : null}</View>
     {open ? <View style={[s.dropdown, isWide && { position: 'absolute', top: 60, left: 0, right: 0, zIndex: 30 }]}>
       <View style={s.heading}><Text style={s.name}>{searching ? '검색 결과' : '인기 검색어'}</Text><Pressable accessibilityRole="button" accessibilityLabel="검색 목록 닫기" onPress={() => setOpen(false)} hitSlop={8}><Ionicons name="close" size={18} color={colors.textMuted} /></Pressable></View>
       {!searching ? <>
