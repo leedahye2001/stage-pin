@@ -113,7 +113,7 @@ const localApiUrl = Platform.select({
   default: 'http://localhost:8080',
 });
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? localApiUrl;
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? localApiUrl;
 
 export type PopularSearchResponse = { initial: boolean; updatedAt: string; items: { term: string; count: number }[] };
 

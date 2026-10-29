@@ -38,6 +38,7 @@ export default function RootLayout() {
               <Stack.Screen name="concerts/[id]" options={{ title: '공연 상세' }} />
               <Stack.Screen name="artists/[id]" options={{ title: '아티스트' }} />
               <Stack.Screen name="search" options={{ title: '공연 검색' }} />
+              <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
               <Stack.Screen name="following-concerts" options={{ title: '관심 아티스트 공연' }} />
               <Stack.Screen name="pinlog/create" options={{ title: '핀로그 만들기' }} />
               <Stack.Screen name="admin/notices" options={{ title: 'AI 공연 공지 분석' }} />
