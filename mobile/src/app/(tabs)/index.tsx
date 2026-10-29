@@ -46,7 +46,7 @@ export default function FanHomeScreen() {
 }
 
 const s = StyleSheet.create({
-  brandMark: { width: 31, height: 34, borderRadius: 11, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', transform: [{ rotate: '-8deg' }] },
+  brandMark: { width: 31, height: 34 },
   brand: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -1 },
   smallLabel: { fontSize: 10, color: colors.textMuted },
   onsite: { backgroundColor: colors.surfaceMuted, borderRadius: 24, padding: 17, gap: 17 },
