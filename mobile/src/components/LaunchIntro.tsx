@@ -51,7 +51,7 @@ export function LaunchIntro({ children }: { children: ReactNode }) {
       <View style={s.art}>
         <Animated.View accessible={false} style={[s.wave, { opacity: wave.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0] }), transform: [{ scale: wave.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.5] }) }] }]} />
         <View style={s.halo} />
-        <Animated.View style={{ transform: [{ scale }] }}><Image accessibilityLabel="StagePin 로고" source={require('../../assets/stagepin-mark.png')} style={s.logo} resizeMode="contain" /></Animated.View>
+        <Animated.View style={{ transform: [{ scale }] }}><Image accessibilityLabel="StagePin 로고" source={require('../../assets/stagepin-pin.png')} style={s.logo} resizeMode="contain" /></Animated.View>
       </View>
       <Text style={s.name}>stagepin<Text style={s.period}>.</Text></Text>
       <Text style={s.tagline}>좋아하는 무대, 연결되는 취향</Text>

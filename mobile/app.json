@@ -14,8 +14,8 @@
     "android": {
       "package": "com.leedahye.stagepin",
       "adaptiveIcon": {
-        "backgroundColor": "#1D1A24",
-        "foregroundImage": "./assets/stagepin-mark.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/stagepin-pin.png"
       },
       "predictiveBackGestureEnabled": false
     },
