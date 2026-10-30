@@ -1,11 +1,13 @@
 spring:
   ai:
-    openai:
-      api-key: ${OPENAI_API_KEY:not-configured}
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
       chat:
         options:
-          model: ${OPENAI_MODEL:gpt-4o-mini}
+          model: ${OLLAMA_MODEL:qwen3.5:4b}
           temperature: 0
+          num-ctx: 32768
+          num-predict: 3000
     retry:
       max-attempts: 1
   application:

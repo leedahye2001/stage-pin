@@ -56,12 +56,14 @@ class NoticeExtractionLiveEvaluationTest {
         int correctDates = 0;
         int correctVendors = 0;
         int validEvidence = 0;
+        Path report = Path.of("build/reports/ai/notice-evaluation.csv");
+        Files.createDirectories(report.getParent());
         for (Case sample : cases()) {
             long started = System.nanoTime();
             var result = extractor.extract(sample.text());
             var data = result.extraction();
-            boolean p = data.presaleAt().value().equals(sample.presale());
-            boolean g = data.generalSaleAt().value().equals(sample.general());
+            boolean p = sameInstant(data.presaleAt().value(), sample.presale());
+            boolean g = sameInstant(data.generalSaleAt().value(), sample.general());
             boolean v = data.vendor().value().equals(sample.vendor());
             boolean e = data.fields().stream().allMatch(field -> field.value().isBlank()
                     || (!field.evidence().isBlank() && sample.text().contains(field.evidence())));
@@ -70,14 +72,23 @@ class NoticeExtractionLiveEvaluationTest {
             validEvidence += e ? 1 : 0;
             lines.add(String.join(",", sample.name(), "" + p, "" + g, "" + v, "" + e,
                     "" + (System.nanoTime() - started) / 1_000_000, "" + result.totalTokens()));
+            Files.write(report, lines);
+            System.out.printf("%s: presale=%s general=%s vendor=%s evidence=%s%n", sample.name(), p, g, v, e);
         }
-        Path report = Path.of("build/reports/ai/notice-evaluation.csv");
-        Files.createDirectories(report.getParent());
-        Files.write(report, lines);
         System.out.printf("Synthetic evaluation: dates=%d/40 vendors=%d/20 evidence=%d/20%n",
                 correctDates, correctVendors, validEvidence);
         assertThat(correctDates).isGreaterThanOrEqualTo(36);
         assertThat(correctVendors).isGreaterThanOrEqualTo(18);
         assertThat(validEvidence).isEqualTo(20);
+    }
+
+    static boolean sameInstant(String actual, String expected) {
+        if (actual.isEmpty() || expected.isEmpty()) return actual.equals(expected);
+        try {
+            return java.time.OffsetDateTime.parse(actual).toInstant()
+                    .equals(java.time.OffsetDateTime.parse(expected).toInstant());
+        } catch (java.time.format.DateTimeParseException exception) {
+            return false;
+        }
     }
 }

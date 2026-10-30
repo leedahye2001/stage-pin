@@ -50,7 +50,7 @@ public class TicketNoticeService {
         NoticeExtractor.Result result = extractor.extract(request.text());
         validateEvidence(result.extraction(), request.text());
         var notice = new TicketNotice(request.sourceUrl(), request.text(),
-                json.writeValueAsString(result.extraction()), result.model(),
+                json.writeValueAsString(result.rawExtraction()), result.model(),
                 AiNoticeExtractor.PROMPT_VERSION, (System.nanoTime() - started) / 1_000_000,
                 result.totalTokens());
         return response(repository.save(notice));
@@ -114,7 +114,7 @@ public class TicketNoticeService {
 
     private NoticeResponse response(TicketNotice notice) {
         return new NoticeResponse(notice.id, notice.sourceUrl, notice.sourceText,
-                json.readValue(notice.extractedJson, NoticeExtraction.class),
+                NoticeEvidenceNormalizer.normalize(json.readValue(notice.extractedJson, NoticeExtraction.class), notice.sourceText),
                 notice.reviewedJson == null ? null : json.readValue(notice.reviewedJson, NoticeExtraction.class),
                 notice.status, notice.model, notice.promptVersion, notice.latencyMs, notice.totalTokens,
                 notice.createdAt, notice.approvedAt);
