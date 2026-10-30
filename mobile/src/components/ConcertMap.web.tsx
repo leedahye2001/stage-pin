@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Concert } from '@/api/concerts';
 import { KakaoConcertMap } from '@/components/KakaoConcertMap.web';
 import { requestCurrentLocation, type MapLocation } from '@/lib/current-location';
+import { mapVenues } from '@/lib/map-venues';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import 'leaflet/dist/leaflet.css';
@@ -16,6 +17,10 @@ type ConcertMapProps = {
   initialRealMap?: boolean;
   height?: number;
   autoLocate?: boolean;
+  selectedConcertId?: string;
+  venueCounts?: Record<string, number>;
+  onLocationChange?: (location: MapLocation) => void;
+  hideFootprintToggle?: boolean;
 };
 
 function KoreaSilhouette() {
@@ -72,7 +77,13 @@ function CurrentLocation({ location }: { location: MapLocation }) {
   return <CircleMarker center={[location.latitude, location.longitude]} radius={8} pathOptions={{ color: '#FFFFFF', fillColor: '#287AF5', fillOpacity: 1, weight: 3 }}><Tooltip>현재 위치</Tooltip></CircleMarker>;
 }
 
-export function ConcertMap({ concerts, onSelect, initialRealMap = false, height = 300, autoLocate = false }: ConcertMapProps) {
+function SelectedVenue({ concert }: { concert: Concert | undefined }) {
+  const map = useMap();
+  useEffect(() => { if (concert) map.setView([concert.venue.latitude, concert.venue.longitude], 14); }, [map, concert]);
+  return null;
+}
+
+export function ConcertMap({ concerts, onSelect, initialRealMap = false, height = 300, autoLocate = false, selectedConcertId, venueCounts, onLocationChange, hideFootprintToggle = false }: ConcertMapProps) {
   const [showRealMap, setShowRealMap] = useState(initialRealMap);
   const [location, setLocation] = useState<MapLocation | null>(null);
   const [locating, setLocating] = useState(false);
@@ -86,26 +97,25 @@ export function ConcertMap({ concerts, onSelect, initialRealMap = false, height 
     try {
       const position = await requestCurrentLocation(navigator.geolocation);
       setLocation(position);
+      onLocationChange?.(position);
       setShowRealMap(true);
     } catch (error) {
       setLocationError(error instanceof Error ? error.message : '위치를 확인하지 못했어요.');
     } finally { requestInFlight.current = false; setLocating(false); }
-  }, []);
+  }, [onLocationChange]);
   useEffect(() => {
     if (!autoLocate) return;
     const timer = setTimeout(() => { void locate(); }, 0);
     return () => clearTimeout(timer);
   }, [autoLocate, locate]);
-  const venues = useMemo(() => Array.from(
-    new Map(concerts.map((concert) => [concert.venue.name, concert])).values(),
-  ).slice(0, 30), [concerts]);
+  const venues = useMemo(() => mapVenues(concerts).map(group => group.concerts[0]), [concerts]);
   const useKakaoMap = Boolean(process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY);
 
   return (
-    <View style={[styles.map, { height }]}>
+    <View style={[styles.map, { height }, hideFootprintToggle && { borderWidth: 0, borderRadius: 0 }]}>
       {showRealMap ? (
         useKakaoMap ? (
-          <KakaoConcertMap concerts={venues} onSelect={onSelect} currentLocation={location} />
+          <KakaoConcertMap concerts={venues} onSelect={onSelect} currentLocation={location} selectedConcertId={selectedConcertId} venueCounts={venueCounts} />
         ) : (
           <MapContainer
           attributionControl
@@ -119,13 +129,14 @@ export function ConcertMap({ concerts, onSelect, initialRealMap = false, height 
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {location ? <CurrentLocation location={location} /> : null}
+            <SelectedVenue concert={venues.find(concert => concert.id === selectedConcertId)} />
             {venues.map((concert) => (
               <CircleMarker
                 center={[concert.venue.latitude, concert.venue.longitude]}
                 eventHandlers={{ click: () => onSelect(concert.id) }}
                 key={concert.id}
-                pathOptions={{ color: colors.white, fillColor: colors.primary, fillOpacity: 1, weight: 3 }}
-                radius={9}
+                pathOptions={{ color: colors.white, fillColor: selectedConcertId === concert.id ? colors.text : colors.primary, fillOpacity: 1, weight: 3 }}
+                radius={selectedConcertId === concert.id ? 13 : 9}
               >
                 <Tooltip direction="top" offset={[0, -8]}>
                   {concert.venue.name}
@@ -177,28 +188,28 @@ export function ConcertMap({ concerts, onSelect, initialRealMap = false, height 
         accessibilityState={{ disabled: locating, busy: locating }}
         disabled={locating}
         onPress={locate}
-        style={[styles.mapToggle, styles.locationButton]}
+        style={[styles.mapToggle, styles.locationButton, hideFootprintToggle && { bottom: 24 }]}
       >
         <Ionicons color={colors.text} name="locate-outline" size={17} />
         <Text style={[styles.mapToggleText, { color: colors.text }]}>{locating ? '위치 확인 중…' : '현 위치'}</Text>
       </Pressable>
-      {locationError ? <View accessibilityRole="alert" style={styles.locationError}><Text style={{ color: colors.text, fontSize: 12 }}>{locationError}</Text></View> : null}
+      {locationError ? <View accessibilityRole="alert" style={styles.locationError}><Text style={{ color: colors.text, fontSize: 12, flex: 1 }}>{locationError}</Text><Pressable accessibilityRole="button" accessibilityLabel="위치 안내 닫기" onPress={() => setLocationError('')} hitSlop={8}><Ionicons name="close" color={colors.textMuted} size={17} /></Pressable></View> : null}
 
-      <Pressable
+      {!hideFootprintToggle ? <Pressable
         accessibilityRole="button"
         onPress={() => setShowRealMap((current) => !current)}
         style={({ pressed }) => [styles.mapToggle, pressed && styles.mapTogglePressed]}
       >
         <Ionicons color={colors.white} name={showRealMap ? 'sparkles' : 'map'} size={15} />
         <Text style={styles.mapToggleText}>{showRealMap ? '발자국 보기' : '실제 지도 보기'}</Text>
-      </Pressable>
+      </Pressable> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   locationButton: { bottom: 65, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
-  locationError: { position: 'absolute', left: 12, right: 12, top: 12, padding: 12, backgroundColor: colors.white, borderRadius: 12 },
+  locationError: { position: 'absolute', left: 12, right: 12, top: 12, padding: 12, backgroundColor: colors.white, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
   map: {
     backgroundColor: '#E9E6F6',
     borderColor: '#DED8F2',
