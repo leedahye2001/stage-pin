@@ -62,7 +62,7 @@ export default function NoticeReviewScreen() {
         <View style={styles.hero}>
           <Text style={styles.eyebrow}>NOTICE → SCHEDULE</Text>
           <Text style={styles.title}>공지를 일정으로 핀하세요.</Text>
-          <Text style={styles.description}>공식 공지문을 붙여넣으면 예매 일정을 정리해요. 원문과 대조하고 승인한 정보만 공개됩니다.</Text>
+          <Text style={styles.description}>공식 공지문을 붙여넣으면 로컬 AI가 예매 일정을 정리해요. 원문과 대조하고 승인한 정보만 공개됩니다.</Text>
         </View>
         <View style={styles.card}>
           <Text style={styles.label}>관리자 키</Text>
@@ -83,7 +83,7 @@ export default function NoticeReviewScreen() {
           <TextInput accessibilityLabel="공지 원문" multiline maxLength={16000} style={[styles.input, styles.sourceInput]}
             value={text} onChangeText={setText} placeholder="공연명, 공연 기간, 선예매·일반예매 안내가 담긴 공지문을 붙여넣으세요."
             placeholderTextColor={colors.textMuted} />
-          <Text style={styles.hint}>공지를 분석하려면 원문이 AI 서비스로 전송됩니다. 개인정보는 제외해 주세요.</Text>
+          <Text style={styles.hint}>공지문은 연결된 로컬 AI 서버에서 분석하며 외부 유료 AI로 전송하지 않아요. 첫 분석은 모델 로딩으로 시간이 걸릴 수 있어요.</Text>
           <Pressable disabled={busy || !key.trim() || text.trim().length < 20 || !sourceUrl.startsWith('https://')}
             onPress={analyze} style={[styles.primary, (busy || !key.trim() || text.trim().length < 20 || !sourceUrl.startsWith('https://')) && styles.disabled]}>
             {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryLabel}>AI로 일정 정리하기</Text>}
