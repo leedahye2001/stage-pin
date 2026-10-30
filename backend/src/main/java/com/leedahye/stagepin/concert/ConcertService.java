@@ -74,6 +74,10 @@ public class ConcertService {
                 });
     }
 
+    public ConcertResponse findByKopisId(String kopisId, ConcertGenre genre) {
+        return kopisConcertClient.findByKopisId(kopisId, genre);
+    }
+
     private ConcertResponse toResponse(Concert concert) {
         var venue = concert.getVenue();
         var artists = concert.getArtists().stream()

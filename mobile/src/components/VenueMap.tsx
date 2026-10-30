@@ -3,15 +3,18 @@ import { WebView } from 'react-native-webview';
 
 import type { VenueSummary } from '@/api/concerts';
 import { colors, radius } from '@/theme/tokens';
+import { hasVenueCoordinates } from '@/lib/map-venues';
 
 export function VenueMap({ venue }: { venue: VenueSummary }) {
   const appKey = process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY;
-  const kakaoMapUrl = `https://map.kakao.com/link/map/${encodeURIComponent(venue.name)},${venue.latitude},${venue.longitude}`;
+  const located = hasVenueCoordinates(venue);
+  const kakaoMapUrl = located ? `https://map.kakao.com/link/map/${encodeURIComponent(venue.name)},${venue.latitude},${venue.longitude}`
+    : `https://map.kakao.com/link/search/${encodeURIComponent(venue.name)}`;
 
-  if (!appKey) {
+  if (!appKey || !located) {
     return (
       <View style={[styles.container, styles.fallback]}>
-        <Text style={styles.fallbackTitle}>카카오맵에서 공연장 위치를 확인해요</Text>
+        <Text style={styles.fallbackTitle}>{located ? '카카오맵에서 공연장 위치를 확인해요' : '정확한 공연장 위치를 확인 중이에요'}</Text>
         <Pressable accessibilityRole="link" onPress={() => Linking.openURL(kakaoMapUrl)}>
           <Text style={styles.link}>카카오맵 열기 →</Text>
         </Pressable>

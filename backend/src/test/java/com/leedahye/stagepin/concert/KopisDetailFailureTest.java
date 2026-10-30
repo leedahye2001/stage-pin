@@ -103,6 +103,25 @@ class KopisDetailFailureTest {
         server.expect(requestTo(containsString("/pblprfr?"))).andRespond(withSuccess(LIST, MediaType.APPLICATION_XML));
     }
 
+    @Test
+    void resolvesSavedSourceWithoutSearchCacheAndCachesFacilityCoordinates() {
+        expectDetail(DETAIL);
+        expectFacility();
+        var concert = client.findByKopisId("PF289772", GENRE);
+        assertThat(concert.venue().latitude()).isEqualTo(35.1679);
+        assertThat(concert.venue().longitude()).isEqualTo(129.1357);
+        assertThat(client.findByKopisId("PF289772", GENRE)).isEqualTo(concert);
+        server.verify();
+    }
+
+    @Test
+    void rejectsInvalidSourceBeforeMakingAnyUpstreamRequest() {
+        assertThatThrownBy(() -> client.findByKopisId("../secret", GENRE))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        error -> assertThat(error.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+        server.verify();
+    }
+
     private void expectDetail(String xml) {
         server.expect(requestTo(containsString("/pblprfr/PF289772?"))).andRespond(withSuccess(xml, MediaType.APPLICATION_XML));
     }

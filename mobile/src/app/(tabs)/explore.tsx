@@ -1,17 +1,18 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getHomeConcerts, type Concert } from '@/api/concerts';
+import { getHomeConcerts, getKopisConcert, type Concert } from '@/api/concerts';
 import { ConcertMap } from '@/components/ConcertMap';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import type { MapLocation } from '@/lib/current-location';
 import { useFavorites } from '@/lib/favorites';
 import { concertPhase } from '@/lib/home-concerts';
 import { discoverVenues, type MapPeriod } from '@/lib/map-discovery';
+import { kopisSourceId, mergeMapConcerts } from '@/lib/kopis-source';
 import { responsiveStyles, useResponsiveLayout } from '@/lib/use-responsive-layout';
 import { colors } from '@/theme/tokens';
 
@@ -34,7 +35,24 @@ export default function MapScreen() {
   const [linkError, setLinkError] = useState('');
   const [now] = useState(Date.now);
   const query = useQuery({ queryKey: ['concerts', 'POPULAR_MUSIC', 'home'], queryFn: getHomeConcerts });
-  const concerts = useMemo(() => [...new Map([...favorites.concerts, ...(query.data ?? [])].map(concert => [concert.id, concert])).values()], [favorites.concerts, query.data]);
+  const kopisFavorites = favorites.concerts.filter(concert => concert.source === 'KOPIS');
+  const refreshed = useQueries({
+    queries: kopisFavorites.map(concert => ({
+      queryKey: ['map-concert-location', concert.id],
+      queryFn: async () => {
+        const sourceId = kopisSourceId(concert);
+        if (!sourceId) throw new Error('공연 원본 ID를 확인하지 못했어요');
+        const detail = await getKopisConcert(sourceId, concert.genre);
+        if (detail.id !== concert.id) throw new Error('공연 ID가 일치하지 않아요');
+        return detail;
+      },
+      staleTime: 30 * 60 * 1000, retry: 1,
+    })),
+    combine: results => ({ concerts: results.flatMap(result => result.data ? [result.data] : []),
+      pending: results.some(result => result.isPending), failed: results.some(result => result.isError) }),
+  });
+  // Stored KOPIS summaries may contain old region-center coordinates. Never map them before refreshing.
+  const concerts = useMemo(() => mergeMapConcerts(favorites.concerts, refreshed.concerts, query.data ?? []), [favorites.concerts, refreshed.concerts, query.data]);
   const cities = useMemo(() => [...new Set(concerts.map(concert => concert.venue.city).filter(Boolean))].sort(), [concerts]);
   const venues = useMemo(() => discoverVenues(concerts, { query: keyword, period, city, favoritesOnly: onlyFavorites,
     favoriteIds: favorites.concerts.map(concert => concert.id), location, now }), [concerts, keyword, period, city, onlyFavorites, favorites.concerts, location, now]);
@@ -90,7 +108,8 @@ export default function MapScreen() {
           <View style={s.divider} /><Pressable accessibilityRole="checkbox" accessibilityLabel="찜한 공연만 지도에 표시" accessibilityState={{ checked: onlyFavorites }} onPress={() => setOnlyFavorites(!onlyFavorites)} style={[s.chip, onlyFavorites && s.activeChip]}><Ionicons name={onlyFavorites ? 'heart' : 'heart-outline'} size={14} color={onlyFavorites ? colors.white : colors.text} /><Text style={[s.chipText, onlyFavorites && s.activeChipText]}>찜한 공연</Text></Pressable>
         </ScrollView>
         {cities.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filters}>{['', ...cities].map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={`${value || '전체 지역'} 공연 장소`} accessibilityState={{ selected: city === value }} onPress={() => setCity(value)} style={s.city}><Text style={[s.meta, city === value && s.selectedCity]}>{value || '전체 지역'}</Text></Pressable>)}</ScrollView> : null}
-        {query.isPending && !concerts.length ? <LoadingSkeleton kind="map" label="공연 장소 불러오는 중" /> : query.isError && !concerts.length ? <View style={s.empty}><Text style={s.name}>공연 장소를 불러오지 못했어요</Text><Pressable accessibilityRole="button" onPress={() => query.refetch()} style={s.button}><Text style={s.actionText}>다시 시도</Text></Pressable></View> : <>
+        {(query.isPending || refreshed.pending) && !concerts.length ? <LoadingSkeleton kind="map" label="공연 장소 불러오는 중" /> : query.isError && !concerts.length ? <View style={s.empty}><Text style={s.name}>공연 장소를 불러오지 못했어요</Text><Pressable accessibilityRole="button" onPress={() => query.refetch()} style={s.button}><Text style={s.actionText}>다시 시도</Text></Pressable></View> : <>
+          {refreshed.failed ? <Text style={s.meta}>일부 찜한 공연의 위치를 확인하지 못해 지도에서 제외했어요.</Text> : null}
           {query.isError ? <Text accessibilityRole="alert" style={s.meta}>새 공연을 불러오지 못해 찜한 공연의 장소만 표시해요.</Text> : null}
           <View style={[s.workspace, isWide && s.desktopWorkspace]}>
             <View style={[s.mapPane, isWide && s.desktopMap]}><ConcertMap concerts={markers} onSelect={selectMarker} selectedConcertId={selected?.concerts[0].id} venueCounts={counts} onLocationChange={setLocation} initialRealMap autoLocate hideFootprintToggle height={isWide ? 620 : 350} /></View>
