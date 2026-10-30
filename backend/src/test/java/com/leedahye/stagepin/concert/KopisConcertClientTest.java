@@ -144,8 +144,8 @@ class KopisConcertClientTest {
         assertThat(concerts.getFirst().title()).isEqualTo("DAY6 10th Anniversary Tour");
         assertThat(concerts.getFirst().status()).isEqualTo(ConcertStatus.COMPLETED);
         assertThat(concerts.getFirst().venue().name()).isEqualTo("올림픽공원");
-        assertThat(concerts.getFirst().venue().latitude()).isEqualTo(37.5665);
-        assertThat(concerts.getFirst().venue().longitude()).isEqualTo(126.9780);
+        assertThat(concerts.getFirst().venue().latitude()).isZero();
+        assertThat(concerts.getFirst().venue().longitude()).isZero();
         assertThat(concerts.getFirst().posterUrl()).isEqualTo("https://example.com/day6.jpg");
     }
 

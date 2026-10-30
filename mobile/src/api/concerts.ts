@@ -187,6 +187,10 @@ export function getConcert(id: string, genre: ConcertGenre): Promise<Concert> {
   return request(`/api/v1/concerts/${id}?genre=${genre}`);
 }
 
+export function getKopisConcert(kopisId: string, genre: ConcertGenre): Promise<Concert> {
+  return request(`/api/v1/concerts/kopis/${encodeURIComponent(kopisId)}?genre=${genre}`);
+}
+
 export function getNaverSearch(query: string): Promise<NaverSearchResponse> {
   return request(`/api/v1/search/naver?query=${encodeURIComponent(query)}`);
 }

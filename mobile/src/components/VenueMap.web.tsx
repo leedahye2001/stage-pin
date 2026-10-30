@@ -4,6 +4,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { VenueSummary } from '@/api/concerts';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { colors, radius } from '@/theme/tokens';
+import { hasVenueCoordinates } from '@/lib/map-venues';
 
 type KakaoWindow = Window & {
   kakao?: {
@@ -41,10 +42,12 @@ export function VenueMap({ venue }: { venue: VenueSummary }) {
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const appKey = process.env.EXPO_PUBLIC_KAKAO_MAP_JAVASCRIPT_KEY;
-  const kakaoMapUrl = `https://map.kakao.com/link/map/${encodeURIComponent(venue.name)},${venue.latitude},${venue.longitude}`;
+  const located = hasVenueCoordinates(venue);
+  const kakaoMapUrl = located ? `https://map.kakao.com/link/map/${encodeURIComponent(venue.name)},${venue.latitude},${venue.longitude}`
+    : `https://map.kakao.com/link/search/${encodeURIComponent(venue.name)}`;
 
   useEffect(() => {
-    if (!appKey || !containerRef.current) return;
+    if (!appKey || !located || !containerRef.current) return;
     let cancelled = false;
 
     loadKakaoMaps(appKey)
@@ -57,12 +60,12 @@ export function VenueMap({ venue }: { venue: VenueSummary }) {
       })
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; };
-  }, [appKey, venue.latitude, venue.longitude, venue.name]);
+  }, [appKey, located, venue.latitude, venue.longitude, venue.name]);
 
-  if (!appKey || failed) {
+  if (!appKey || failed || !located) {
     return (
       <View style={[styles.container, styles.fallback]}>
-        <Text style={styles.fallbackTitle}>카카오맵에서 공연장 위치를 확인해요</Text>
+        <Text style={styles.fallbackTitle}>{located ? '카카오맵에서 공연장 위치를 확인해요' : '정확한 공연장 위치를 확인 중이에요'}</Text>
         <Pressable accessibilityRole="link" onPress={() => Linking.openURL(kakaoMapUrl)}>
           <Text style={styles.link}>카카오맵 열기 →</Text>
         </Pressable>

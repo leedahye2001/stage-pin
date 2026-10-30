@@ -65,8 +65,7 @@ function PersonalSchedule({ initialDay }: { initialDay: string }) {
   const open = (url: string) => run(async () => { await Linking.openURL(url); });
 
   return <SafeAreaView edges={['top']} style={s.safe}><ScrollView contentContainerStyle={[s.content, isWide && responsiveStyles.content]}>
-    <View style={s.header}><View><Text style={s.eyebrow}>MY STAGE, MY PLAN</Text><Text style={s.title}>내가 챙길 덕질 일정</Text></View><View style={s.headerIcon}><Ionicons name="calendar" size={25} color={colors.primary} /></View></View>
-    <Text style={s.description}>공연을 발견하고, 필요한 날짜만 쏙 담아두세요.{ '\n' }아티스트 찜만으로 달력에 자동 추가되지는 않아요.</Text>
+    <View style={s.header}><Text style={s.title}>일정</Text></View>
     <View style={s.summary}><View><Text style={s.summaryNumber}>{saved.items.length}<Text style={s.summaryUnit}>개의 내 일정</Text></Text><Text style={s.hint}>이 기기에 저장돼요 · 자동 예매·알림 아님</Text></View><Pressable accessibilityRole="button" onPress={() => router.push('/explore')} style={s.findButton}><Text style={s.link}>공연 찾기 ↗</Text></Pressable></View>
     {saved.loadError || error ? <Text accessibilityRole="alert" style={s.error}>{saved.loadError || error}</Text> : null}
     {!saved.ready && !saved.loadError ? <LoadingSkeleton kind="schedule" label="내 일정 불러오는 중" /> : null}
@@ -107,8 +106,8 @@ function PersonalSchedule({ initialDay }: { initialDay: string }) {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background }, content: { padding: 20, paddingBottom: 32, gap: 18, maxWidth: 700, width: '100%', alignSelf: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }, eyebrow: { fontSize: 10, letterSpacing: 1.6, fontWeight: '900', color: colors.primary },
-  title: { fontSize: 27, fontWeight: '900', color: colors.text, marginTop: 8, letterSpacing: -1 }, headerIcon: { backgroundColor: '#EDE7FF', width: 47, height: 47, borderRadius: 18, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-8deg' }] },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text },
   description: { color: colors.textMuted, fontSize: 12, lineHeight: 21 }, hint: { color: colors.textMuted, fontSize: 11, lineHeight: 19 },
   summary: { padding: 18, borderRadius: 20, backgroundColor: colors.surfaceMuted, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   summaryNumber: { fontSize: 27, fontWeight: '900', color: colors.primary }, summaryUnit: { fontSize: 13, color: colors.text, fontWeight: '700' },

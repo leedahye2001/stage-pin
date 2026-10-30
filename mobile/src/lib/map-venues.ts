@@ -1,12 +1,16 @@
 import type { Concert, VenueSummary } from '../api/concerts';
 
+export function hasVenueCoordinates(venue: VenueSummary) {
+  return Number.isFinite(venue.latitude) && Number.isFinite(venue.longitude)
+    && Math.abs(venue.latitude) <= 90 && Math.abs(venue.longitude) <= 180
+    && !(venue.latitude === 0 && venue.longitude === 0);
+}
+
 export function mapVenues(concerts: Concert[]) {
   const groups = new Map<string, { key: string; venue: VenueSummary; concerts: Concert[] }>();
   for (const concert of concerts) {
     const { latitude, longitude } = concert.venue;
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
-      || Math.abs(latitude) > 90 || Math.abs(longitude) > 180
-      || (latitude === 0 && longitude === 0)) continue;
+    if (!hasVenueCoordinates(concert.venue)) continue;
     const key = concert.venue.id || `${concert.venue.name}:${latitude}:${longitude}`;
     const group = groups.get(key);
     if (group) {

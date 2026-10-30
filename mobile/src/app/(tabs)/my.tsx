@@ -21,9 +21,7 @@ export default function MyScreen() {
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.reading]}>
         <View>
-          <Text style={styles.eyebrow}>MY STAGEPIN</Text>
-          <Text style={styles.title}>나의 덕질 보관함</Text>
-          <Text style={styles.subtitle}>찜한 굿즈와 무대, 교환하고 싶은 마음까지.</Text>
+          <Text style={styles.title}>MY</Text>
         </View>
 
         <MemberLoginCard />
@@ -116,9 +114,7 @@ function EmptyFavorite({ message }: { message: string }) {
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { gap: spacing.xl, padding: spacing.md, paddingBottom: spacing.xl },
-  eyebrow: { color: colors.primary, fontSize: 11, fontWeight: '900', letterSpacing: 1.5 },
-  title: { color: colors.text, fontSize: 30, fontWeight: '900', marginTop: spacing.xs },
-  subtitle: { color: colors.textMuted, lineHeight: 20, marginTop: spacing.sm },
+  title: { color: colors.text, fontSize: 26, fontWeight: '800' },
   section: { gap: spacing.md },
   sectionHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   sectionTitle: { color: colors.text, fontSize: typography.title, fontWeight: '800' },

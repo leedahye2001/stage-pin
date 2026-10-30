@@ -23,7 +23,7 @@ export default function GoodsScreen() {
   const items = filterDemoGoods(listings, artist, kind, query, onsiteOnly);
   return <SafeAreaView edges={['top']} style={m.safe}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[m.content, layout.isWide && responsiveStyles.content]}>
-      <View style={m.between}><View style={{ gap: 7, flex: 1 }}><Text style={s.eyebrow}>FAN TO FAN</Text><Text style={[m.title, s.title]}>취향이 만나는 굿즈장터</Text><Text style={m.subtitle}>내 작은 보물이, 누군가의 최애가 되는 곳</Text></View><Pressable accessibilityRole="button" accessibilityLabel="굿즈 판매·교환 글 등록" onPress={() => router.push('/goods/create')} style={s.register}><Ionicons name="add" size={18} color={colors.buttonText} /><Text style={s.registerText}>등록</Text></Pressable></View>
+      <View style={m.between}><Text style={s.title}>굿즈</Text><Pressable accessibilityRole="button" accessibilityLabel="굿즈 판매·교환 글 등록" onPress={() => router.push('/goods/create')} style={s.register}><Ionicons name="add" size={18} color={colors.buttonText} /><Text style={s.registerText}>등록</Text></Pressable></View>
       <DemoNotice />
       <View style={s.search}><Ionicons name="search" size={19} color="#92889F" /><TextInput accessibilityLabel="굿즈 검색" placeholder="아티스트, 멤버, 찾는 굿즈를 검색해요" placeholderTextColor="#948B9E" value={query} onChangeText={setQuery} style={s.input} />{query ? <Pressable accessibilityRole="button" accessibilityLabel="굿즈 검색어 지우기" onPress={() => setQuery('')}><Ionicons name="close-circle" color="#92889F" size={18} /></Pressable> : null}</View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={m.chips}>{['전체', ...artistNames].map((name) => <Pressable key={name} accessibilityRole="button" accessibilityLabel={`${name} 굿즈 필터`} accessibilityState={{ selected: artist === name }} onPress={() => setArtist(name)} style={[m.chip, artist === name && m.chipSelected]}><Text style={[m.chipText, artist === name && m.chipSelectedText]}>{name}</Text></Pressable>)}</ScrollView>
@@ -37,10 +37,9 @@ export default function GoodsScreen() {
 }
 
 const s = StyleSheet.create({
-  title: { fontSize: 24, lineHeight: 32 },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text },
   register: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.button, borderRadius: 999, paddingHorizontal: 14, minHeight: 44 },
   registerText: { color: colors.buttonText, fontSize: 12, fontWeight: '800' },
-  eyebrow: { fontSize: 10, letterSpacing: 2, color: colors.primary, fontWeight: '900' },
   search: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: colors.surfaceMuted, paddingHorizontal: 18, borderRadius: 999, minHeight: 49 },
   input: { flex: 1, paddingVertical: 14, fontSize: 12, color: colors.text, minWidth: 0 },
   tip: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: colors.surfaceMuted, borderRadius: 17, padding: 16 },

@@ -43,4 +43,10 @@ public class ConcertController {
             @RequestParam(defaultValue = "POPULAR_MUSIC") ConcertGenre genre) {
         return concertService.findById(id, genre);
     }
+
+    @GetMapping("/kopis/{kopisId}")
+    ConcertResponse findByKopisId(@PathVariable String kopisId,
+            @RequestParam(defaultValue = "POPULAR_MUSIC") ConcertGenre genre) {
+        return concertService.findByKopisId(kopisId, genre);
+    }
 }
