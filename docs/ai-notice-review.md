@@ -14,12 +14,15 @@ MY → AI 공연 공지 분석 → 관리자 키 입력 → 공식 공지 URL과
 `infra/.env`에 서버 전용 설정을 넣는다. 프론트의 EXPO_PUBLIC 환경 변수에는 넣지 않는다.
 
 ```dotenv
-OPENAI_API_KEY=발급받은_API_키
-OPENAI_MODEL=gpt-4o-mini
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+OLLAMA_MODEL=qwen3.5:4b
 STAGEPIN_ADMIN_KEY=충분히_긴_임의의_관리자_키
 ```
 
 ```sh
+ollama serve
+# 다른 터미널에서 모델 다운로드
+ollama pull qwen3.5:4b
 docker compose -f infra/compose.yaml up -d --build api
 cd mobile
 EXPO_PUBLIC_API_URL=http://localhost:8080 npm run web -- --port 8081
@@ -28,12 +31,21 @@ EXPO_PUBLIC_API_URL=http://localhost:8080 npm run web -- --port 8081
 기존 8081 개발 서버가 실행 중이면 먼저 그 서버를 종료한 후 다시 실행한다.
 MY 화면의 관리자 키 입력란에는 STAGEPIN_ADMIN_KEY를 입력한다.
 키는 화면 메모리에만 보관하며, 앱 저장소나 DB·로그에 보관하지 않는다.
-API 키가 없으면 분석 요청은 503으로 명확하게 실패하며 가짜 AI 결과로 대체하지 않는다.
+Ollama는 macOS에서 네이티브로 실행하여 Apple Silicon GPU를 사용한다.
+API와 PostgreSQL은 Docker에서 실행하며 host.docker.internal로 맥의 Ollama에 연결한다.
+Ollama 로컬 모델에는 유료 API 키가 필요하지 않다. 기존 OPENAI_API_KEY는 더 이상 읽지 않는다.
+모델이 없거나 Ollama가 꺼지면 오류를 표시하며 외부 유료 모델로 대체하지 않는다.
+Ollama는 기본 loopback 주소 127.0.0.1:11434에서 실행한다. 인증 없는 포트를 인터넷에 노출하지 않는다.
+
+웹·API 코드를 배포해도 맥에서 실행 중인 Ollama는 운영 서버에서 접근할 수 없다.
+운영 AI 분석에는 별도로 인증·네트워크 보호가 적용된 모델 서버와 OLLAMA_BASE_URL 설정이 필요하다.
+그 설정 전까지 운영의 관리자 AI 분석은 사용할 수 없으며, 일반 공연·지도·굿즈 화면에는 영향을 주지 않는다.
 
 ## 구현과 검증
 
-- Spring AI 2.0.2 + OpenAI provider structured output + Java record schema.
-- 프롬프트 버전 `ticket-notice-v1`; 원문은 명령이 아닌 데이터로 처리.
+- Spring AI 2.0.2 + Ollama provider structured output + Java record schema.
+- 기본 로컬 모델 qwen3.5:4b, thinking 비활성화, context 32768, 최대 생성 3000 토큰.
+- 프롬프트 버전 `ticket-notice-v2-local`; 원문은 명령이 아닌 데이터로 처리.
 - 연도·시간 미상은 빈 문자열, 한국 공지의 시간대는 +09:00 사용.
 - 각 값과 원문 인용문을 함께 저장하고, 서버에서 원문 포함 여부 검사.
 - 원문 인용 일치는 사실의 정확도나 확률을 보장하지 않는다. 최종 공개는 관리자 검수 필요.
@@ -63,15 +75,15 @@ API:
 실제 모델 평가 실행:
 
 ```sh
-LIVE_AI_EVAL=true OPENAI_API_KEY=발급받은_API_키 ./gradlew test --tests '*NoticeExtractionLiveEvaluationTest' --info
+LIVE_AI_EVAL=true OLLAMA_BASE_URL=http://localhost:11434 ./gradlew test --tests '*NoticeExtractionLiveEvaluationTest' --info
 ```
 
 20개 **합성 공지**로 예매처 4개, 선예매/일반예매, 오전/오후/정오,
 연도 누락, 시간 미정을 평가한다. 실제 공식 공지를 수집한 데이터셋은 아니다.
-실제 모델을 호출한 경우에만 `backend/build/reports/ai/notice-evaluation.csv`를 생성한다.
+실제 로컬 모델을 호출한 경우에만 `backend/build/reports/ai/notice-evaluation.csv`를 생성한다.
 측정 항목: 선예매/일반예매 정확 일치 40개, 예매처 정확 일치 20개,
 원문 근거 존재 20개, 응답 시간·토큰 수. 기준은 날짜 90%, 예매처 90%, 근거 100%.
-이는 목표 기준이며 측정 성과가 아니다. 키가 없으면 live 테스트는 SKIPPED다.
+이는 목표 기준이며 측정 성과가 아니다. LIVE_AI_EVAL=true로 명시하지 않으면 live 테스트는 SKIPPED다.
 실서비스 평가에는 사용 허용 범위를 확인한 실제 공지와 수작업 정답 데이터가 추가로 필요하다.
 
 ## 후속 작업

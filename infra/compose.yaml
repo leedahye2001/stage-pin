@@ -30,8 +30,8 @@ services:
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
       STAGEPIN_ADMIN_KEY: ${STAGEPIN_ADMIN_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-not-configured}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:4b}
       APP_CORS_ALLOWED_ORIGIN_PATTERNS: http://localhost:*,https://*.vercel.app
     depends_on:
       database:
