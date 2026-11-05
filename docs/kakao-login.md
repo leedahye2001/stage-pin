@@ -81,3 +81,15 @@ STAGEPIN_WEB_URL=https://stage-pin.vercel.app
 - `mobile/assets/kakao-login-official.png`는 위 원본을 비율 유지해 PNG로 변환한 것이다. 심볼·색상·문구를 임의 변경하지 않는다.
 - https://docs.expo.dev/versions/v58.0.0/sdk/webbrowser/
 - https://docs.expo.dev/versions/v58.0.0/sdk/securestore/
+
+## 2026-11-05 성공/실패 시나리오 검증
+
+여기서 A/B는 사용자 대상 전환율 실험이 아니라 정상(A)·실패(B) 경로의 자동 회귀 테스트를 의미한다.
+
+- A 웹: 시작 → 고정 callback → 일회용 코드 교환 → HttpOnly/Secure 쿠키 → 반복 세션 조회 → 로그아웃 → 401.
+- A 네이티브: 고정 scheme 복귀 → 잘못된 verifier 거부 후 올바른 교환 성공 → Bearer 세션 조회 → 로그아웃 → 401.
+- B: 동의 취소, provider 오류, callback state 재사용, 교환 코드 재사용/만료/동시 교환, 잘못된 Origin을 검증한다. 카카오 인증 응답은 모의 객체이고 저장·조회·삭제는 임시 실제 PostgreSQL을 사용한다.
+- `MemberAuthStoreDatabaseTest` 7개, 인증 컨트롤러 7개, 카카오 HTTP 클라이언트 3개, 세션 접근 2개를 실행했다. 실제 카카오 계정 동의와 iPhone 브라우저/앱 복귀를 이 자동 테스트가 대신하지 않는다.
+- CI backend job에 임시 PostgreSQL 서비스를 추가해 `AUTH_TEST_JDBC_URL` 조건부 인증 테스트가 실행되도록 했다. 운영 키는 CI에 넣지 않는다.
+- 운영 읽기 점검: Vercel 홈 200, Vercel 인증 프록시 및 Render 인증 설정 API 200과 `kakaoEnabled: false`, Vercel 비로그인 `/me` 401. 최초 백엔드 요청은 시간 초과였으며 이후 응답했다. 비활성의 코드상 조건은 비어 있는 `KAKAO_REST_API_KEY`다. 재배포만으로 키가 채워지지 않는다.
+- 로컬 웹의 공식 로그인 버튼 → 카카오 계정 로그인 화면 진입까지 확인했다. 실제 계정 입력·동의·복귀 검증은 사용자 참여가 필요하다.
