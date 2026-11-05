@@ -17,6 +17,8 @@
 - 로컬 macOS expo-doctor는 20개 중 19개 통과, CocoaPods 도구 검사 실패. 웹 배포 검사와 iPhone 네이티브 빌드 성공을 혼동하지 않는다.
 - 서버 83개 중 82개 통과, 외부 AI 실호출 조건부 테스트 1개 미실행. 인증 DB 7개/굿즈 DB 4개는 새 PostgreSQL에서 `--rerun-tasks`로 실행했다.
 - 웹 export 통과. PR #13의 backend/mobile CI 2개 성공을 확인한 뒤 main에 병합했다(merge `1372ad4`). 기능 PR·운영 배포 커밋은 확인 후 추가한다.
+- PR #14의 HEAD `c8cd253` backend/mobile CI 성공 후 main에 병합했다(merge `e9ebfa2`). Vercel 배포 `85MhvaeX5LyFytL2mm3Lh93LCUik` Ready, Render 배포 `dep-dbm433l9fdbs73bppnqg` 서비스 live 및 Flyway V8 적용을 확인했다. 둘 다 `e9ebfa2` 기준이다.
+- 운영 회귀 발견: Render의 `/api/v1/goods` GET은 200, `/api/v1/goods/` GET은 403. Vercel collection wildcard rewrite도 403이었다. 내 글/인증 프록시는 비로그인 401로 정상이다. collection의 빈 wildcard 끝 슬래시를 방지하는 exact rewrite를 추가하고 회귀 테스트를 둔다. 보안 허용 경로를 넓혀 해결하지 않는다.
 
 ## 3. 운영 굿즈 등록 검증
 

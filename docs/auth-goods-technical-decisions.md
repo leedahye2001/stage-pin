@@ -12,6 +12,7 @@
 - callback은 60초 유효한 handoff code로 설정된 복귀 주소에만 이동한다. 원래 클라이언트의 S256 verifier를 확인한 후 StagePin 세션을 발급한다. 이는 자체 세션 교환 구간의 PKCE이며 카카오 측 PKCE 지원을 가정한 구현이 아니다.
 - 웹은 HttpOnly/Secure/SameSite=Lax 쿠키, 네이티브는 Bearer + SecureStore를 사용한다. 서버에는 7일 세션의 원문이 아닌 SHA-256 해시만 저장한다. 로그아웃은 해당 StagePin 세션을 삭제하며 카카오 계정 전체 로그아웃은 아니다.
 - Vercel의 `/api/v1/auth/*`, `/api/v1/goods/*`를 같은 출처 프록시로 둔다. 브라우저가 Render의 제3자 쿠키에 의존하지 않도록 한 선택이다. 쿠키 쓰기 요청은 정확한 웹 Origin을 검사한다.
+- collection `/api/v1/goods`는 nested wildcard 앞에 exact rewrite를 둔다. 운영에서 wildcard가 빈 경로에 끝 슬래시를 붙여 Spring의 collection mapping과 달라지는 문제를 확인했기 때문이다. `/goods`와 `/goods/`를 같다고 가정하지 않고, 프록시 계약을 테스트한다. 403을 없애려고 인증/CORS/전체 경로 권한을 완화하지 않는다.
 
 관련 코드: `backend/src/main/java/com/leedahye/stagepin/auth/`, `mobile/src/api/auth.ts`, `mobile/vercel.json`.
 
