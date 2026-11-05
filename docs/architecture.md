@@ -1,7 +1,8 @@
 # StagePin 시스템 아키텍처
 
 작성일: 2026-10-28. 기준: `1d997cd`와 작성 시점의 로컬 작업 트리.
-AI 관련 미커밋 변경도 반영했다. 운영 배포 반영 여부와 서버 가동 상태까지 검증한 문서는 아니다.
+AI 관련 미커밋 변경도 반영했다. 굿즈·인증 부분은 2026-11-05 코드 기준으로 갱신했다.
+운영 배포 반영 여부와 서버 가동 상태까지 검증한 문서는 아니다.
 
 ## 1. 서비스와 구현 범위
 
@@ -17,8 +18,8 @@ StagePin은 **공연·예매 일정 탐색과 팬 굿즈 판매·교환을 연�
 | 선예매·일반예매 | 확인한 예매 일정 조회·등록 | PostgreSQL `ticket_opening` |
 | AI 공지 분석·검수 | 원문 입력 → 로컬 모델 추출 → 운영자 수정·승인 | `ticket_notice`, 승인 시 `ticket_opening` 생성 |
 | 공연장 지도 | 탐색 지도, 상세 카카오맵 | 공연 응답의 좌표 |
-| 굿즈 판매·교환 | 목업 목록·필터, 등록·사진 첨부·찜·신청 미리보기 | React Context 메모리. 새로고침 시 초기화 |
-| 현장 교환 | 거래 방식·공연명 입력과 목록 필터 | 굿즈 목업 속성. 매칭·채팅·위치 공유 없음 |
+| 굿즈 판매·교환 글 | 로그인 등록·필수 사진·가격/상태, 공개 조회·필터, 내 글 | PostgreSQL `goods_listing`, `goods_photo`. 하트만 메모리, 결제·채팅·신청 미구현 |
+| 현장 교환 | 거래 방식·공연명 입력과 목록 필터 | 굿즈 저장 속성. 매칭·채팅·위치 공유 없음 |
 | 일정 탭 | 공연 상세에서 선택한 공연·확인된 예매 일정, 월 달력·필터, 수동 관람 예정 표시, 예매처 이동 | AsyncStorage. 공연·아티스트 찜과 분리, 계정 동기화 없음 |
 | 로그북·모의 티켓팅 | 이전 화면·코드 보존 | 핵심 진입점 제외, 로그북 하단 탭 숨김 |
 
@@ -31,14 +32,14 @@ flowchart LR
     subgraph client["클라이언트"]
         expoApp["Expo 앱 / 웹 SPA"]
         favorites["AsyncStorage: 공연·아티스트 찜"]
-        goodsMemory["React Context: 굿즈·사진 URI·신청"]
+        goodsMemory["React Context: 굿즈 하트"]
     end
     subgraph service["Spring Boot 단일 API 서버"]
-        api["REST API: 공연·아티스트·예매 일정·공지"]
+        api["REST API: 공연·아티스트·예매 일정·공지·인증·굿즈"]
         localCache["프로세스 메모리 캐시"]
     end
     subgraph datastore["영속 데이터"]
-        postgres["PostgreSQL: 카탈로그·예매 일정·공지"]
+        postgres["PostgreSQL: 카탈로그·예매 일정·공지·회원·굿즈·사진"]
     end
     subgraph external["외부 연동 및 별도 로컬 프로세스"]
         kopis["KOPIS Open API"]
@@ -50,7 +51,7 @@ flowchart LR
     end
     expoApp -->|"JSON 요청"| api
     expoApp -->|"찜 읽기·쓰기"| favorites
-    expoApp -->|"로컬 미리보기"| goodsMemory
+    expoApp -->|"하트 상태"| goodsMemory
     api -->|"캐시 읽기·쓰기"| localCache
     api -->|"JPA / JDBC"| postgres
     api -.->|"공연·시설 XML"| kopis
@@ -62,7 +63,7 @@ flowchart LR
 ```
 
 - 예매는 외부 예매처에서 한다. StagePin 좌석 예약·결제 서버는 없다.
-- 굿즈 사진은 선택한 URI/웹 데이터 URL을 메모리에 보관한다. 서버 업로드·S3 저장은 없다.
+- 굿즈 사진은 multipart로 업로드하고 검증/재인코딩 후 PostgreSQL BYTEA에 저장한다. S3·거래 신청/결제는 아직 없다. [상세](goods-persistence.md).
 - 아티스트 검색의 MusicBrainz ID와 DB `artist.id`는 별도 식별자 체계다. 통합 마스터 매핑은 없다.
 - KOPIS는 현재 서버 코드에 지정된 HTTP 주소로 호출한다. 앱이 KOPIS 키를 직접 쓰지 않는다.
 
@@ -73,7 +74,7 @@ flowchart LR
 | 화면 | React Native 0.88, React 19.3, Expo SDK 58, TypeScript | 웹·네이티브 공통 화면 |
 | 라우팅 | Expo Router | 홈·일정·굿즈·MY와 상세/검색/관리자 화면 |
 | 서버 상태 | TanStack Query | 기본 staleTime 60초, 재시도 1회. 화면별 재정의 가능 |
-| 기기 상태 | Context, AsyncStorage | 세션성 굿즈와 영속 찜 분리 |
+| 기기 상태 | Context, AsyncStorage | 굿즈 하트와 공연 찜/내 일정. 굿즈 글·사진은 서버 상태 |
 | 서버 | Java 21, Spring Boot 4.1.1, Spring MVC | REST, 외부 응답 변환, 입력 검증 |
 | 저장 | Spring Data JPA, PostgreSQL, Flyway | 마이그레이션. Hibernate `ddl-auto=validate` |
 | AI | Spring AI 2.0.2, Ollama, 기본 `qwen3.5:4b` | 원문에서 필드와 인용 근거 추출. 모델 환경 변수 변경 가능 |
@@ -90,6 +91,8 @@ backend/src/main/java/com/leedahye/stagepin/
 ├── schedule/   공연별 일정 엔티티
 ├── ticketing/  검증 예매 일정, AI 공지 분석·승인
 ├── search/     NAVER 관련 링크
+├── auth/       카카오 로그인·회원 세션
+├── goods/      회원 소유 글·검증 사진 저장·공개/내 글 조회
 └── common/     보안 설정, CORS, 오류 처리
 ```
 
@@ -115,7 +118,7 @@ Compose DB는 호스트 포트 노출 없이 API와 내부 네트워크로 연�
 - Kakao JS 키는 허용 도메인 설정이 필요한 공개 클라이언트 키다.
 - 관리자 API는 서비스 계층에서 `X-StagePin-Admin-Key`를 검사한다. 키 미설정은 503, 잘못된 키는 403이다.
 - Spring Security 필터에서 지정 API 경로를 허용한 뒤 관리자 서비스에서 키를 검사한다. 나머지 경로는 거부한다.
-- 서버 세션은 STATELESS이며 일반 사용자 로그인·JWT·역할 시스템은 없다. CORS는 인증을 대신하지 않는다.
+- Servlet 세션은 STATELESS지만 별도의 DB 해시 세션으로 카카오 로그인을 제공한다. 굿즈 등록/내 글은 이를 검증한다. JWT/역할 시스템은 없으며 CORS는 인증을 대신하지 않는다.
 - 공지 원문은 관리자가 입력한다. 입력된 출처 URL을 자동 크롤링하지 않는다.
 
 ## 5. 조회와 캐시 한계
@@ -147,7 +150,7 @@ KOPIS 장애 시 API가 DB의 한국 데모 공연을 반환할 수 있지만 �
 
 ## 7. 미구현 운영 기능
 
-회원 인증, 굿즈 DB/API, 사진 업로드, 소유권 검증, 채팅, 실시간 현장 매칭,
+굿즈 수정/삭제, 거래 신청/상태 전환, 채팅, 실시간 현장 매칭,
 결제·환불·배송, 푸시 알림, 대량 수집 배치, 검색 엔진, 거래 분쟁·신고 처리는 미구현이다.
 
 ## 문서와 소스 근거
@@ -156,5 +159,5 @@ KOPIS 장애 시 API가 DB의 한국 데모 공연을 반환할 수 있지만 �
 - [굿즈 로드맵](fan-market-roadmap.md), [사진 출처 정책](artist-profile-sources.md)
 - DB: `backend/src/main/resources/db/migration/V1`, `V3`, `V4` SQL. `V2`는 데모 입력.
 - 서버: `ConcertService`, `KopisConcertClient`, `ArtistCatalogClient`, `TicketOpeningService`, `TicketNoticeService`, `SecurityConfig`.
-- 앱: `mobile/src/api/concerts.ts`, `src/lib/favorites.tsx`, `src/lib/goods-demo-state.tsx`, `src/lib/goods-demo.ts`.
+- 앱: `mobile/src/api/concerts.ts`, `src/api/goods.ts`, `src/lib/favorites.tsx`, `src/lib/goods-state.tsx`, `src/lib/goods-demo.ts`.
 - 인프라: `infra/compose.yaml`, `backend/Dockerfile`, `render.yaml`, `mobile/vercel.json`.

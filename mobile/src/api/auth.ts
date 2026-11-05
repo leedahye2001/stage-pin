@@ -11,12 +11,12 @@ const TOKEN_KEY = 'stagepin.auth.token';
 const nativeRedirect = 'stagepin://auth/callback';
 
 function base() { return authApiBase(Platform.OS, Platform.OS === 'web' ? window.location.hostname : '', API_URL!); }
-async function authRequest<T>(path: string, body?: unknown): Promise<T> {
+export async function memberRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = Platform.OS === 'web' ? null : await SecureStore.getItemAsync(TOKEN_KEY);
-  const response = await fetch(`${base()}/api/v1/auth${path}`, {
-    method: body === undefined ? 'GET' : 'POST', credentials: 'include',
-    headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  const headers = new Headers(init.headers);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const response = await fetch(`${base()}${path}`, {
+    ...init, credentials: 'include', headers,
   });
   if (response.status === 401) {
     if (Platform.OS !== 'web') await SecureStore.deleteItemAsync(TOKEN_KEY);
@@ -24,11 +24,18 @@ async function authRequest<T>(path: string, body?: unknown): Promise<T> {
   }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data.message || '로그인 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    throw new Error(data.message || (response.status === 413 ? '사진 용량이 너무 커요. 작은 사진으로 다시 선택해 주세요.' : '서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.'));
   }
   return response.status === 204 ? undefined as T : response.json();
 }
-class AuthRequiredError extends Error { }
+function authRequest<T>(path: string, body?: unknown): Promise<T> {
+  return memberRequest(`/api/v1/auth${path}`, body === undefined ? {} : {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+}
+export class AuthRequiredError extends Error {
+  constructor() { super('로그인이 만료됐어요. 카카오로 다시 로그인해 주세요.'); }
+}
 export function getAuthConfig() { return authRequest<{ kakaoEnabled: boolean }>('/config'); }
 export async function getCurrentMember(): Promise<Member | null> {
   try { return await authRequest<Member>('/me'); }

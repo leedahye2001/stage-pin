@@ -95,28 +95,34 @@ sequenceDiagram
 - 원문, 추출/검수 결과, 모델, 프롬프트 버전, 지연 시간, 토큰 수를 기록한다.
 - 최신 작업 트리는 로컬 Ollama 연결 기준이다. Render Blueprint에 모델 실행 환경은 포함되지 않는다.
 
-## 4. 굿즈 등록과 거래 신청 미리보기
+## 4. 굿즈 등록과 사진 저장 (2026-11-05 갱신)
 
 ```mermaid
 sequenceDiagram
     participant GoodsForm
     participant SystemPhotoPicker
     participant GoodsValidation
-    participant GoodsDemoProvider
+    participant SpringAPI
+    participant PostgreSQL
     participant GoodsDetail
     GoodsForm->>SystemPhotoPicker: 이미지 선택
     SystemPhotoPicker-->>GoodsForm: URI와 메타데이터
     GoodsForm->>GoodsValidation: 가격, 상태 코드, 필수 사진 검증
-    GoodsValidation-->>GoodsForm: DemoGoods 객체
-    GoodsForm->>GoodsDemoProvider: addListing
+    GoodsValidation-->>GoodsForm: 검증 metadata
+    GoodsForm->>SpringAPI: 세션 + multipart metadata/photos
+    SpringAPI->>SpringAPI: 회원·Origin·입력·실제 사진 검증/재인코딩
+    SpringAPI->>PostgreSQL: 글/사진 원자적 저장
+    PostgreSQL-->>SpringAPI: 저장 결과
+    SpringAPI-->>GoodsForm: ID/사진 URL
     GoodsForm->>GoodsDetail: 등록한 글 상세 이동
-    GoodsDetail->>GoodsDemoProvider: 로컬 목록 읽기
-    GoodsDemoProvider-->>GoodsDetail: 등록 객체와 사진
+    GoodsDetail->>SpringAPI: 상세/사진 재조회
+    SpringAPI->>PostgreSQL: 글·사진 읽기
+    SpringAPI-->>GoodsDetail: 저장된 글과 사진
 ```
 
-API 서버와 DB 호출은 없다. 사진은 서버에 업로드되지 않고 새로고침하면 글과 함께 사라진다.
-목록은 첫 사진, 상세는 선택한 첨부 사진을 표시한다.
-거래 신청 역시 `requested` 배열에 ID를 넣는 목업이다. 상대방 전송·주문·결제·채팅은 없다.
+새로고침/직접 상세 진입/내 글 조회는 서버에서 재조회한다. 목록은 첫 사진, 상세는 선택 사진을 표시한다.
+하트는 메모리 상태이며 거래 신청·상대방 전송·주문·결제·채팅은 없다.
+인증/보관 한계·API는 [굿즈 영속 저장](goods-persistence.md)을 참고한다.
 
 ## 5. 실제 서버 API
 
@@ -134,7 +140,8 @@ API 서버와 DB 호출은 없다. 사진은 서버에 업로드되지 않고 �
 | GET | `/actuator/health` | 없음 | 헬스체크 |
 
 관리자 헤더는 `X-StagePin-Admin-Key`다. 실제 키는 문서·예제에 기록하지 않는다.
-`/goods`, `/orders`, `/payments`, `/auth`, `/chat` **서버 API는 없다**.
+굿즈 `/api/v1/goods`와 인증 `/api/v1/auth`는 구현됐다. 상세 API는 [굿즈 저장](goods-persistence.md), [카카오 로그인](kakao-login.md)을 참고한다.
+`/orders`, `/payments`, `/chat` 서버 API는 없다.
 
 ## 6. 포트폴리오 설명 포인트
 

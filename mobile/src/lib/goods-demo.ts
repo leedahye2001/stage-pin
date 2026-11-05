@@ -21,7 +21,7 @@ export const goodsConditions = [
   { code: 'USED_FAIR', label: '사용감 있음' },
   { code: 'DAMAGED', label: '하자 있음' },
 ] as const;
-export type GoodsPhoto = { uri: string; width: number; height: number; fileSize?: number; mimeType?: string };
+export type GoodsPhoto = { uri: string; width: number; height: number; fileSize?: number; mimeType?: string; file?: File };
 export const MAX_GOODS_PHOTOS = 5;
 export function digitsOnly(value: string) { return value.replace(/[^0-9]/g, ''); }
 export function validateGoodsPhotos(photos: GoodsPhoto[]) {

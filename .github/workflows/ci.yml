@@ -8,6 +8,36 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      auth-postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: stagepin_auth_test
+          POSTGRES_USER: auth_test
+          POSTGRES_PASSWORD: auth_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U auth_test -d stagepin_auth_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      goods-postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: stagepin_goods_test
+          POSTGRES_USER: goods_test
+          POSTGRES_PASSWORD: goods_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U goods_test -d stagepin_goods_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      AUTH_TEST_JDBC_URL: jdbc:postgresql://localhost:5432/stagepin_auth_test
+      GOODS_TEST_JDBC_URL: jdbc:postgresql://localhost:5433/stagepin_goods_test
     defaults:
       run:
         working-directory: backend

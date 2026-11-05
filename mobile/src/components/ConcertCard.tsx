@@ -11,6 +11,7 @@ type ConcertCardProps = {
   favorite?: boolean;
   onFavoriteToggle?: () => void;
   onPress: () => void;
+  fluid?: boolean;
 };
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -21,13 +22,13 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
   minute: '2-digit',
 });
 
-export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress }: ConcertCardProps) {
+export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress, fluid = false }: ConcertCardProps) {
   const [now] = useState(Date.now);
   const phase = concertPhase(concert, now);
   const isKopis = concert.source === 'KOPIS';
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, fluid && { width: '100%' }]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${concert.title} 공연 상세 보기`}

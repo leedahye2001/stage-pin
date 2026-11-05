@@ -12,7 +12,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GoodsCard, marketStyles as m } from "@/components/GoodsDemo";
 import { demoArtists, filterDemoGoods } from "@/lib/goods-demo";
-import { useGoodsDemo } from "@/lib/goods-demo-state";
+import { useGoods } from "@/lib/goods-state";
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { colors } from "@/theme/tokens";
 import {
   useResponsiveLayout,
@@ -27,7 +28,7 @@ export default function GoodsScreen() {
     method?: string;
   }>();
   const onsiteOnly = params.method === "현장";
-  const { items: listings } = useGoodsDemo();
+  const { items: listings, loading, error, refresh, hasMore, loadMore, loadingMore } = useGoods();
   const artistNames = [
     ...new Set([
       ...demoArtists.map((item) => item.name),
@@ -147,8 +148,10 @@ export default function GoodsScreen() {
               </Pressable>
             ))}
           </View>
-          <Text style={m.subtitle}>{items.length}개의 굿즈 · 샘플</Text>
+          <Text style={m.subtitle}>{items.length}개의 굿즈</Text>
         </View>
+        {loading ? <LoadingSkeleton label="굿즈 불러오는 중" /> : null}
+        {error ? <Pressable accessibilityRole="button" onPress={refresh}><Text accessibilityRole="alert" style={m.subtitle}>{error} 다시 시도</Text></Pressable> : null}
         {items.length ? (
           <View style={m.grid}>
             {items.map((item) => (
@@ -167,7 +170,7 @@ export default function GoodsScreen() {
               </View>
             ))}
           </View>
-        ) : (
+        ) : !loading && !error ? (
           <View style={m.empty}>
             <Ionicons name="search-outline" color={colors.primary} size={30} />
             <Text style={m.sectionTitle}>아직 이 굿즈는 없어요</Text>
@@ -182,10 +185,10 @@ export default function GoodsScreen() {
               <Text style={m.link}>필터 초기화</Text>
             </Pressable>
           </View>
-        )}
+        ) : null}
+        {hasMore ? <Pressable accessibilityRole="button" onPress={loadMore} disabled={loadingMore}><Text style={m.sectionLink}>{loadingMore ? '불러오는 중…' : '굿즈 더 보기'}</Text></Pressable> : null}
         <Text style={s.footer}>
-          샘플과 로컬 등록 글을 보여드려요.{`\n`}새로고침 시 초기화 · 실제
-          게시·채팅·거래는 아직 연결되지 않았어요.
+          등록한 글과 사진은 서버에 보관돼요.{`\n`}결제·채팅·거래 신청은 준비 중이에요.
         </Text>
       </ScrollView>
     </SafeAreaView>

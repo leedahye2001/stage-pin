@@ -1,5 +1,5 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
+import { useQuery } from '@tanstack/react-query';
 import { useState } from "react";
 import {
   Image,
@@ -13,16 +13,25 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GoodsCard, marketStyles as m } from "@/components/GoodsDemo";
 import { HomeSearch } from "@/components/HomeSearch";
 import { HomeHeroCarousel } from "@/components/HomeHeroCarousel";
-import { HomeVendorConcerts } from "@/components/HomeVendorConcerts";
+import { HomeConcertDiscovery } from '@/components/HomeConcertDiscovery';
+import { HomeTicketOpenings } from '@/components/HomeTicketOpenings';
 import { HomeStageSchedule } from "@/components/HomeStageSchedule";
-import { useGoodsDemo } from "@/lib/goods-demo-state";
+import { useGoods } from "@/lib/goods-state";
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { colors } from "@/theme/tokens";
+import { getHomeConcerts } from '@/api/concerts';
+import { discoveryConcerts } from '@/lib/home-discovery';
+import { useFavorites } from '@/lib/favorites';
 import { useResponsiveLayout, responsiveStyles } from "@/lib/use-responsive-layout";
 
 export default function FanHomeScreen() {
   const layout = useResponsiveLayout();
   const [kind, setKind] = useState("전체");
-  const { items } = useGoodsDemo();
+  const [now] = useState(Date.now);
+  const { items, loading, error, refresh } = useGoods();
+  const { artists } = useFavorites();
+  const publicConcerts = useQuery({ queryKey: ['home-discovery'], queryFn: getHomeConcerts, staleTime: 300000, retry: false });
+  const shows = discoveryConcerts(publicConcerts.data ?? [], now);
   const goods = items
     .filter((item) => kind === "전체" || item.kind === kind)
     .slice(0, layout.isDesktop ? 8 : 6);
@@ -63,9 +72,9 @@ export default function FanHomeScreen() {
           </View>
         </View>
         {!layout.isWide ? <HomeSearch /> : null}
-        <HomeHeroCarousel />
-        <HomeStageSchedule />
-        <HomeVendorConcerts />
+        <HomeHeroCarousel concerts={shows} pending={publicConcerts.isPending} />
+        <HomeTicketOpenings />
+        <HomeConcertDiscovery />
         <View style={m.section}>
           <View style={m.between}>
             <Text style={m.sectionTitle}>새로 올라온 굿즈</Text>
@@ -96,6 +105,9 @@ export default function FanHomeScreen() {
             ))}
           </View>
           <View style={m.grid}>
+            {loading ? <LoadingSkeleton label="굿즈 불러오는 중" /> : null}
+            {error ? <Pressable accessibilityRole="button" onPress={refresh}><Text style={m.subtitle}>{error} 다시 시도</Text></Pressable> : null}
+            {!loading && !error && !goods.length ? <View style={s.goodsEmpty}><Text style={m.subtitle}>아직 등록된 굿즈가 없어요.</Text><Pressable accessibilityRole="button" onPress={() => router.push('/goods/create')} style={s.register}><Text style={m.chipText}>굿즈 등록하기</Text></Pressable></View> : null}
             {goods.map((item) => (
               <View key={item.id} style={[m.gridItem, layout.isWide && { width: layout.cardWidth, maxWidth: layout.cardWidth, flexGrow: 0 }]}>
                 <GoodsCard item={item} />
@@ -103,9 +115,10 @@ export default function FanHomeScreen() {
             ))}
           </View>
         </View>
-        <View style={s.onsite}>
+        {artists.length > 0 ? <HomeStageSchedule compact /> : null}
+        {exchanges.length > 0 ? <View style={s.onsite}>
           <View style={m.between}>
-            <Text style={m.sectionTitle}>공연 가는 날, 여기서 만나요</Text>
+            <Text style={m.sectionTitle}>현장 교환</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="현장 교환 전체 보기"
@@ -123,17 +136,12 @@ export default function FanHomeScreen() {
               <View key={item.id} style={{ width: 174 }}>
                 <GoodsCard item={item} />
                 <Text style={s.event}>
-                  <Ionicons name="location-outline" size={10} /> {item.event}
+                  {item.event}
                 </Text>
               </View>
             ))}
           </ScrollView>
-        </View>
-        <Text style={s.footer}>
-          공연 정보와 사진의 원출처는
-          각 상세에서 확인할 수 있어요.
-          {`\n`}굿즈는 미리보기이며 실제 거래 기능은 준비 중이에요.
-        </Text>
+        </View> : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -157,10 +165,6 @@ const s = StyleSheet.create({
     gap: 17,
   },
   event: { fontSize: 9, color: colors.primary, paddingTop: 8, lineHeight: 15 },
-  footer: {
-    color: "#A59BAD",
-    fontSize: 9,
-    textAlign: "center",
-    lineHeight: 18,
-  },
+  goodsEmpty: { gap: 14, padding: 22, backgroundColor: colors.surfaceMuted, borderRadius: 16, width: '100%', alignItems: 'flex-start' },
+  register: { backgroundColor: colors.white, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 18 },
 });

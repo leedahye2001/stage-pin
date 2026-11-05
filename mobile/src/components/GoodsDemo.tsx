@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { type DemoGoods, goodsPrice } from "@/lib/goods-demo";
-import { useGoodsDemo } from "@/lib/goods-demo-state";
+import { useGoods } from "@/lib/goods-state";
 import { colors } from "@/theme/tokens";
 import { useResponsiveLayout } from "@/lib/use-responsive-layout";
 
@@ -106,7 +106,7 @@ export function GoodsArtwork({
 }
 
 export function GoodsCard({ item }: { item: DemoGoods }) {
-  const { saved, toggleSaved } = useGoodsDemo();
+  const { saved, toggleSaved } = useGoods();
   return (
     <View style={s.card}>
       <Pressable

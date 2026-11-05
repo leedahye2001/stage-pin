@@ -2,8 +2,9 @@
 
 StagePin connects concert discovery, ticket-opening schedules, and fan-to-fan
 goods sales and exchanges, including meetups at the same performance.
-The current goods marketplace is a local-only prototype: listings, requests,
-and artwork are previews, not real publishing, messaging, or payments.
+Signed-in members can publish goods listings and photos stored in PostgreSQL.
+Listings survive refresh and API restarts. Payments, chat and trade requests are
+not implemented; goods hearts are still in-memory. See [goods storage](docs/goods-persistence.md).
 
 ## Repository
 

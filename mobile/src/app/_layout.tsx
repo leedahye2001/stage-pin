@@ -9,7 +9,7 @@ import { DesktopHeader } from '@/components/DesktopHeader';
 import { OutsidePressProvider } from '@/components/OutsidePressProvider';
 
 import { FavoritesProvider } from '@/lib/favorites';
-import { GoodsDemoProvider } from '@/lib/goods-demo-state';
+import { GoodsProvider } from '@/lib/goods-state';
 import { SavedSchedulesProvider } from '@/lib/saved-schedules-state';
 import { queryClient } from '@/lib/query-client';
 import { colors } from '@/theme/tokens';
@@ -19,7 +19,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <FavoritesProvider>
-          <GoodsDemoProvider>
+          <GoodsProvider>
             <SavedSchedulesProvider>
             <StatusBar style="dark" />
             <WebAnalytics />
@@ -38,6 +38,7 @@ export default function RootLayout() {
               <Stack.Screen name="concerts/[id]" options={{ title: '공연 상세' }} />
               <Stack.Screen name="artists/[id]" options={{ title: '아티스트' }} />
               <Stack.Screen name="search" options={{ title: '공연 검색' }} />
+              <Stack.Screen name="discover" options={{ title: '공연 둘러보기' }} />
               <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
               <Stack.Screen name="following-concerts" options={{ title: '관심 아티스트 공연' }} />
               <Stack.Screen name="pinlog/create" options={{ title: '핀로그 만들기' }} />
@@ -49,7 +50,7 @@ export default function RootLayout() {
             </OutsidePressProvider>
             </LaunchIntro>
             </SavedSchedulesProvider>
-          </GoodsDemoProvider>
+          </GoodsProvider>
         </FavoritesProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

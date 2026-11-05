@@ -1,62 +1,84 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, usePathname } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import type { Concert } from '@/api/concerts';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { concertPhase } from '@/lib/home-concerts';
 import { colors } from '@/theme/tokens';
 import { useResponsiveLayout } from '@/lib/use-responsive-layout';
 
-const banners = [
-  { title: '무대를 찾고,\n취향을 나누는 곳.', cta: '다음 공연 찾아보기', route: '/explore', color: '#F5F5F6', accent: '#6C4CF1', mark: '✦' },
-  { title: '같은 공연,\n새로운 굿즈 친구.', cta: '굿즈장터 둘러보기', route: '/goods', color: '#F5F5F6', accent: '#6C4CF1', mark: '♡' },
-] as const;
-
-export function HomeHeroCarousel() {
+export function HomeHeroCarousel({ concerts, pending }: { concerts: Concert[]; pending: boolean }) {
   const { isWide } = useResponsiveLayout();
+  const items = concerts.filter(item => Boolean(item.posterUrl)).slice(0, 5);
   const [width, setWidth] = useState(0);
   const [page, setPage] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [now] = useState(Date.now);
   const pathname = usePathname();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  const active = Math.min(page, Math.max(0, items.length - 1));
+  const move = (index: number) => {
+    setPage(index);
+    scroll.current?.scrollTo({ x: index * width, animated: true });
+  };
   useEffect(() => {
-    if (pathname !== '/' || !width || dragging || paused) return;
+    if (pathname !== '/' || !width || dragging || paused || items.length < 2) return;
     const timer = setTimeout(() => {
-      const next = (page + 1) % banners.length;
+      const next = (active + 1) % items.length;
       setPage(next);
       scroll.current?.scrollTo({ x: next * width, animated: true });
     }, 5000);
     return () => clearTimeout(timer);
-  }, [pathname, width, page, dragging, paused]);
-  return <View style={{ gap: 11 }} onLayout={(event) => { const nextWidth = event.nativeEvent.layout.width; setWidth(nextWidth); scroll.current?.scrollTo({ x: page * nextWidth, animated: false }); }}>
-    <ScrollView ref={scroll} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScrollBeginDrag={() => setDragging(true)} onScrollEndDrag={() => setDragging(false)} onMomentumScrollEnd={(event) => { if (width) setPage(Math.max(0, Math.min(banners.length - 1, Math.round(event.nativeEvent.contentOffset.x / width)))); }}>
-      {banners.map((item) => <View key={item.title} style={[s.hero, { width: width || 320, backgroundColor: item.color }, isWide && { padding: 40, minHeight: 300, justifyContent: 'center', gap: 24 }]}>
-        <Text style={[s.title, isWide && { fontSize: 36, lineHeight: 48 }]}>{item.title}</Text>
-        <View style={[s.art, isWide && { right: 120, top: 50, transform: [{ scale: 1.6 }] }]}><Text style={[s.mark, { color: item.accent }]}>{item.mark}</Text><View style={[s.card, { borderColor: item.accent }]}><Text style={[s.cardText, { color: item.accent }]}>MY{`\n`}FAVE</Text></View></View>
-        <Pressable accessibilityRole="button" onPress={() => router.push(item.route)} style={s.cta}><Text style={s.ctaText}>{item.cta}</Text><Ionicons name="arrow-forward" size={16} color={colors.buttonText} /></Pressable>
+  }, [pathname, width, active, items.length, dragging, paused]);
+  if (pending && !items.length) return <LoadingSkeleton kind="detail" label="공연 포스터 불러오는 중" />;
+  if (!items.length) return null;
+  return <View style={s.section} onLayout={event => {
+    const nextWidth = event.nativeEvent.layout.width;
+    setWidth(nextWidth);
+    scroll.current?.scrollTo({ x: active * nextWidth, animated: false });
+  }}>
+    <ScrollView ref={scroll} horizontal pagingEnabled showsHorizontalScrollIndicator={false}
+      onScrollBeginDrag={() => setDragging(true)} onScrollEndDrag={() => setDragging(false)}
+      onMomentumScrollEnd={event => { if (width) setPage(Math.max(0, Math.min(items.length - 1, Math.round(event.nativeEvent.contentOffset.x / width)))); }}>
+      {items.map(item => <View key={item.id} style={[s.hero, { width: width || 320 }, isWide && s.heroWide]}>
+        <View style={s.info}>
+          <Text style={s.badge}>{concertPhase(item, now)}</Text>
+          <Text numberOfLines={3} style={[s.title, isWide && s.titleWide]}>{item.title}</Text>
+          <Text style={s.meta}>{new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' }).format(new Date(item.startsAt))}</Text>
+          <Text numberOfLines={2} style={s.meta}>{item.venue.name}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={`${item.title} 공연 보기`}
+            onPress={() => router.push({ pathname: '/concerts/[id]', params: { id: item.id, genre: item.genre } })} style={s.cta}>
+            <Text style={s.ctaText}>공연 보기</Text><Ionicons name="arrow-forward" size={16} color={colors.buttonText} />
+          </Pressable>
+        </View>
+        <Image source={{ uri: item.posterUrl! }} accessibilityLabel={`${item.title} 포스터`} resizeMode="contain" style={[s.poster, isWide && s.posterWide]} />
       </View>)}
     </ScrollView>
-    {isWide ? <View pointerEvents="box-none" style={s.arrows}>
-      <Pressable accessibilityRole="button" accessibilityLabel="이전 홈 배너" onPress={() => { const next = (page + banners.length - 1) % banners.length; setPage(next); scroll.current?.scrollTo({ x: next * width, animated: true }); }} style={s.arrow}><Ionicons name="chevron-back" size={19} color={colors.text} /></Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="다음 홈 배너" onPress={() => { const next = (page + 1) % banners.length; setPage(next); scroll.current?.scrollTo({ x: next * width, animated: true }); }} style={s.arrow}><Ionicons name="chevron-forward" size={19} color={colors.text} /></Pressable>
+    {items.length > 1 ? <View style={s.controls}>
+      <Pressable accessibilityRole="button" accessibilityLabel="이전 공연 배너" onPress={() => move((active + items.length - 1) % items.length)} style={s.control}><Ionicons name="chevron-back" size={17} color={colors.text} /></Pressable>
+      <Text style={s.counter}>{active + 1} / {items.length}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel="다음 공연 배너" onPress={() => move((active + 1) % items.length)} style={s.control}><Ionicons name="chevron-forward" size={17} color={colors.text} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={paused ? '배너 자동 넘김 재생' : '배너 자동 넘김 일시정지'} onPress={() => setPaused(!paused)} style={s.control}><Ionicons name={paused ? 'play' : 'pause'} size={13} color={colors.textMuted} /></Pressable>
     </View> : null}
-    <View style={s.controls}>{banners.map((item, index) => <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={`${index + 1}번 홈 배너 보기`} accessibilityState={{ selected: page === index }} onPress={() => { setPage(index); scroll.current?.scrollTo({ x: index * width, animated: true }); }} style={s.dotTouch}><View style={[s.dot, page === index && s.dotActive]} /></Pressable>)}<Pressable accessibilityRole="button" accessibilityLabel={paused ? '배너 자동 넘김 재생' : '배너 자동 넘김 일시정지'} onPress={() => setPaused(!paused)} style={s.dotTouch}><Ionicons name={paused ? 'play' : 'pause'} size={12} color={colors.textMuted} /></Pressable><Text style={s.counter}>{page + 1} / {banners.length}</Text></View>
   </View>;
 }
 
 const s = StyleSheet.create({
-  arrows: { position: 'absolute', top: 130, left: -18, right: -18, flexDirection: 'row', justifyContent: 'space-between' },
-  arrow: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, justifyContent: 'center', alignItems: 'center' },
-  hero: { borderRadius: 24, padding: 20, gap: 10, overflow: 'hidden' },
-  title: { color: colors.text, fontSize: 24, fontWeight: '900', lineHeight: 32, letterSpacing: -1, zIndex: 1 },
-  cta: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 15, borderRadius: 20, zIndex: 1, backgroundColor: '#E8E8EB' },
-  ctaText: { fontSize: 11, fontWeight: '800', color: colors.buttonText },
-  art: { position: 'absolute', width: 130, height: 180, right: -15, top: 70, opacity: 0.16 },
-  mark: { fontSize: 60 },
-  card: { width: 75, height: 105, borderWidth: 5, borderRadius: 9, transform: [{ rotate: '16deg' }], alignSelf: 'flex-end', justifyContent: 'center', alignItems: 'center' },
-  cardText: { fontSize: 21, fontWeight: '900' },
-  controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  dotTouch: { padding: 7 },
-  dot: { width: 6, height: 6, backgroundColor: '#D6CEDF', borderRadius: 4 },
-  dotActive: { width: 18, backgroundColor: colors.primary },
-  counter: { position: 'absolute', right: 2, fontSize: 10, color: colors.textMuted },
+  section: { gap: 8 },
+  hero: { borderRadius: 24, padding: 22, gap: 16, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceMuted, minHeight: 280 },
+  heroWide: { padding: 40, gap: 48, minHeight: 350 },
+  info: { flex: 1, minWidth: 0, gap: 10, alignItems: 'flex-start' },
+  badge: { color: colors.primary, backgroundColor: colors.primarySoft, fontSize: 11, fontWeight: '800', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, overflow: 'hidden' },
+  title: { color: colors.text, fontSize: 21, fontWeight: '900', lineHeight: 28, letterSpacing: -0.6 },
+  titleWide: { fontSize: 31, lineHeight: 42 },
+  meta: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  poster: { width: '39%', aspectRatio: 0.7, maxHeight: 230, borderRadius: 12 },
+  posterWide: { width: 200, maxHeight: 285 },
+  cta: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 999, backgroundColor: colors.white, marginTop: 6 },
+  ctaText: { fontSize: 12, fontWeight: '800', color: colors.buttonText },
+  controls: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' },
+  control: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  counter: { fontSize: 11, color: colors.textMuted, minWidth: 35, textAlign: 'center' },
 });
