@@ -88,18 +88,14 @@ public class MemberAuthController {
         return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookie("", Duration.ZERO, request).toString()).build();
     }
     private void requireWebOrigin(HttpServletRequest request) {
-        if (!settings.webUrl().equals(request.getHeader(HttpHeaders.ORIGIN)))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "허용되지 않은 로그인 요청이에요.");
+        MemberSessionAccess.requireWebOrigin(request, settings.webUrl());
     }
     private ResponseCookie cookie(String token, Duration maxAge, HttpServletRequest request) {
         return ResponseCookie.from(COOKIE, token).httpOnly(true).secure(settings.webUrl().startsWith("https://"))
                 .sameSite("Lax").path("/api").maxAge(maxAge).build();
     }
     private String token(HttpServletRequest request) {
-        String auth = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (auth != null) return auth.startsWith("Bearer ") ? auth.substring(7) : null;
-        if (request.getCookies() != null) for (var cookie : request.getCookies()) if (COOKIE.equals(cookie.getName())) return cookie.getValue();
-        return null;
+        return MemberSessionAccess.token(request);
     }
     private ResponseEntity<Void> redirect(String client, String key, String value) {
         URI uri = UriComponentsBuilder.fromUriString(settings.returnUri(client)).queryParam(key, value).build().encode().toUri();

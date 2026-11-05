@@ -31,6 +31,7 @@ public class SecurityConfig {
                                 "/api/v1/admin/notices/**",
                                 "/api/v1/search/**",
                                 "/api/v1/auth/**",
+                                "/api/v1/goods/**",
                                 "/actuator/health").permitAll()
                         .anyRequest().denyAll())
                 .build();
@@ -52,6 +53,7 @@ public class SecurityConfig {
         auth.setAllowedHeaders(List.of("Content-Type", "Authorization"));
         auth.setAllowCredentials(true);
         source.registerCorsConfiguration("/api/v1/auth/**", auth);
+        source.registerCorsConfiguration("/api/v1/goods/**", auth);
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
