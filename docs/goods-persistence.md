@@ -1,6 +1,6 @@
 # 굿즈 등록·사진 영속 저장
 
-기준: 2026-11-05 로컬 구현. main 병합/운영 배포와 iOS 실기기 검증은 별도다.
+기준: 2026-11-05 구현. main 병합 및 운영 웹의 실제 카카오 계정 등록·재조회까지 검증했다. [배포 커밋·검증 결과](release-verification-2026-11-05.md)를 참고한다. iOS 실기기 검증은 별도다.
 
 ## 사용자 흐름
 
@@ -62,10 +62,12 @@ DB 용량/백업·트래픽 부담이 증가하면 S3 계열 객체 저장소와
 - 클라이언트: metadata 검증/서버 응답 매핑 테스트, lint, tsc, Node tests, 웹 export.
 - iOS 실기기 사진 업로드·재빌드는 별도 검증 필요.
 
-2026-11-05 실행 결과: 서버 79개 중 75개 통과, 기존 인증 DB/실모델 조건부 4개 미실행.
+2026-11-05 최초 로컬 실행 결과: 서버 79개 중 75개 통과, 기존 인증 DB/실모델 조건부 4개 미실행.
 새 굿즈 DB 테스트 4개는 실제 격리 PostgreSQL에서 실행했다. 클라이언트 Node 테스트 52개 통과.
 별도 임시 API에 실제 multipart 업로드 후 해당 API를 재시작하고 글/가격/상태/사진 bytes가 유지되는 것까지 확인했다.
 이 테스트는 합성 세션/전용 계정·DB를 사용했으며 실제 카카오 동의와 iPhone 업로드를 대체하지 않는다.
+
+이후 인증·굿즈 테스트 DB를 함께 연결한 최종 검사에서는 서버 83개 중 82개 통과(외부 AI 실호출 1개 제외), 프런트 Node 테스트는 프록시 회귀 추가 후 55개 통과했다. 운영 웹에서 실제 카카오 세션의 사진/가격/상태 등록, 공개 조회, MY, 상세 재진입과 로그아웃·재로그인 후 유지까지 추가로 확인했다. 기술 선택과 한계는 [별도 기술 문서](auth-goods-technical-decisions.md)에 정리했다.
 
 공식 참고: [Expo SDK 58 ImagePicker](https://docs.expo.dev/versions/v58.0.0/sdk/imagepicker/),
 [Spring multipart](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-methods/multipart-forms.html).
