@@ -9,7 +9,7 @@ import { DesktopHeader } from '@/components/DesktopHeader';
 import { OutsidePressProvider } from '@/components/OutsidePressProvider';
 
 import { FavoritesProvider } from '@/lib/favorites';
-import { GoodsDemoProvider } from '@/lib/goods-demo-state';
+import { GoodsProvider } from '@/lib/goods-state';
 import { SavedSchedulesProvider } from '@/lib/saved-schedules-state';
 import { queryClient } from '@/lib/query-client';
 import { colors } from '@/theme/tokens';
@@ -19,7 +19,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <FavoritesProvider>
-          <GoodsDemoProvider>
+          <GoodsProvider>
             <SavedSchedulesProvider>
             <StatusBar style="dark" />
             <WebAnalytics />
@@ -49,7 +49,7 @@ export default function RootLayout() {
             </OutsidePressProvider>
             </LaunchIntro>
             </SavedSchedulesProvider>
-          </GoodsDemoProvider>
+          </GoodsProvider>
         </FavoritesProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

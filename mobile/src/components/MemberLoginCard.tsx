@@ -16,7 +16,7 @@ export function MemberLoginCard() {
     if (busy) return;
     setBusy(true); setError('');
     try {
-      if (logout) { await logoutMember(); client.setQueryData(['current-member'], null); client.setQueryData(['auth-feedback'], null); }
+      if (logout) { await logoutMember(); await client.cancelQueries({ queryKey: ['my-goods'] }); client.removeQueries({ queryKey: ['my-goods'] }); client.setQueryData(['current-member'], null); client.setQueryData(['auth-feedback'], null); }
       else if (await startKakaoLogin(Boolean(member.data))) {
         await client.invalidateQueries({ queryKey: ['current-member'] });
         client.setQueryData(['auth-feedback'], '카카오 로그인이 완료됐어요.');
@@ -47,7 +47,7 @@ export function MemberLoginCard() {
       {config.isError || member.isError ? <Pressable accessibilityRole="button" onPress={() => { void config.refetch(); void member.refetch(); }}><Text style={s.hint}>로그인 상태를 확인하지 못했어요. 다시 확인</Text></Pressable> : null}
     </>}
     {error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}
-    <Text style={s.hint}>현재 찜·일정·굿즈 글은 이 기기에 저장되며, 계정 동기화는 준비 중이에요.</Text>
+    <Text style={s.hint}>등록한 굿즈는 계정에 보관돼요. 공연 찜·일정은 아직 이 기기에만 저장돼요.</Text>
   </View>;
 }
 const s = StyleSheet.create({

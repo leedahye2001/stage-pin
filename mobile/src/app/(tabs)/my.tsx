@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
@@ -8,14 +9,22 @@ import { ConcertCard } from '@/components/ConcertCard';
 import { MemberLoginCard } from '@/components/MemberLoginCard';
 import { ArtistPhoto } from '@/components/ArtistPhoto';
 import { GoodsCard, marketStyles } from '@/components/GoodsDemo';
-import { useGoodsDemo } from '@/lib/goods-demo-state';
+import { useGoods } from '@/lib/goods-state';
+import { getCurrentMember } from '@/api/auth';
+import { getMyGoods, goodsBase } from '@/api/goods';
+import { goodsItem } from '@/lib/goods-listings';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { useFavorites } from '@/lib/favorites';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function MyScreen() {
   const { isWide } = useResponsiveLayout();
   const { artists, concerts, isConcertFavorite, toggleArtist, toggleConcert } = useFavorites();
-  const { items, saved, requested } = useGoodsDemo();
+  const { items, saved } = useGoods();
+  const member = useQuery({ queryKey: ['current-member'], queryFn: getCurrentMember, retry: false });
+  const mine = useInfiniteQuery({ queryKey: ['my-goods', member.data?.id], enabled: Boolean(member.data), initialPageParam: 0,
+    queryFn: ({ pageParam }) => getMyGoods(pageParam), getNextPageParam: (last, pages) => last.length === 24 ? pages.length : undefined, retry: false });
+  const myItems = member.data ? mine.data?.pages.flat().map(item => goodsItem(item, goodsBase())) ?? [] : [];
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -26,9 +35,13 @@ export default function MyScreen() {
 
         <MemberLoginCard />
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>데모 신청 내역 · {requested.length}</Text>
-          <Text style={styles.emptyText}>상대방에게 전송되지 않으며 새로고침 시 초기화돼요.</Text>
-          {requested.length ? items.filter((item) => requested.includes(item.id)).map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => router.push({ pathname: '/goods/[id]', params: { id: item.id } })} style={styles.emptyCard}><Ionicons name="swap-horizontal" color={colors.primary} size={23} /><View style={{ flex: 1 }}><Text style={{ color: colors.text, fontWeight: '700', lineHeight: 22 }}>{item.title}</Text><Text style={styles.emptyText}>{item.kind} 신청 미리보기 · 데모 보관</Text></View><Ionicons name="chevron-forward" color={colors.primary} size={17} /></Pressable>) : <EmptyFavorite message="굿즈 상세에서 데모 신청을 남겨보세요." />}
+          <Text style={styles.sectionTitle}>내 등록 굿즈</Text>
+          {member.data && mine.isPending ? <LoadingSkeleton kind="search" label="내 등록 굿즈 불러오는 중" /> : null}
+          {member.data && mine.isError ? <Pressable accessibilityRole="button" onPress={() => void mine.refetch()}><Text style={styles.emptyText}>내 등록 글을 불러오지 못했어요. 다시 시도</Text></Pressable> : null}
+          {myItems.map(item => <Pressable accessibilityRole="button" key={item.id} onPress={() => router.push({ pathname: '/goods/[id]', params: { id: item.id } })} style={styles.emptyCard}><Ionicons name="bag-handle-outline" color={colors.primary} size={23} /><View style={{ flex: 1 }}><Text style={{ color: colors.text, fontWeight: '700', lineHeight: 22 }}>{item.title}</Text><Text style={styles.emptyText}>{item.kind} · {item.condition}</Text></View><Ionicons name="chevron-forward" color={colors.primary} size={17} /></Pressable>)}
+          {member.data && !mine.isPending && !mine.isError && !myItems.length ? <EmptyFavorite message="아직 등록한 굿즈가 없어요." /> : null}
+          {!member.data ? <EmptyFavorite message="로그인하면 내가 등록한 굿즈를 확인할 수 있어요." /> : null}
+          {member.data && mine.hasNextPage ? <Pressable accessibilityRole="button" disabled={mine.isFetchingNextPage} onPress={() => void mine.fetchNextPage()}><Text style={styles.emptyText}>내 등록 굿즈 더 보기</Text></Pressable> : null}
         </View>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>찜한 굿즈 · {saved.length}</Text>

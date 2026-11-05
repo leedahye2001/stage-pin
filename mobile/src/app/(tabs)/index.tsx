@@ -15,14 +15,15 @@ import { HomeSearch } from "@/components/HomeSearch";
 import { HomeHeroCarousel } from "@/components/HomeHeroCarousel";
 import { HomeVendorConcerts } from "@/components/HomeVendorConcerts";
 import { HomeStageSchedule } from "@/components/HomeStageSchedule";
-import { useGoodsDemo } from "@/lib/goods-demo-state";
+import { useGoods } from "@/lib/goods-state";
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { colors } from "@/theme/tokens";
 import { useResponsiveLayout, responsiveStyles } from "@/lib/use-responsive-layout";
 
 export default function FanHomeScreen() {
   const layout = useResponsiveLayout();
   const [kind, setKind] = useState("전체");
-  const { items } = useGoodsDemo();
+  const { items, loading, error, refresh } = useGoods();
   const goods = items
     .filter((item) => kind === "전체" || item.kind === kind)
     .slice(0, layout.isDesktop ? 8 : 6);
@@ -96,6 +97,9 @@ export default function FanHomeScreen() {
             ))}
           </View>
           <View style={m.grid}>
+            {loading ? <LoadingSkeleton label="굿즈 불러오는 중" /> : null}
+            {error ? <Pressable accessibilityRole="button" onPress={refresh}><Text style={m.subtitle}>{error} 다시 시도</Text></Pressable> : null}
+            {!loading && !error && !goods.length ? <Text style={m.subtitle}>아직 등록된 굿즈가 없어요.</Text> : null}
             {goods.map((item) => (
               <View key={item.id} style={[m.gridItem, layout.isWide && { width: layout.cardWidth, maxWidth: layout.cardWidth, flexGrow: 0 }]}>
                 <GoodsCard item={item} />
@@ -132,7 +136,7 @@ export default function FanHomeScreen() {
         <Text style={s.footer}>
           공연 정보와 사진의 원출처는
           각 상세에서 확인할 수 있어요.
-          {`\n`}굿즈는 미리보기이며 실제 거래 기능은 준비 중이에요.
+          {`\n`}굿즈 등록·조회가 가능하며 결제·채팅은 준비 중이에요.
         </Text>
       </ScrollView>
     </SafeAreaView>
