@@ -1,7 +1,8 @@
 # StagePin ERD와 데이터 저장 경계
 
-작성일: 2026-10-28. Flyway V1~V4와 현재 소스 기준이다.
-운영 DB에 접속해 역공학한 결과는 아니며 Flyway 이력 테이블을 제외한 애플리케이션 테이블 7개를 표시한다.
+기존 도식 작성일: 2026-10-28 (V1~V4의 7개 테이블).
+2026-11-05: V5~V8의 회원/검색/굿즈 추가 테이블은 아래 별도 절에 반영했다.
+운영 DB를 역공학한 문서는 아니다.
 
 ## 1. 실제 DB ERD
 
@@ -124,10 +125,29 @@ PK 인덱스 외에 아래 인덱스가 정의되어 있다.
 - MusicBrainz 검색 ID와 DB `artist.id`를 연결하는 영속 매핑 테이블은 없다.
 - 승인 일정에 `notice_id`가 없어 DB 관계만으로 원본 공지와 직접 JOIN할 수 없다.
 
-## 2. DB가 아닌 굿즈 데이터 모델
+## 2. 현재 굿즈·회원 저장 (V5~V8)
+
+- V5: `popular_search_term`. V6: `member_account`, `member_identity`, `member_login_attempt`, `member_session`. V7: 회원 email 추가.
+- V8: `goods_listing`과 `goods_photo`. 현재 전체 애플리케이션 테이블은 14개다.
+- `member_account.id` 1:N `goods_listing.owner_id` 필수 FK, `goods_listing.id` 1:N `goods_photo.listing_id` 필수 FK. 둘 다 부모 삭제 시 CASCADE다.
+- 글의 `(owner_id, request_id)`는 유일해 재전송 중복을 막는다. 사진의 `(listing_id, position)`도 유일하며 순서는 0~4다.
+
+| 테이블 | 주요 필드/제약 |
+| --- | --- |
+| goods_listing | UUID id/owner_id/request_id, artist, title, kind(SALE/EXCHANGE), price, wanted, condition_code, description, onsite/delivery, event, created_at |
+| goods_photo | UUID id/listing_id, position, width/height(1~1600), content BYTEA(최대 2MB, 재인코딩 JPEG) |
+| 판매 가격 | SALE이면 1~100,000,000원 NOT NULL, EXCHANGE이면 null + wanted 필수 |
+| 방식 | onsite/delivery 중 하나 이상, onsite이면 event 필수 |
+| 상태 | SEALED/OPENED_UNUSED/USED_GOOD/USED_FAIR/DAMAGED CHECK |
+
+사진 1~5장은 서비스 검증이며, 글/사진을 한 트랜잭션으로 넣는다. 목록/상세 DTO에는 bytes 대신 공개 사진 URL/크기만 둔다.
+원본 사진·GPS/EXIF는 저장하지 않는다. [검증·인증·확장 한계](goods-persistence.md) 참고.
+
+### 과거 목업 표시 모델 (DB 아님)
 
 아래는 **TypeScript 객체 구조**다. SQL 테이블·FK·서버 API가 아니다.
-목업 8개와 사용자가 앱 안에서 등록한 글을 `GoodsDemoProvider`가 메모리에 보관한다.
+`DemoGoods` 타입과 샘플 데이터는 기존 UI/검증 호환 코드로 남아 있으나 실제 목록에 섞지 않는다.
+현재 `GoodsProvider`는 서버 응답을 UI 객체로 매핑하며 글/사진의 원본은 DB에 있다.
 
 ```mermaid
 erDiagram
@@ -160,7 +180,7 @@ erDiagram
 
 목업은 샘플 일러스트를 써서 사진이 `0..N`이다. 신규 등록에는 검증 함수가 **사진 1~5장**을 강제한다.
 화면 장식 필드 `color`, `ink`, `mark`, 표시 시간 `time`은 위 도식에서 생략했다.
-사진은 독립 ID 없이 배열로 포함되고 첫 사진이 대표 이미지다.
+현재 서버 사진에는 독립 UUID가 있다. 위 과거 UI 모델에는 URI 배열로 매핑하고 첫 사진이 대표 이미지다.
 
 ### 등록 검증
 
@@ -168,8 +188,8 @@ erDiagram
 | --- | --- |
 | 가격 | 숫자 외 문자 제거. 등록 시 1~100,000,000원 정수 |
 | 상태 | 정해진 코드 선택, 등록 객체에 코드와 표시명 저장 |
-| 사진 | 1~5장. 크기 메타데이터가 있으면 장당 10MB 이하 |
-| 형식 | 제공된 MIME이 JPEG/PNG/WebP/HEIC/HEIF/AVIF인지, 이미지 크기가 양수인지 검증 |
+| 사진 | 1~5장. 서버에서 실제 입력 장당 10MB 이하 검증 |
+| 형식 | 클라이언트 MIME/크기 검사와 별도로 서버에서 JPEG/PNG 실제 디코딩·재인코딩 |
 | 방식 | 현장·택배 중 하나 이상. 현장이면 공연명 필수 |
 | 교환 | 구하는 굿즈 필수, 가격은 `null` |
 
@@ -181,7 +201,7 @@ erDiagram
 | `USED_FAIR` | 사용감 있음 |
 | `DAMAGED` | 하자 있음 |
 
-클라이언트 검증이므로 향후 업로드 서버에서 실제 파일 내용·크기·소유권을 다시 검증해야 한다.
+클라이언트 검증 외에도 현재 업로드 서버가 실제 파일 내용·크기·세션 작성자를 검증한다.
 
 ## 3. 찜·신청 저장 위치
 
@@ -191,21 +211,21 @@ erDiagram
 | 공연 찜 | `Concert[]` | 같은 키의 `concerts` 배열 |
 | 내 일정 | `SavedSchedule[]` | AsyncStorage `stagepin:saved-schedules:v1`. 공연·예매 일정 스냅샷, 수동 관람 예정 표시 |
 | 굿즈 찜 | `saved: string[]` | React Context 메모리 |
-| 거래 신청 | `requested: string[]` | React Context 메모리, 상대방 전송 없음 |
-| 등록 글·사진 | `items: DemoGoods[]` | React Context 메모리, 서버 업로드 없음 |
+| 거래 신청 | 없음 | 준비 중, 전송/예약/결제하지 않음 |
+| 등록 글·사진 | goods_listing/goods_photo | PostgreSQL 영속 저장, 계정 작성자 FK |
 
-현재 `user`, `goods`, `goods_photo`, `favorite`, `trade`, `order`, `payment`, `chat_message` 테이블은 없다.
+회원/굿즈 테이블은 위와 같이 존재한다. `favorite`, `trade`, `order`, `payment`, `chat_message` 테이블은 없다.
 
 ## 4. 다음 설계 과제 — 미구현
 
-1. 회원과 등록자·찜·신청의 관계 및 소유권 검증.
-2. 굿즈·사진 영속 저장, 파일 저장 키와 공개 URL 분리.
+1. 굿즈 수정/삭제, 회원별 찜·신청 관계와 작성자 권한 확장.
+2. 대량 이미지의 객체 저장소 분리, 보관/삭제·업로드 quota 정책.
 3. 현장 교환 공연을 문자열에서 검증 가능한 공연 ID로 연결.
 4. 승인 예매 일정에 공지 참조를 추가해 출처 추적 강화.
 5. 외부 아티스트 ID와 내부 아티스트 ID 매핑.
 
 근거: `backend/src/main/resources/db/migration/V1__create_concert_catalog.sql`,
 `V3__create_verified_ticket_openings.sql`, `V4__create_ticket_notice.sql`,
-`mobile/src/lib/goods-demo.ts`, `goods-demo-state.tsx`, `favorites.tsx`.
+`V5~V8`, `mobile/src/lib/goods-demo.ts`, `goods-state.tsx`, `favorites.tsx`.
 
 관련: [아키텍처](architecture.md), [데이터 흐름](data-flows.md).
