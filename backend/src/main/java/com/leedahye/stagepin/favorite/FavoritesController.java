@@ -2,7 +2,6 @@ package com.leedahye.stagepin.favorite;
 
 import com.leedahye.stagepin.auth.MemberSessionAccess;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +20,6 @@ public class FavoritesController {
     @PostMapping
     ResponseEntity<FavoritesStore.State> change(HttpServletRequest request, @RequestBody FavoritesStore.Change change) {
         return response(store.change(expectedMember(request, true), change));
-    }
-    @PostMapping("/import")
-    ResponseEntity<FavoritesStore.State> merge(HttpServletRequest request, @RequestBody List<FavoritesStore.Change> changes) {
-        return response(store.merge(expectedMember(request, true), changes));
     }
     private UUID expectedMember(HttpServletRequest request, boolean write) {
         var member = write ? sessions.requireWriter(request) : sessions.requireMember(request);

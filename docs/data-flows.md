@@ -57,7 +57,7 @@ sequenceDiagram
 사진이 없거나 이용 메타데이터가 기준에 맞지 않으면 기본 아이콘을 쓴다.
 [사진 표시 정책](artist-profile-sources.md)을 별도로 따른다.
 
-아티스트·공연 찜은 로그인하면 세션 회원별 `/api/v1/favorites`로 저장/조회하며 비로그인은 기존 AsyncStorage를 유지한다. 기기 찜의 계정 병합은 MY에서 명시적으로 요청한다. API·예상 회원 ID 검사·원자적 병합·검증 범위는 [회원 찜](account-favorites.md)을 참고한다. 내 일정은 아직 기기 저장이다.
+아티스트·공연 찜은 로그인하면 세션 회원별 `/api/v1/favorites`로 저장/조회하며 비로그인은 기존 AsyncStorage를 유지한다. 기기 찜의 계정 가져오기/자동 병합 기능은 제공하지 않는다. API·예상 회원 ID 검사·검증 범위는 [회원 찜](account-favorites.md)을 참고한다. 내 일정은 아직 기기 저장이다.
 
 ## 3. AI 공지 분석 → 사람 검수 → 일정 공개
 

@@ -1,6 +1,5 @@
 package com.leedahye.stagepin.favorite;
 
-import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -51,18 +50,19 @@ class FavoritesStoreDatabaseTest {
         tx.execute(status -> store.change(a, new FavoritesStore.Change("ARTIST", "mbid:day6", false, null)));
         assertThat(store.list(a).artists()).isEmpty();
     }
-    @Test void importPreservesExistingSnapshotAndRollsBackEntireBatchOnQuota() {
+    @Test void repeatedSelectionUpdatesSnapshotAndQuotaFailureRollsBack() {
         UUID owner = member();
         tx.execute(status -> store.change(owner, artist()));
         var older = new FavoritesStore.Change("ARTIST", "mbid:day6", true,
                 json.readTree(FavoritesStoreTest.ARTIST.replace("band", "older")));
-        tx.execute(status -> store.merge(owner, List.of(older, older)));
-        assertThat(store.list(owner).artists().getFirst().path("description").asString()).isEqualTo("band");
+        tx.execute(status -> store.change(owner, older));
+        assertThat(store.list(owner).artists()).hasSize(1);
+        assertThat(store.list(owner).artists().getFirst().path("description").asString()).isEqualTo("older");
         for (int i = 0; i < 199; i++) jdbc.update("INSERT INTO member_favorite(member_id,kind,target_id,snapshot) VALUES (?,'ARTIST',?,?::jsonb)",
                 owner, "fixture" + i, FavoritesStoreTest.ARTIST.replace("mbid:day6", "fixture" + i));
         var extra = new FavoritesStore.Change("ARTIST", "extra", true,
                 json.readTree(FavoritesStoreTest.ARTIST.replace("mbid:day6", "extra")));
-        assertThatThrownBy(() -> tx.execute(status -> store.merge(owner, List.of(extra))))
+        assertThatThrownBy(() -> tx.execute(status -> store.change(owner, extra)))
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
         assertThat(store.list(owner).artists()).hasSize(200);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM member_favorite WHERE target_id='extra'", Integer.class)).isZero();

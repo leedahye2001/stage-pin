@@ -30,20 +30,16 @@ class FavoritesControllerTest {
         var state = new FavoritesStore.State(List.of(), List.of());
         when(store.list(any())).thenReturn(state);
         when(store.change(any(), any())).thenReturn(state);
-        when(store.merge(any(), any())).thenReturn(state);
         mvc = MockMvcBuilders.standaloneSetup(new FavoritesController(store, sessions))
                 .setControllerAdvice(new ApiErrorHandler()).build();
     }
-    @Test void usesSessionOwnerForReadsWritesAndImport() throws Exception {
+    @Test void usesSessionOwnerForReadsAndWrites() throws Exception {
         mvc.perform(get("/api/v1/favorites").header("X-StagePin-Member-Id", member)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"));
         verify(store).list(member);
         mvc.perform(post("/api/v1/favorites").header("X-StagePin-Member-Id", member).contentType("application/json")
                 .content("{\"kind\":\"ARTIST\",\"id\":\"day6\",\"selected\":false}"))
                 .andExpect(status().isOk());
         verify(store).change(eq(member), any());
-        mvc.perform(post("/api/v1/favorites/import").header("X-StagePin-Member-Id", member).contentType("application/json").content("[]"))
-                .andExpect(status().isOk());
-        verify(store).merge(eq(member), eq(List.of()));
     }
     @Test void unauthorizedAndWrongOriginNeverReachPersistence() throws Exception {
         when(sessions.requireMember(any())).thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED));
@@ -51,8 +47,6 @@ class FavoritesControllerTest {
         mvc.perform(get("/api/v1/favorites")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/v1/favorites").contentType("application/json")
                 .content("{\"kind\":\"ARTIST\",\"id\":\"day6\",\"selected\":false}"))
-                .andExpect(status().isForbidden());
-        mvc.perform(post("/api/v1/favorites/import").contentType("application/json").content("[]"))
                 .andExpect(status().isForbidden());
         verifyNoInteractions(store);
     }
@@ -63,6 +57,11 @@ class FavoritesControllerTest {
         mvc.perform(post("/api/v1/favorites").header("X-StagePin-Member-Id", UUID.randomUUID())
                 .contentType("application/json").content("{\"kind\":\"ARTIST\",\"id\":\"day6\",\"selected\":false}"))
                 .andExpect(status().isConflict());
+        verifyNoInteractions(store);
+    }
+    @Test void removedImportEndpointIsNotMapped() throws Exception {
+        mvc.perform(post("/api/v1/favorites/import").header("X-StagePin-Member-Id", member)
+                .contentType("application/json").content("[]")).andExpect(status().isNotFound());
         verifyNoInteractions(store);
     }
 }

@@ -46,26 +46,6 @@ public class FavoritesStore {
         return list(member);
     }
 
-    @Transactional
-    public State merge(UUID member, List<Change> changes) {
-        if (changes == null || changes.size() > 200) throw invalid();
-        var snapshots = changes.stream().map(change -> {
-            if (change == null || !Boolean.TRUE.equals(change.selected())) throw invalid();
-            return validate(change);
-        }).toList();
-        lock(member);
-        for (int i = 0; i < changes.size(); i++) {
-            var change = changes.get(i);
-            // Explicit import never overwrites a newer account snapshot.
-            jdbc.update("""
-                    INSERT INTO member_favorite(member_id, kind, target_id, snapshot) VALUES (?, ?, ?, ?::jsonb)
-                    ON CONFLICT (member_id, kind, target_id) DO NOTHING
-                    """, member, change.kind(), change.id(), snapshots.get(i));
-        }
-        checkLimit(member);
-        return list(member);
-    }
-
     private void lock(UUID member) {
         jdbc.queryForObject("SELECT id FROM member_account WHERE id = ? FOR UPDATE", UUID.class, member);
     }

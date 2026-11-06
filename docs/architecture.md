@@ -14,7 +14,7 @@ StagePin은 **공연·예매 일정 탐색과 팬 굿즈 판매·교환을 연�
 | --- | --- | --- |
 | 공연 탐색·검색·상세 | KOPIS 조회, 과거 공연 검색, 포스터·예매처 링크·공연장 표시 | 서버 메모리 캐시. KOPIS 응답 자동 DB 저장 없음 |
 | 아티스트 검색·사진 | MusicBrainz 이름·별칭, Wikidata 이미지 연결, Commons 사진·이용 정보 | 서버 메모리 캐시 |
-| 공연·아티스트 찜 | 회원별 서버 저장, 명시적 기기 찜 가져오기 | PostgreSQL member_favorite; 비로그인은 기존 AsyncStorage |
+| 공연·아티스트 찜 | 회원별 서버 저장, 기기 찜과 분리 | PostgreSQL member_favorite; 비로그인은 기존 AsyncStorage |
 | 선예매·일반예매 | 확인한 예매 일정 조회·등록 | PostgreSQL `ticket_opening` |
 | AI 공지 분석·검수 | 원문 입력 → 로컬 모델 추출 → 운영자 수정·승인 | `ticket_notice`, 승인 시 `ticket_opening` 생성 |
 | 공연장 지도 | 탐색 지도, 상세 카카오맵 | 공연 응답의 좌표 |
