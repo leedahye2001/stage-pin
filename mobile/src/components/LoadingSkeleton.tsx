@@ -22,13 +22,22 @@ function Profile() {
   return <View style={s.profile}><Block width={76} height={76} round={38} /><Lines /></View>;
 }
 
-export function LoadingSkeleton({ kind = 'concerts', label = '정보를 불러오는 중', grid = false }: { kind?: Kind; label?: string; grid?: boolean }) {
+function ListRows({ kind }: { kind: Kind }) {
+  const height = kind === 'artists' ? 66 : kind === 'goods' ? 90 : 108;
+  return <View style={s.body}>{[0, 1].map(i => <View key={i} style={[s.profile, { paddingVertical: 12 }]}>
+    <Block width={kind === 'artists' ? 66 : 78} height={height} round={kind === 'artists' ? 22 : 10} />
+    <Lines /><Block width={32} height={32} round={16} />
+  </View>)}</View>;
+}
+
+export function LoadingSkeleton({ kind = 'concerts', label = '정보를 불러오는 중', grid = false, list = false }: { kind?: Kind; label?: string; grid?: boolean; list?: boolean }) {
   return <View accessible accessibilityRole="progressbar" accessibilityLabel={label} accessibilityState={{ busy: true }} style={s.container}>
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={s.body}>
-      {kind === 'concerts' ? <Cards grid={grid} /> : null}
-      {kind === 'goods' ? <Cards grid={grid} square /> : null}
+      {list ? <ListRows kind={kind} /> : null}
+      {!list && kind === 'concerts' ? <Cards grid={grid} /> : null}
+      {!list && kind === 'goods' ? <Cards grid={grid} square /> : null}
       {kind === 'account' ? <View style={[s.profile, { minHeight: 88, paddingVertical: 8, gap: 16 }]}><Block width={56} height={56} round={28} /><Lines /><Block width={76} height={44} round={22} /></View> : null}
-      {kind === 'artists' ? <View style={s.row}>{[0, 1, 2, 3, 4].map(i => <View key={i} style={s.artist}><Block width={66} height={66} round={22} /><Block width={52} height={10} /></View>)}</View> : null}
+      {!list && kind === 'artists' ? <View style={s.row}>{[0, 1, 2, 3, 4].map(i => <View key={i} style={s.artist}><Block width={66} height={66} round={22} /><Block width={52} height={10} /></View>)}</View> : null}
       {kind === 'search' ? [0, 1, 2].map(i => <View key={i} style={s.profile}><Block width={43} height={43} round={22} /><Lines /></View>) : null}
       {kind === 'profile' ? <Profile /> : null}
       {kind === 'schedule' ? [0, 1, 2].map(i => <View key={i} style={s.schedule}><Block width={44} height={44} /><Lines /></View>) : null}

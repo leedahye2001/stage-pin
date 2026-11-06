@@ -4,12 +4,12 @@ import { createContext, type PropsWithChildren, useContext, useEffect, useRef, u
 
 import type { ArtistSearchResult, Concert } from '@/api/concerts';
 import { AuthRequiredError, getCurrentMember, type Member } from '@/api/auth';
-import { getFavorites, importFavorites, saveFavorite } from '@/api/favorites';
+import { getFavorites, saveFavorite } from '@/api/favorites';
 import { changeFavorite, emptyFavorites, parseFavorites, writeForOwner, type Favorites } from '@/lib/favorite-storage';
 
 type FavoritesContextValue = Favorites & {
-  ready: boolean; busy: boolean; error: string; guestCount: number;
-  retry: () => void; importGuest: () => void;
+  ready: boolean; busy: boolean; error: string;
+  retry: () => void;
   isArtistFavorite: (id: string) => boolean;
   isConcertFavorite: (id: string) => boolean;
   toggleArtist: (artist: ArtistSearchResult) => void;
@@ -80,10 +80,8 @@ export function FavoritesProvider({ children }: PropsWithChildren) {
   }
   return <FavoritesContext.Provider value={{
     ...favorites, ready, busy,
-    error: (writeError?.owner === (signedOut ? null : owner) ? writeError?.message : '') || (owner && account.isError ? '계정 찜을 불러오지 못했어요. 다시 시도해 주세요.' : member.isError ? '로그인 상태를 확인하지 못했어요.' : loadError),
-    guestCount: loaded ? guest.artists.length + guest.concerts.length : 0,
+    error: (writeError?.owner === (signedOut ? null : owner) ? writeError?.message : '') || (owner && account.isError ? '계정 찜을 불러오지 못했어요. 다시 시도해 주세요.' : member.isError ? '로그인 상태를 확인하지 못했어요.' : signedOut ? loadError : ''),
     retry: () => { setWriteError(null); void loadGuest(); void member.refetch(); if (owner) void account.refetch(); },
-    importGuest: () => { if (owner && loaded) perform(() => importFavorites(owner, guestRef.current), owner); },
     isArtistFavorite: id => favorites.artists.some(item => item.id === id),
     isConcertFavorite: id => favorites.concerts.some(item => item.id === id),
     toggleArtist: artist => toggle('ARTIST', artist),

@@ -4,7 +4,6 @@ export const myCollections = [
   { id: 'listings', label: '내 등록 굿즈', skeleton: 'goods' },
   { id: 'goods', label: '찜한 굿즈', skeleton: 'goods' },
 ] as const;
-export type MyCollection = typeof myCollections[number]['id'];
 
 export function collectionViewState({ authPending, requiresLogin, hasItems, pending, failed }: {
   authPending: boolean; requiresLogin: boolean; hasItems: boolean; pending: boolean; failed: boolean;

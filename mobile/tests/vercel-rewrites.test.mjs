@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const { rewrites } = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 
-test('account favorites proxy preserves collection and import paths before SPA fallback', () => {
+test('account favorites proxy preserves collection paths before SPA fallback', () => {
   const exact = rewrites.findIndex(rule => rule.source === '/api/v1/favorites');
   const nested = rewrites.findIndex(rule => rule.source === '/api/v1/favorites/:path*');
   assert.ok(exact >= 0 && nested > exact);

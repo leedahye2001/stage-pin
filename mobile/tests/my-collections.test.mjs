@@ -14,7 +14,8 @@ test('cached content stays visible during background refetch and failure', () =>
   assert.equal(collectionViewState({ ...base, hasItems: true, pending: true }), 'content');
   assert.equal(collectionViewState({ ...base, hasItems: true, failed: true }), 'content');
 });
-test('collection loading shapes match posters, artist portraits and goods photos', () => {
+test('vertical MY sections keep their order and matching row loading shapes', () => {
+  assert.deepEqual(myCollections.map(item => item.label), ['찜한 공연', '관심 아티스트', '내 등록 굿즈', '찜한 굿즈']);
   assert.deepEqual(myCollections.map(item => item.skeleton), ['concerts', 'artists', 'goods', 'goods']);
   assert.equal(new Set(myCollections.map(item => item.id)).size, 4);
 });
