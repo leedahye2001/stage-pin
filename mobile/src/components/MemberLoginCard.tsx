@@ -47,7 +47,7 @@ export function MemberLoginCard() {
       {config.isError || member.isError ? <Pressable accessibilityRole="button" onPress={() => { void config.refetch(); void member.refetch(); }}><Text style={s.hint}>로그인 상태를 확인하지 못했어요. 다시 확인</Text></Pressable> : null}
     </>}
     {error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}
-    <Text style={s.hint}>등록한 굿즈는 계정에 보관돼요. 공연 찜·일정은 아직 이 기기에만 저장돼요.</Text>
+    <Text style={s.hint}>로그인하면 아티스트·공연 찜과 등록한 굿즈는 계정에 보관돼요. 내 일정은 이 기기에 저장돼요.</Text>
   </View>;
 }
 const s = StyleSheet.create({

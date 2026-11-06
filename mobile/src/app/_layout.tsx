@@ -7,6 +7,7 @@ import { WebAnalytics } from '@/components/WebAnalytics';
 import { LaunchIntro } from '@/components/LaunchIntro';
 import { DesktopHeader } from '@/components/DesktopHeader';
 import { OutsidePressProvider } from '@/components/OutsidePressProvider';
+import { FavoritesSyncNotice } from '@/components/FavoritesSyncNotice';
 
 import { FavoritesProvider } from '@/lib/favorites';
 import { GoodsProvider } from '@/lib/goods-state';
@@ -26,6 +27,7 @@ export default function RootLayout() {
             <LaunchIntro>
             <OutsidePressProvider>
             <DesktopHeader />
+            <FavoritesSyncNotice />
             <Stack
               screenOptions={{
                 contentStyle: { backgroundColor: colors.background },

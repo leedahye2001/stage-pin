@@ -1,7 +1,7 @@
 # StagePin 시스템 아키텍처
 
 작성일: 2026-10-28. 기준: `1d997cd`와 작성 시점의 로컬 작업 트리.
-AI 관련 미커밋 변경도 반영했다. 굿즈·인증 부분은 2026-11-05 코드 기준으로 갱신했다.
+AI 관련 미커밋 변경도 반영했다. 굿즈·인증은 2026-11-05, 회원 찜은 2026-11-06 로컬 코드 기준으로 갱신했다.
 운영 배포 반영 여부와 서버 가동 상태까지 검증한 문서는 아니다.
 
 ## 1. 서비스와 구현 범위
@@ -14,7 +14,7 @@ StagePin은 **공연·예매 일정 탐색과 팬 굿즈 판매·교환을 연�
 | --- | --- | --- |
 | 공연 탐색·검색·상세 | KOPIS 조회, 과거 공연 검색, 포스터·예매처 링크·공연장 표시 | 서버 메모리 캐시. KOPIS 응답 자동 DB 저장 없음 |
 | 아티스트 검색·사진 | MusicBrainz 이름·별칭, Wikidata 이미지 연결, Commons 사진·이용 정보 | 서버 메모리 캐시 |
-| 공연·아티스트 찜 | 기기 내 저장, 홈 일정 필터 | AsyncStorage. 서버 계정 동기화 없음 |
+| 공연·아티스트 찜 | 회원별 서버 저장, 명시적 기기 찜 가져오기 | PostgreSQL member_favorite; 비로그인은 기존 AsyncStorage |
 | 선예매·일반예매 | 확인한 예매 일정 조회·등록 | PostgreSQL `ticket_opening` |
 | AI 공지 분석·검수 | 원문 입력 → 로컬 모델 추출 → 운영자 수정·승인 | `ticket_notice`, 승인 시 `ticket_opening` 생성 |
 | 공연장 지도 | 탐색 지도, 상세 카카오맵 | 공연 응답의 좌표 |
@@ -31,15 +31,15 @@ StagePin은 **공연·예매 일정 탐색과 팬 굿즈 판매·교환을 연�
 flowchart LR
     subgraph client["클라이언트"]
         expoApp["Expo 앱 / 웹 SPA"]
-        favorites["AsyncStorage: 공연·아티스트 찜"]
+        favorites["AsyncStorage: 비로그인 공연·아티스트 찜"]
         goodsMemory["React Context: 굿즈 하트"]
     end
     subgraph service["Spring Boot 단일 API 서버"]
-        api["REST API: 공연·아티스트·예매 일정·공지·인증·굿즈"]
+        api["REST API: 공연·아티스트·예매 일정·공지·인증·굿즈·회원 찜"]
         localCache["프로세스 메모리 캐시"]
     end
     subgraph datastore["영속 데이터"]
-        postgres["PostgreSQL: 카탈로그·예매 일정·공지·회원·굿즈·사진"]
+        postgres["PostgreSQL: 카탈로그·예매 일정·공지·회원·굿즈·사진·찜"]
     end
     subgraph external["외부 연동 및 별도 로컬 프로세스"]
         kopis["KOPIS Open API"]
@@ -50,7 +50,7 @@ flowchart LR
         vendors["NOL / YES24 / 멜론 등 예매 사이트"]
     end
     expoApp -->|"JSON 요청"| api
-    expoApp -->|"찜 읽기·쓰기"| favorites
+    expoApp -->|"비로그인 찜 읽기·쓰기"| favorites
     expoApp -->|"하트 상태"| goodsMemory
     api -->|"캐시 읽기·쓰기"| localCache
     api -->|"JPA / JDBC"| postgres
@@ -74,7 +74,7 @@ flowchart LR
 | 화면 | React Native 0.88, React 19.3, Expo SDK 58, TypeScript | 웹·네이티브 공통 화면 |
 | 라우팅 | Expo Router | 홈·일정·굿즈·MY와 상세/검색/관리자 화면 |
 | 서버 상태 | TanStack Query | 기본 staleTime 60초, 재시도 1회. 화면별 재정의 가능 |
-| 기기 상태 | Context, AsyncStorage | 굿즈 하트와 공연 찜/내 일정. 굿즈 글·사진은 서버 상태 |
+| 기기 상태 | Context, AsyncStorage | 굿즈 하트·비로그인 찜·내 일정. 회원 찜과 굿즈 글·사진은 서버 상태 |
 | 서버 | Java 21, Spring Boot 4.1.1, Spring MVC | REST, 외부 응답 변환, 입력 검증 |
 | 저장 | Spring Data JPA, PostgreSQL, Flyway | 마이그레이션. Hibernate `ddl-auto=validate` |
 | AI | Spring AI 2.0.2, Ollama, 기본 `qwen3.5:4b` | 원문에서 필드와 인용 근거 추출. 모델 환경 변수 변경 가능 |

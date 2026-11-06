@@ -19,7 +19,7 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function MyScreen() {
   const { isWide } = useResponsiveLayout();
-  const { artists, concerts, isConcertFavorite, toggleArtist, toggleConcert } = useFavorites();
+  const { artists, concerts, isConcertFavorite, toggleArtist, toggleConcert, ready, busy, guestCount, importGuest } = useFavorites();
   const { items, saved } = useGoods();
   const member = useQuery({ queryKey: ['current-member'], queryFn: getCurrentMember, retry: false });
   const mine = useInfiniteQuery({ queryKey: ['my-goods', member.data?.id], enabled: Boolean(member.data), initialPageParam: 0,
@@ -34,6 +34,13 @@ export default function MyScreen() {
         </View>
 
         <MemberLoginCard />
+        {!ready ? <LoadingSkeleton kind="search" label="찜 불러오는 중" /> : null}
+        {member.data && guestCount > 0 ? <View style={styles.section}>
+          <Pressable accessibilityRole="button" disabled={!ready || busy} onPress={importGuest} style={styles.emptyCard}>
+            <Text style={styles.sectionTitle}>{busy ? '저장 중' : `기기 찜 ${guestCount}개 가져오기`}</Text>
+          </Pressable>
+          <Text style={styles.emptyText}>이 기기의 찜을 현재 계정에 추가해요. 중복은 제외하며 기기 원본은 유지돼요.</Text>
+        </View> : null}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>내 등록 굿즈</Text>
           {member.data && mine.isPending ? <LoadingSkeleton kind="search" label="내 등록 굿즈 불러오는 중" /> : null}
@@ -81,9 +88,9 @@ export default function MyScreen() {
                 </View>
               ))}
             </ScrollView>
-          ) : (
+          ) : ready ? (
             <EmptyFavorite message="홈에서 아티스트를 검색한 뒤 하트를 눌러보세요." />
-          )}
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -106,9 +113,9 @@ export default function MyScreen() {
                 />
               ))}
             </ScrollView>
-          ) : (
+          ) : ready ? (
             <EmptyFavorite message="다가오는 무대에서 보고 싶은 공연을 찜해보세요." />
-          )}
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
