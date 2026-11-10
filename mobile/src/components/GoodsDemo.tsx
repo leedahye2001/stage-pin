@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { type DemoGoods, goodsPrice } from "@/lib/goods-demo";
 import { useGoods } from "@/lib/goods-state";
+import { favoritePress } from '@/lib/favorite-press';
 import { colors } from "@/theme/tokens";
 import { useResponsiveLayout } from "@/lib/use-responsive-layout";
 
@@ -148,14 +149,14 @@ export function GoodsCard({ item, compact = false }: { item: DemoGoods; compact?
         accessibilityRole="button"
         accessibilityLabel={`${item.title} 찜`}
         accessibilityState={{ selected: saved.includes(item.id) }}
-        onPress={() => toggleSaved(item.id)}
+        onPress={event => favoritePress(event, () => toggleSaved(item.id))}
         style={[s.heart, compact && { right: 0, top: 12 }]}
       >
-        <Ionicons
+        <View pointerEvents="none" style={s.heartSurface}><Ionicons
           name={saved.includes(item.id) ? "heart" : "heart-outline"}
           size={19}
           color={saved.includes(item.id) ? colors.primary : "#635B6A"}
-        />
+        /></View>
       </Pressable>
     </View>
   );
@@ -223,7 +224,7 @@ export const marketStyles = StyleSheet.create({
 const s = StyleSheet.create({
   listCard: { width: '100%', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
   listPress: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  listCopy: { flex: 1, minWidth: 0, paddingTop: 0, paddingRight: 36 },
+  listCopy: { flex: 1, minWidth: 0, paddingTop: 0, paddingRight: 52 },
   listArtwork: { width: 78, height: 90, flexShrink: 0, borderRadius: 10, overflow: 'hidden', backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
   notice: {
     flexDirection: "row",
@@ -321,11 +322,11 @@ const s = StyleSheet.create({
     position: "absolute",
     right: 8,
     top: 8,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#FFFFFFE6",
+    width: 44,
+    height: 44,
+    zIndex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
+  heartSurface: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFFE6', alignItems: 'center', justifyContent: 'center' },
 });

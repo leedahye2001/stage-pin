@@ -97,6 +97,7 @@ export default function ConcertDetailScreen() {
     : dateFormatter.format(new Date(concert.startsAt));
 
   return (
+    <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.background }}>
     <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}>
       <View style={isDesktop ? { flexDirection: 'row', gap: 40, alignItems: 'flex-start' } : undefined}>
       {concert.posterUrl ? (
@@ -185,6 +186,7 @@ export default function ConcertDetailScreen() {
         </Pressable>
       </View> : null}
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
