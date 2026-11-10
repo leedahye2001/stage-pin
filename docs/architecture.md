@@ -14,7 +14,7 @@ StagePin은 **공연·예매 일정 탐색과 팬 굿즈 판매·교환을 연�
 | --- | --- | --- |
 | 공연 탐색·검색·상세 | KOPIS 조회, 과거 공연 검색, 포스터·예매처 링크·공연장 표시 | 서버 메모리 캐시. KOPIS 응답 자동 DB 저장 없음 |
 | 아티스트 검색·사진 | MusicBrainz 이름·별칭, Wikidata 이미지 연결, Commons 사진·이용 정보 | 서버 메모리 캐시 |
-| 공연·아티스트 찜 | 회원별 서버 저장, 기기 찜과 분리 | PostgreSQL member_favorite; 비로그인은 기존 AsyncStorage |
+| 공연과 아티스트 찜 | 로그인 후 회원별 서버 저장 | PostgreSQL member_favorite; 비로그인 입력은 MY 로그인 이동 |
 | 선예매·일반예매 | 확인한 예매 일정 조회·등록 | PostgreSQL `ticket_opening` |
 | AI 공지 분석·검수 | 원문 입력 → 로컬 모델 추출 → 운영자 수정·승인 | `ticket_notice`, 승인 시 `ticket_opening` 생성 |
 | 공연장 지도 | 탐색 지도, 상세 카카오맵 | 공연 응답의 좌표 |
@@ -31,7 +31,6 @@ StagePin은 **공연·예매 일정 탐색과 팬 굿즈 판매·교환을 연�
 flowchart LR
     subgraph client["클라이언트"]
         expoApp["Expo 앱 / 웹 SPA"]
-        favorites["AsyncStorage: 비로그인 공연·아티스트 찜"]
         goodsMemory["React Context: 굿즈 하트"]
     end
     subgraph service["Spring Boot 단일 API 서버"]
@@ -50,7 +49,6 @@ flowchart LR
         vendors["NOL / YES24 / 멜론 등 예매 사이트"]
     end
     expoApp -->|"JSON 요청"| api
-    expoApp -->|"비로그인 찜 읽기·쓰기"| favorites
     expoApp -->|"하트 상태"| goodsMemory
     api -->|"캐시 읽기·쓰기"| localCache
     api -->|"JPA / JDBC"| postgres
@@ -74,7 +72,7 @@ flowchart LR
 | 화면 | React Native 0.88, React 19.3, Expo SDK 58, TypeScript | 웹·네이티브 공통 화면 |
 | 라우팅 | Expo Router | 홈·일정·굿즈·MY와 상세/검색/관리자 화면 |
 | 서버 상태 | TanStack Query | 기본 staleTime 60초, 재시도 1회. 화면별 재정의 가능 |
-| 기기 상태 | Context, AsyncStorage | 굿즈 하트·비로그인 찜·내 일정. 회원 찜과 굿즈 글·사진은 서버 상태 |
+| 기기 상태 | Context, AsyncStorage | 로그인 회원의 굿즈 하트는 메모리, 내 일정은 기기 저장. 기존 기기 찜은 미사용 상태로 보존 |
 | 서버 | Java 21, Spring Boot 4.1.1, Spring MVC | REST, 외부 응답 변환, 입력 검증 |
 | 저장 | Spring Data JPA, PostgreSQL, Flyway | 마이그레이션. Hibernate `ddl-auto=validate` |
 | AI | Spring AI 2.0.2, Ollama, 기본 `qwen3.5:4b` | 원문에서 필드와 인용 근거 추출. 모델 환경 변수 변경 가능 |
