@@ -16,7 +16,7 @@ export type DemoGoods = {
 
 export const goodsConditions = [
   { code: 'SEALED', label: '미개봉' },
-  { code: 'OPENED_UNUSED', label: '개봉 · 미사용' },
+  { code: 'OPENED_UNUSED', label: '개봉, 미사용' },
   { code: 'USED_GOOD', label: '사용감 적음' },
   { code: 'USED_FAIR', label: '사용감 있음' },
   { code: 'DAMAGED', label: '하자 있음' },

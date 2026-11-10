@@ -33,7 +33,7 @@ export default function MyScreen() {
   return <SafeAreaView edges={['top']} style={m.safe}>
     <ScrollView contentContainerStyle={[m.content, layout.isWide && responsiveStyles.reading]} keyboardShouldPersistTaps="handled">
       <Text accessibilityRole="header" style={s.title}>MY</Text>
-      <MemberLoginCard />
+      <MemberLoginCard guestMessage="로그인하면 내가 등록한 굿즈를 확인할 수 있어요." />
       {memberCollections(member.data?.id, member.isError).map(section => {
         const { id, label, skeleton } = section;
         const count = id === 'concerts' ? favorites.concerts.length : id === 'artists' ? favorites.artists.length

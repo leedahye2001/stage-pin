@@ -41,7 +41,7 @@ test('reloaded server data uses server owner, permanent image URL and stored pri
   assert.equal(item.ownerId, 'member-id');
   assert.equal(item.seller, '실제 닉네임');
   assert.equal(item.price, 12000);
-  assert.equal(item.condition, '개봉 · 미사용');
+  assert.equal(item.condition, '개봉, 미사용');
   assert.equal(item.photos[0].uri, 'http://localhost:8080/api/v1/goods/photos/photo-id');
   assert.equal(goodsItem(data, '').photos[0].uri, '/api/v1/goods/photos/photo-id');
 });

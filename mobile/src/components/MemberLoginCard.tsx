@@ -6,7 +6,7 @@ import { getAuthConfig, getCurrentMember, logoutMember, startKakaoLogin } from '
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { colors, radius, spacing } from '@/theme/tokens';
 
-export function MemberLoginCard() {
+export function MemberLoginCard({ guestMessage }: { guestMessage?: string }) {
   const client = useQueryClient();
   const member = useQuery({ queryKey: ['current-member'], queryFn: getCurrentMember, retry: false });
   const config = useQuery({ queryKey: ['auth-config'], queryFn: getAuthConfig, enabled: member.data === null, retry: false, staleTime: 60000 });
@@ -46,6 +46,7 @@ export function MemberLoginCard() {
       <Pressable accessibilityRole="button" disabled={busy} onPress={() => void action(true)} style={s.button}><Text style={s.buttonText}>{busy ? '처리 중' : '로그아웃'}</Text></Pressable>
     </View> : <>
       <Text style={s.title}>로그인</Text>
+      {guestMessage ? <Text style={s.hint}>{guestMessage}</Text> : null}
       <Pressable accessibilityRole="button" accessibilityLabel="카카오 로그인" accessibilityState={{ disabled: busy || !config.data?.kakaoEnabled }} disabled={busy || !config.data?.kakaoEnabled} onPress={() => void action()} style={[s.kakao, (busy || !config.data?.kakaoEnabled) && s.disabled]}>
         <Image source={require('../../assets/kakao-login-official.png')} style={s.kakaoImage} resizeMode="contain" accessible={false} />
       </Pressable>
