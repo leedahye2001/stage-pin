@@ -24,6 +24,10 @@ export default function GoodsDetailScreen() {
   const item = goodsItem(query.data, goodsBase());
   const isExchange = item.kind === '교환';
   const isOwn = member.data?.id === item.ownerId;
+  const actions = <View style={[s.bottom, isDesktop && s.desktopActions]}>
+    <Pressable accessibilityRole="button" accessibilityLabel="이 굿즈 찜" accessibilityState={{ selected: saved.includes(item.id) }} onPress={() => toggleSaved(item.id)} style={s.heart}><Ionicons name={saved.includes(item.id) ? 'heart' : 'heart-outline'} color={colors.primary} size={24} /></Pressable>
+    <View style={[s.cta, s.disabled]}><Text style={[s.ctaText, isDesktop && { fontSize: 15 }]}>{isOwn ? '내가 등록한 글이에요' : '거래 신청 준비 중'}</Text></View>
+  </View>;
   return <SafeAreaView edges={['bottom']} style={m.safe}>
     <ScrollView contentContainerStyle={[m.content, isWide && responsiveStyles.content, { paddingBottom: 24 }]}>
       {registered === '1' && isOwn ? <View style={s.panel}><Text accessibilityLiveRegion="polite" style={m.sectionTitle}>등록이 완료됐어요</Text><Text style={m.subtitle}>사진과 글이 저장됐어요. MY의 내 등록 굿즈에서도 볼 수 있어요.</Text><Pressable accessibilityRole="button" onPress={() => router.setParams({ registered: '' })}><Text style={m.link}>닫기</Text></Pressable></View> : null}
@@ -31,25 +35,29 @@ export default function GoodsDetailScreen() {
       <View style={isDesktop ? { flex: 1 } : undefined}><GoodsArtwork item={item} large /></View>
       <View style={[{ gap: 24 }, isDesktop && { flex: 1, minWidth: 0 }]}>
       <View style={m.section}>
-        <View style={m.between}><Text style={s.artist}>{item.artist} · {item.member} · {item.category}</Text><Text style={s.status}>{item.status}</Text></View>
-        <Text style={s.title}>{item.title}</Text><Text style={s.price}>{goodsPrice(item)}</Text>
-        <Text style={m.subtitle}>{item.methods.join(' / ')} 거래 · {item.time}</Text>
+        <View style={m.between}><Text style={[s.artist, isDesktop && s.desktopMeta]}>{[item.artist, item.member, item.category].filter(Boolean).join(' / ')}</Text><Text style={[s.status, isDesktop && { fontSize: 13 }]}>{item.status}</Text></View>
+        <Text style={[s.title, isDesktop && s.desktopTitle]}>{item.title}</Text><Text style={[s.price, isDesktop && s.desktopPrice]}>{goodsPrice(item)}</Text>
+        <Text style={[m.subtitle, isDesktop && s.desktopMeta]}>{item.methods.join(' / ')} 거래, {item.time}</Text>
       </View>
       {isExchange ? <View style={s.wanted}><Ionicons name="swap-horizontal" size={24} color="#527F63" /><View style={{ flex: 1, gap: 6 }}><Text style={s.wantedLabel}>제가 찾고 있는 굿즈는요</Text><Text style={s.wantedTitle}>{item.wanted}</Text></View></View> : null}
-      <View style={s.panel}><Text style={m.sectionTitle}>굿즈 정보</Text><View style={s.info}><Text style={m.subtitle}>굿즈 상태</Text><Text style={s.infoValue}>{item.condition}</Text></View><View style={s.info}><Text style={m.subtitle}>거래 방식</Text><Text style={s.infoValue}>{item.methods.join(' / ')}</Text></View><Text style={s.description}>{item.description}</Text></View>
+      <View style={[s.panel, isDesktop && s.desktopPanel]}><Text style={m.sectionTitle}>굿즈 정보</Text><View style={s.info}><Text style={[m.subtitle, isDesktop && s.desktopMeta]}>굿즈 상태</Text><Text style={[s.infoValue, isDesktop && s.desktopMeta]}>{item.condition}</Text></View><View style={s.info}><Text style={[m.subtitle, isDesktop && s.desktopMeta]}>거래 방식</Text><Text style={[s.infoValue, isDesktop && s.desktopMeta]}>{item.methods.join(' / ')}</Text></View><Text style={[s.description, isDesktop && s.desktopBody]}>{item.description}</Text></View>
       {item.event ? <View style={s.event}><Ionicons name="location-outline" color={colors.primary} size={23} /><View style={{ flex: 1, gap: 5 }}><Text style={s.eventTitle}>현장 거래 희망 공연</Text><Text style={s.eventCopy}>{item.event}</Text></View></View> : null}
-      <View style={s.seller}><View style={s.avatar}><Ionicons name="person-outline" size={22} color="#8B7D9D" /></View><View><Text style={s.sellerName}>{item.seller}{isOwn ? ' · 내 글' : ''}</Text><Text style={m.subtitle}>등록자</Text></View></View>
-      <View style={s.safety}><Ionicons name="shield-checkmark-outline" size={18} color="#7D718F" /><Text style={s.safetyText}>공개 글에 연락처·주소를 남기지 마세요. 결제·채팅·거래 신청은 아직 연결되지 않았어요.</Text></View>
+      <View style={s.seller}><View style={s.avatar}><Ionicons name="person-outline" size={22} color="#8B7D9D" /></View><View><Text style={s.sellerName}>{item.seller}{isOwn ? ' (내 글)' : ''}</Text><Text style={m.subtitle}>등록자</Text></View></View>
+      <View style={s.safety}><Ionicons name="shield-checkmark-outline" size={18} color="#7D718F" /><Text style={[s.safetyText, isDesktop && { fontSize: 13, lineHeight: 22 }]}>공개 글에 연락처와 주소를 남기지 마세요. 결제, 채팅, 거래 신청은 아직 연결되지 않았어요.</Text></View>
+      {isDesktop ? actions : null}
       </View></View>
     </ScrollView>
-    <View style={[s.bottom, isWide && { width: '100%', maxWidth: 900, alignSelf: 'center' }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="이 굿즈 찜" accessibilityState={{ selected: saved.includes(item.id) }} onPress={() => toggleSaved(item.id)} style={s.heart}><Ionicons name={saved.includes(item.id) ? 'heart' : 'heart-outline'} color={colors.primary} size={24} /></Pressable>
-      <View style={[s.cta, s.disabled]}><Text style={s.ctaText}>{isOwn ? '내가 등록한 글이에요' : '거래 신청 준비 중'}</Text></View>
-    </View>
+    {!isDesktop ? actions : null}
   </SafeAreaView>;
 }
 
 const s = StyleSheet.create({
+  desktopTitle: { fontSize: 30, lineHeight: 42 },
+  desktopPrice: { fontSize: 32, lineHeight: 42 },
+  desktopMeta: { fontSize: 15, lineHeight: 24 },
+  desktopBody: { fontSize: 16, lineHeight: 28 },
+  desktopPanel: { paddingHorizontal: 0, borderTopWidth: 1, borderTopColor: colors.border, borderRadius: 0 },
+  desktopActions: { borderTopWidth: 0, padding: 0 },
   title: { fontSize: 24, fontWeight: '900', color: colors.text, lineHeight: 34, letterSpacing: -0.6 },
   artist: { fontSize: 11, color: colors.primary, fontWeight: '700', flex: 1 },
   status: { fontSize: 10, color: '#6D8372', backgroundColor: '#EAF1E8', borderRadius: 8, padding: 7 },
