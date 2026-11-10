@@ -8,16 +8,26 @@
 
 > 현재는 공연 탐색, 회원별 아티스트/공연 찜, 개인 일정, 굿즈 게시글과 사진 저장을 제공합니다. 결제, 채팅, 거래 신청과 실시간 현장 매칭은 아직 제공하지 않습니다.
 
-## 1. 어떤 문제를 해결하나요?
+## 1. 프로젝트 개요
 
-팬은 아티스트의 공연을 찾고, 공연마다 다른 예매처를 확인하고, 공연 전후로 굿즈를 사고 교환합니다. StagePin은 이 흐름을 **공연 발견 → 일정 확인 → 굿즈 탐색**으로 연결합니다.
+| 항목 | 내용 |
+| --- | --- |
+| 개발 형태 | 개인 프로젝트. 기획, 클라이언트, API, DB 설계, 테스트와 배포 구현 |
+| 서비스 범위 | 공개 공연 탐색, 카카오 로그인, 회원별 찜, 굿즈 판매/교환 게시글 등록 |
+| 실행 구조 | Expo 웹/iOS 클라이언트, 도메인별 패키지로 구성한 Spring Boot 단일 서버, PostgreSQL |
+| 운영 환경 | 웹은 Vercel, API는 Render Docker 서비스, 데이터는 별도 PostgreSQL |
+| 주요 검토 지점 | 세션 소유권, 계정 전환, 이미지 검증, 원자적 저장, 중복 요청과 외부 데이터 실패 처리 |
 
-- 로그인하지 않아도 공연과 공개 굿즈를 둘러볼 수 있습니다.
-- 관심 아티스트와 공연은 로그인한 계정에 저장합니다.
-- 공연 상세에서 위치와 확인된 예매처 링크를 제공합니다. 실제 예매는 해당 예매처에서 진행합니다.
-- 굿즈는 판매와 교환을 구분하고, 상태와 사진을 필수로 받아 게시합니다. 현장 거래를 선택하면 관련 공연명을 입력합니다.
+### 코드 검토 시작점
 
-개인 프로젝트로 기획, 반응형 클라이언트, Spring API, 데이터 모델, 테스트와 배포를 구현했습니다. 기능 수보다 **외부 데이터의 정확성, 계정 간 데이터 분리, 게시글의 영속성**을 우선했습니다.
+| 검토 항목 | 구현 | 검증 근거 |
+| --- | --- | --- |
+| 인증과 세션 | [인가/세션 교환](backend/src/main/java/com/leedahye/stagepin/auth/MemberAuthController.java), [세션과 Origin 검사](backend/src/main/java/com/leedahye/stagepin/auth/MemberSessionAccess.java) | [인증값 소비와 회원 동시 생성 DB 테스트](backend/src/test/java/com/leedahye/stagepin/auth/MemberAuthStoreDatabaseTest.java) |
+| 굿즈 저장 정합성 | [글/사진 트랜잭션과 멱등 등록](backend/src/main/java/com/leedahye/stagepin/goods/GoodsRepository.java), [DB 제약](backend/src/main/resources/db/migration/V8__create_goods_listings.sql) | [재조회, 회원 분리, 중복과 롤백 테스트](backend/src/test/java/com/leedahye/stagepin/goods/GoodsRepositoryDatabaseTest.java) |
+| 계정별 찜 | [행 잠금과 upsert](backend/src/main/java/com/leedahye/stagepin/favorite/FavoritesStore.java), [클라이언트 상태](mobile/src/lib/favorites.tsx) | [회원 분리와 한도 롤백 DB 테스트](backend/src/test/java/com/leedahye/stagepin/favorite/FavoritesStoreDatabaseTest.java) |
+| 외부 연동 실패 | [KOPIS 상세/시설 조회](backend/src/main/java/com/leedahye/stagepin/concert/KopisConcertClient.java) | [상세 실패와 재조회 테스트](backend/src/test/java/com/leedahye/stagepin/concert/KopisDetailFailureTest.java) |
+
+설계 배경은 아래 기술 의사결정에, 전체 모델과 API 계약은 연결된 설계 문서에 정리했습니다. 테스트 코드가 있다는 사실과 실제 운영 부하에서 검증됐다는 주장은 구분합니다.
 
 ## 2. 현재 구현된 기능
 
@@ -57,6 +67,8 @@ PC와 모바일의 레이아웃을 구분하고 API 대기는 스켈레톤으로
 
 **도메인 패키지로 나눈 단일 Spring Boot 서버**입니다. 현재 규모에서 마이크로서비스, 메시지 큐, Redis를 추가하지 않았습니다.
 
+공개 공연 조회는 클라이언트에서 API를 거쳐 외부 KOPIS 응답을 변환하는 경로이고, 굿즈/찜 쓰기는 API에서 세션을 검증한 뒤 PostgreSQL에 저장하는 경로입니다. 지도 SDK는 클라이언트에서 렌더링합니다. 외부 응답 캐시와 영속 데이터는 별도로 관리합니다.
+
 - **Vercel**: Expo 웹 export 결과 제공. 인증, 굿즈, 찜 API는 Render로 프록시합니다.
 - **Render**: 멀티 스테이지 Docker 이미지로 Spring API 실행. 비루트 사용자를 사용합니다.
 - **PostgreSQL**: 회원, 세션, 굿즈, 사진, 찜, 확인된 예매 일정 등을 저장합니다. KOPIS 응답 전체를 자동 적재하지는 않습니다.
@@ -94,6 +106,8 @@ PC와 모바일의 레이아웃을 구분하고 API 대기는 스켈레톤으로
 
 근거: [굿즈 코드](backend/src/main/java/com/leedahye/stagepin/goods), [V8 스키마](backend/src/main/resources/db/migration/V8__create_goods_listings.sql), [저장과 검증 상세](docs/goods-persistence.md)
 
+DB에도 판매/교환에 따른 가격 조건, 거래 방식, 현장 공연명, 사진 크기와 순서 제약을 둡니다. 사진 필수 개수와 파일 내용 검사는 서비스에서 수행합니다. 애플리케이션 검증과 DB 제약이 각각 보장하는 범위를 구분합니다.
+
 ### 계정 전환과 동시 요청을 고려한 찜 저장
 
 외부 아티스트와 공연 ID가 내부 카탈로그에 항상 존재하지 않으므로 회원 FK, 외부 ID, JSONB 표시 스냅샷을 저장합니다.
@@ -107,6 +121,8 @@ PC와 모바일의 레이아웃을 구분하고 API 대기는 스켈레톤으로
 굿즈 하트는 아직 메모리 상태이며 아티스트/공연 찜과 같은 영속 저장이라고 표현하지 않습니다.
 
 근거: [찜 서버](backend/src/main/java/com/leedahye/stagepin/favorite), [클라이언트 상태](mobile/src/lib/favorites.tsx), [계정 찜 설계](docs/account-favorites.md)
+
+스냅샷은 회원의 표시용 데이터이지 외부 카탈로그의 최신 원본이 아닙니다. 카탈로그 FK를 강제하지 않는 대신, 원본 변경과 이미지 URL 만료를 자동 추적하지 못하는 한계가 있습니다. 회원별 행 잠금은 단순한 쓰기 직렬화를 제공하지만 같은 회원의 요청이 집중되면 대기가 생길 수 있습니다.
 
 ### 외부 데이터의 누락과 지도 좌표 오류 처리
 
@@ -143,11 +159,16 @@ KOPIS만으로 확보할 수 없는 예매 시각을 보완하기 위해 **운�
 | 빌드와 정적 검사 | ESLint, TypeScript, Expo Doctor, 웹 export |
 | 운영 확인 | 배포 커밋, DB 마이그레이션, health, 공개 API와 비로그인 401, 실제 화면 |
 
-GitHub Actions는 PR마다 Java 21/Node 24에서 backend와 mobile을 검사합니다. 인증과 굿즈용 PostgreSQL을 따로 실행해 실제 SQL 테스트를 수행합니다. 조건부 DB 테스트와 실모델 호출의 skip은 성공한 검증으로 계산하지 않습니다.
+GitHub Actions는 PR마다 Java 21/Node 24에서 backend와 mobile을 검사합니다. 인증과 굿즈용 PostgreSQL을 따로 실행해 실제 SQL 테스트를 수행합니다. 찜 DB 테스트는 굿즈 테스트 DB의 별도 스키마를 사용합니다.
+
+- backend 필수 검사: `./gradlew test --no-daemon`과 연결된 테스트 DB.
+- mobile 필수 검사: clean install, lint, 타입 검사, Node 테스트, Expo Doctor.
+- 웹 export는 현재 GitHub CI 단계에 포함되지 않습니다. 웹 코드 변경 시 로컬 검사와 Vercel 빌드에서 확인합니다.
+- 실제 Ollama 평가, 브라우저 OAuth, iPhone 실행은 별도 검증입니다. 조건부 테스트의 skip을 해당 기능의 검증 성공으로 계산하지 않습니다.
 
 작업 브랜치 → PR → 최신 커밋의 필수 CI 성공 → main 병합 순서를 따릅니다. 운영 수동 배포는 별도 단계이며, 필요한 백엔드 마이그레이션을 먼저 완료한 뒤 프론트를 전환합니다.
 
-2026-11-10에는 main `d75512b`를 Render와 Vercel에 반영하고 V9 마이그레이션, health `UP`, 공개 굿즈 API `200`, 비로그인 회원/찜 API `401`을 확인했습니다. 해당 시점의 기록이며 이후 가동 상태를 보장하는 수치는 아닙니다.
+운영에서는 `/actuator/health`와 호스팅 로그로 기동/마이그레이션을 확인하고, 공개 조회와 비로그인 쓰기 차단을 별도로 검사합니다. 브라우저 인증과 사진 저장 검증 기록은 [릴리스 검증 문서](docs/release-verification-2026-11-05.md)에 있습니다. 응답 시간, 처리량, 대규모 동시 접속에 대한 측정 결과는 아직 없습니다.
 
 ## 7. 로컬 실행
 
@@ -183,17 +204,21 @@ npm run web -- --port 8081
 
 ### 검사 명령
 
-각 디렉터리에서 실행합니다.
+저장소 루트에서 클라이언트 검사를 실행합니다.
 
 ```bash
-# mobile/
+cd mobile
 npm run lint -- --no-cache
 npx tsc --noEmit
 node --test tests/*.test.mjs
 npx expo-doctor
 npm run build:web
+```
 
-# backend/
+서버 검사는 별도 터미널에서 저장소 루트를 기준으로 실행합니다.
+
+```bash
+cd backend
 ./gradlew test --no-daemon
 ```
 
