@@ -8,8 +8,6 @@ import { LaunchIntro } from '@/components/LaunchIntro';
 import { DesktopHeader } from '@/components/DesktopHeader';
 import { OutsidePressProvider } from '@/components/OutsidePressProvider';
 import { FavoritesSyncNotice } from '@/components/FavoritesSyncNotice';
-import { GoodsDetailHeader } from '@/components/GoodsDetailHeader';
-import { useResponsiveLayout } from '@/lib/use-responsive-layout';
 
 import { FavoritesProvider } from '@/lib/favorites';
 import { GoodsProvider } from '@/lib/goods-state';
@@ -18,7 +16,6 @@ import { queryClient } from '@/lib/query-client';
 import { colors } from '@/theme/tokens';
 
 export default function RootLayout() {
-  const { isWide } = useResponsiveLayout();
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
@@ -40,8 +37,8 @@ export default function RootLayout() {
               }}
             >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="concerts/[id]" options={{ title: '공연 상세' }} />
-              <Stack.Screen name="artists/[id]" options={{ title: '아티스트' }} />
+              <Stack.Screen name="concerts/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="artists/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="search" options={{ title: '공연 검색' }} />
               <Stack.Screen name="discover" options={{ title: '공연 둘러보기' }} />
               <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
@@ -49,7 +46,7 @@ export default function RootLayout() {
               <Stack.Screen name="pinlog/create" options={{ title: '핀로그 만들기' }} />
               <Stack.Screen name="admin/notices" options={{ title: 'AI 공연 공지 분석' }} />
               <Stack.Screen name="practice/ticketing" options={{ title: '모의 티켓팅' }} />
-              <Stack.Screen name="goods/[id]" options={{ title: '굿즈 상세', header: isWide ? () => <GoodsDetailHeader /> : undefined }} />
+              <Stack.Screen name="goods/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="goods/create" options={{ title: '굿즈 등록' }} />
             </Stack>
             </OutsidePressProvider>

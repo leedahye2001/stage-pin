@@ -28,7 +28,7 @@ export default function GoodsDetailScreen() {
     <Pressable accessibilityRole="button" accessibilityLabel="이 굿즈 찜" accessibilityState={{ selected: saved.includes(item.id) }} onPress={() => toggleSaved(item.id)} style={s.heart}><Ionicons name={saved.includes(item.id) ? 'heart' : 'heart-outline'} color={colors.primary} size={24} /></Pressable>
     <View style={[s.cta, s.disabled]}><Text style={[s.ctaText, isDesktop && { fontSize: 15 }]}>{isOwn ? '내가 등록한 글이에요' : '거래 신청 준비 중'}</Text></View>
   </View>;
-  return <SafeAreaView edges={['bottom']} style={m.safe}>
+  return <SafeAreaView edges={['top', 'bottom']} style={m.safe}>
     <ScrollView contentContainerStyle={[m.content, isWide && responsiveStyles.content, { paddingBottom: 24 }]}>
       {registered === '1' && isOwn ? <View style={s.panel}><Text accessibilityLiveRegion="polite" style={m.sectionTitle}>등록이 완료됐어요</Text><Text style={m.subtitle}>사진과 글이 저장됐어요. MY의 내 등록 굿즈에서도 볼 수 있어요.</Text><Pressable accessibilityRole="button" onPress={() => router.setParams({ registered: '' })}><Text style={m.link}>닫기</Text></Pressable></View> : null}
       <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 24 }}>

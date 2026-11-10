@@ -4,6 +4,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Concert } from '@/api/concerts';
 import { concertPhase } from '@/lib/home-concerts';
+import { favoritePress } from '@/lib/favorite-press';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 type ConcertCardProps = {
@@ -81,15 +82,15 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress, flui
         <Pressable
           accessibilityLabel={favorite ? `${concert.title} 찜 해제` : `${concert.title} 찜하기`}
           accessibilityRole="button"
-          hitSlop={8}
-          onPress={onFavoriteToggle}
+          accessibilityState={{ selected: Boolean(favorite) }}
+          onPress={event => favoritePress(event, onFavoriteToggle)}
           style={[styles.favoriteButton, compact && styles.listFavorite]}
         >
-          <Ionicons
+          <View pointerEvents="none" style={styles.favoriteSurface}><Ionicons
             color={favorite ? colors.primary : colors.textMuted}
             name={favorite ? 'heart' : 'heart-outline'}
             size={20}
-          />
+          /></View>
         </Pressable>
       ) : null}
 
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
   listCard: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
   listPress: { flexDirection: 'row', gap: 14, alignItems: 'center' },
   listPoster: { width: 78, height: 108, flexShrink: 0, borderRadius: radius.sm },
-  listCopy: { flex: 1, minWidth: 0, paddingTop: 0, paddingRight: 36 },
+  listCopy: { flex: 1, minWidth: 0, paddingTop: 0, paddingRight: 52 },
   listFavorite: { top: 12, right: 0 },
   statusBadge: { borderRadius: 8, overflow: 'hidden', fontSize: 12, lineHeight: 18, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 4 },
   completedBadge: { backgroundColor: colors.surfaceMuted, color: colors.textMuted },
@@ -115,15 +116,15 @@ const styles = StyleSheet.create({
   },
   favoriteButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.94)',
-    borderRadius: radius.pill,
-    height: 36,
+    height: 44,
     justifyContent: 'center',
     position: 'absolute',
     right: spacing.sm,
     top: spacing.sm,
-    width: 36,
+    width: 44,
+    zIndex: 1,
   },
+  favoriteSurface: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.94)', alignItems: 'center', justifyContent: 'center' },
   posterFallback: {
     borderRadius: radius.md,
     alignItems: 'center',

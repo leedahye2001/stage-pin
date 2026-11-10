@@ -62,7 +62,7 @@ export default function ArtistScreen() {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={[styles.content, isWide && responsiveStyles.content]}>
         {artistQuery.isPending ? (
           <LoadingSkeleton kind="profile" label="아티스트 프로필 불러오는 중" />
