@@ -5,6 +5,10 @@ export const myCollections = [
   { id: 'goods', label: '찜한 굿즈', skeleton: 'goods' },
 ] as const;
 
+export function memberCollections(memberId: string | undefined, authFailed: boolean) {
+  return memberId && !authFailed ? myCollections : [];
+}
+
 export function collectionViewState({ authPending, requiresLogin, hasItems, pending, failed }: {
   authPending: boolean; requiresLogin: boolean; hasItems: boolean; pending: boolean; failed: boolean;
 }): 'loading' | 'login' | 'content' | 'error' | 'empty' {

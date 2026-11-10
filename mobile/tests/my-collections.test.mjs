@@ -1,8 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { collectionViewState, myCollections } from '../src/lib/my-collections.ts';
+import { collectionViewState, memberCollections, myCollections } from '../src/lib/my-collections.ts';
 
 const base = { authPending: false, requiresLogin: false, hasItems: false, pending: false, failed: false };
+test('MY hides every private section while signed out, resolving auth or failing auth even with stale member data', () => {
+  assert.deepEqual(memberCollections(undefined, false), []);
+  assert.deepEqual(memberCollections(undefined, true), []);
+  assert.deepEqual(memberCollections('stale-member', true), []);
+  assert.deepEqual(memberCollections('member', false), myCollections);
+});
 test('MY distinguishes auth loading, login required, failure and a genuinely empty list', () => {
   assert.equal(collectionViewState({ ...base, authPending: true, requiresLogin: true }), 'loading');
   assert.equal(collectionViewState({ ...base, requiresLogin: true, pending: true }), 'login');

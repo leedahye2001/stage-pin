@@ -13,7 +13,7 @@ import { getMyGoods, goodsBase } from '@/api/goods';
 import { goodsItem } from '@/lib/goods-listings';
 import { useGoods } from '@/lib/goods-state';
 import { useFavorites } from '@/lib/favorites';
-import { collectionViewState, myCollections } from '@/lib/my-collections';
+import { collectionViewState, memberCollections } from '@/lib/my-collections';
 import { useResponsiveLayout, responsiveStyles } from '@/lib/use-responsive-layout';
 import { colors, radius } from '@/theme/tokens';
 
@@ -34,7 +34,7 @@ export default function MyScreen() {
     <ScrollView contentContainerStyle={[m.content, layout.isWide && responsiveStyles.reading]} keyboardShouldPersistTaps="handled">
       <Text accessibilityRole="header" style={s.title}>MY</Text>
       <MemberLoginCard />
-      {myCollections.map(section => {
+      {memberCollections(member.data?.id, member.isError).map(section => {
         const { id, label, skeleton } = section;
         const count = id === 'concerts' ? favorites.concerts.length : id === 'artists' ? favorites.artists.length
           : id === 'listings' ? myGoods.length : savedGoods.length;
@@ -95,9 +95,6 @@ export default function MyScreen() {
           </Pressable> : null}
         </View>;
       })}
-      <Pressable accessibilityRole="button" accessibilityLabel="관리자 공지 검수" onPress={() => router.push('/admin/notices')} style={s.utility}>
-        <Ionicons name="document-text-outline" size={19} color={colors.textMuted} /><Text style={s.utilityText}>관리자 공지 검수</Text><Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-      </Pressable>
     </ScrollView>
   </SafeAreaView>;
 }
@@ -114,6 +111,4 @@ const s = StyleSheet.create({
   artistName: { color: colors.text, fontSize: 15, fontWeight: '700' },
   heart: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   more: { minHeight: 44, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill },
-  utility: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 52, borderTopWidth: 1, borderTopColor: colors.border },
-  utilityText: { flex: 1, color: colors.textMuted, fontSize: 13 },
 });
