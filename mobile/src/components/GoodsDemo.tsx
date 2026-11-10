@@ -17,15 +17,20 @@ import { useResponsiveLayout } from "@/lib/use-responsive-layout";
 export function GoodsArtwork({
   item,
   large = false,
+  compact = false,
 }: {
   item: DemoGoods;
   large?: boolean;
+  compact?: boolean;
 }) {
   const layout = useResponsiveLayout();
   const wideArtwork = layout.isWide
     ? { height: large ? 420 : layout.cardWidth }
     : undefined;
   const [selected, setSelected] = useState(0);
+  if (compact) return <View style={s.listArtwork}>{item.photos?.[0]
+    ? <Image accessibilityLabel={`${item.title} 실물 사진`} source={{ uri: item.photos[0].uri }} resizeMode="cover" style={{ width: 78, height: 90 }} />
+    : <Ionicons name="image-outline" size={24} color={colors.textMuted} />}</View>;
   if (item.photos?.length)
     return (
       <View style={{ gap: 10 }}>
@@ -105,19 +110,20 @@ export function GoodsArtwork({
   );
 }
 
-export function GoodsCard({ item }: { item: DemoGoods }) {
+export function GoodsCard({ item, compact = false }: { item: DemoGoods; compact?: boolean }) {
   const { saved, toggleSaved } = useGoods();
   return (
-    <View style={s.card}>
+    <View style={[s.card, compact && s.listCard]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${item.title} 상세 보기`}
+        style={compact && s.listPress}
         onPress={() =>
           router.push({ pathname: "/goods/[id]", params: { id: item.id } })
         }
       >
-        <GoodsArtwork item={item} />
-        <View style={s.cardCopy}>
+        <GoodsArtwork item={item} compact={compact} />
+        <View style={[s.cardCopy, compact && s.listCopy]}>
           <View style={s.row}>
             <Text style={[s.badge, item.kind === "교환" && s.exchange]}>
               {item.kind}
@@ -143,7 +149,7 @@ export function GoodsCard({ item }: { item: DemoGoods }) {
         accessibilityLabel={`${item.title} 찜`}
         accessibilityState={{ selected: saved.includes(item.id) }}
         onPress={() => toggleSaved(item.id)}
-        style={s.heart}
+        style={[s.heart, compact && { right: 0, top: 12 }]}
       >
         <Ionicons
           name={saved.includes(item.id) ? "heart" : "heart-outline"}
@@ -215,6 +221,10 @@ export const marketStyles = StyleSheet.create({
 });
 
 const s = StyleSheet.create({
+  listCard: { width: '100%', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+  listPress: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  listCopy: { flex: 1, minWidth: 0, paddingTop: 0, paddingRight: 36 },
+  listArtwork: { width: 78, height: 90, flexShrink: 0, borderRadius: 10, overflow: 'hidden', backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
   notice: {
     flexDirection: "row",
     gap: 7,

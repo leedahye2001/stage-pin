@@ -1,52 +1,48 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# 모바일·웹 변경 제약
 
-## StagePin project conventions
+- npm lockfile을 유지하고 다른 패키지 매니저의 lockfile을 섞지 않는다. Node 버전은 `.github/workflows/ci.yml`과 맞춘다.
+- Expo/React Native API를 변경할 때 `package.json`의 Expo SDK 버전을 확인하고 해당 버전 공식 문서를 조회한다. 기존 코드와 무관한 최신 SDK 예제를 그대로 적용하지 않는다.
+- DOM·브라우저 지도 SDK는 `.web.tsx` 경계에 둔다. `AppTabs.ios.tsx`와 일반 구현처럼 플랫폼별 파일이 나뉜 경우 public props와 행동을 함께 확인한다.
+- 생성된 네이티브 자산만 수정해 원본 설정과 불일치시키지 않는다. 네이티브 변경 전 `app.json`/config plugin과 기존 iOS/Android 프로젝트의 수동 변경 여부를 확인한다.
+- 웹 배포는 설치된 iPhone 앱을 갱신하지 않는다. 네이티브 모듈·설정 변경은 재빌드가 필요하며, 웹 빌드 성공을 실기기 실행 성공으로 보고하지 않는다. 빌드 방식은 기존 스크립트를 확인하고 EAS로 임의 전환하지 않는다.
 
-- 이 파일은 `mobile/` 전체에 적용된다. 변경 경로의 `src/app`, `src/components`, `src/api`, `src/lib`, `src/theme`, `assets`, `tests` 안의 `AGENTS.md`도 확인한다.
-- 현재 저장소는 `package-lock.json` 기반 npm 프로젝트다. CI와 맞춰 Node.js 24를 사용하고 lockfile을 함께 관리한다.
-- TypeScript strict와 `@/` → `src/` 별칭을 유지한다. 기존 파일의 형식을 따르고 별도 formatter 도입으로 전체를 재작성하지 않는다.
-- 웹/네이티브 공통은 React Native로 작성하고, DOM·지도 SDK 등 플랫폼 전용 구현은 기존 `.web.tsx`/`.ios.tsx` 경계를 유지한다.
-- 서버 상태는 TanStack Query, 공연·아티스트 찜/내 일정은 Context/AsyncStorage를 따른다. 굿즈 글·사진은 서버 저장이며 굿즈 찜만 메모리다. 공연 찜·일정까지 계정 동기화된 것으로 취급하지 않는다.
-- 앱 코드 변경 후 `npm run lint -- --no-cache`, `npx tsc --noEmit`, `node --test tests/*.test.mjs`를 실행한다. 웹 관련 변경은 `npm run build:web`도 확인한다.
-- 문서만 변경한 작업은 위 앱 검사를 생략할 수 있다. 대신 경로·명령과 `git diff --check`를 확인하고 생략 사실을 보고한다.
-- 웹 배포와 iPhone 설치본 갱신은 별개다. 네이티브 변경은 재빌드/실기기 실행 검증이 필요하며 서명 설정·배포는 요청 범위에서만 수행한다.
+## API 프록시 회귀
 
-## Expo has changed — do not trust your training data
-
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
-
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+- `vercel.json`에서 `/api/v1/goods` exact rewrite는 `/api/v1/goods/:path*`보다 먼저 둔다. 빈 wildcard가 collection URL 끝에 `/`를 붙여 운영 403을 만든 이력이 있다.
+- API rewrite는 SPA fallback보다 앞에 둔다. 경로 문제를 서버 인증·Origin·CORS 완화로 해결하지 않는다. 변경 시 `tests/vercel-rewrites.test.mjs`로 exact/nested 경로와 순서를 검증한다.
 
 ## Commands
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+아래 명령은 모두 저장소의 `mobile/`에서 실행한다. 실행·검증·의존성 변경을 구분하며, 목록에 있다는 이유만으로 전부 실행하지 않는다.
+
+### 실행
+
+서버 실행 요청 시 기존 8081 프로세스를 먼저 확인하고 중복 실행하지 않는다. iPhone 빌드·설치는 요청받았을 때만 수행한다.
 
 ```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+npm run web -- --port 8081  # 웹 개발 서버
+npm start                  # Metro 개발 서버 (네이티브 개발)
+npm run ios:device         # 연결된 iPhone용 빌드·설치 (Xcode/서명 필요)
 ```
 
-Run lint and typecheck before declaring app-code changes done; documentation-only checks are described above.
+### 검증
 
-## Navigation & Routing
+앱 코드 변경은 lint·타입 검사·Node 테스트를 실행한다. 웹 영향 시 웹 빌드와 화면 확인, 의존성/Expo 설정 변경 시 expo-doctor를 추가한다. 문서 전용 검증·생략 보고는 루트 지침을 따른다.
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+```bash
+npm run lint -- --no-cache
+npx tsc --noEmit
+node --test tests/*.test.mjs
+npm run build:web
+npx expo-doctor
+```
 
-## Building with EAS
+### 의존성 변경
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
+설치가 필요하면 lockfile 기준으로 설치한다. Expo/React Native 패키지는 SDK 호환 버전을 고르는 `expo install`을 사용한다. `--fix`는 진단된 호환성 문제를 수정할 때만 실행하고 package.json/lockfile diff를 검토한다.
 
-## Rules
-
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+```bash
+npm ci
+npx expo install <package>
+npx expo install --fix
+```

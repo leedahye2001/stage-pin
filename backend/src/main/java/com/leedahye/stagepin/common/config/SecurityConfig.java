@@ -32,6 +32,7 @@ public class SecurityConfig {
                                 "/api/v1/search/**",
                                 "/api/v1/auth/**",
                                 "/api/v1/goods/**",
+                                "/api/v1/favorites/**",
                                 "/actuator/health").permitAll()
                         .anyRequest().denyAll())
                 .build();
@@ -54,6 +55,9 @@ public class SecurityConfig {
         auth.setAllowCredentials(true);
         source.registerCorsConfiguration("/api/v1/auth/**", auth);
         source.registerCorsConfiguration("/api/v1/goods/**", auth);
+        CorsConfiguration favorites = new CorsConfiguration(auth);
+        favorites.setAllowedHeaders(List.of("Content-Type", "Authorization", "X-StagePin-Member-Id"));
+        source.registerCorsConfiguration("/api/v1/favorites/**", favorites);
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }

@@ -1,7 +1,7 @@
 # StagePin ERD와 데이터 저장 경계
 
 기존 도식 작성일: 2026-10-28 (V1~V4의 7개 테이블).
-2026-11-05: V5~V8의 회원/검색/굿즈 추가 테이블은 아래 별도 절에 반영했다.
+2026-11-05: V5~V8 회원/검색/굿즈, 2026-11-06: V9 회원 찜 테이블을 아래 반영했다.
 운영 DB를 역공학한 문서는 아니다.
 
 ## 1. 실제 DB ERD
@@ -207,18 +207,24 @@ erDiagram
 
 | 데이터 | 구조 | 수명 |
 | --- | --- | --- |
-| 아티스트 찜 | `ArtistSearchResult[]` | AsyncStorage `stagepin:favorites` |
-| 공연 찜 | `Concert[]` | 같은 키의 `concerts` 배열 |
+| 아티스트 찜 | `ArtistSearchResult[]` | 로그인: member_favorite; 비로그인: AsyncStorage stagepin:favorites |
+| 공연 찜 | `Concert[]` | 로그인: member_favorite; 비로그인: 같은 기기 키의 concerts 배열 |
 | 내 일정 | `SavedSchedule[]` | AsyncStorage `stagepin:saved-schedules:v1`. 공연·예매 일정 스냅샷, 수동 관람 예정 표시 |
 | 굿즈 찜 | `saved: string[]` | React Context 메모리 |
 | 거래 신청 | 없음 | 준비 중, 전송/예약/결제하지 않음 |
 | 등록 글·사진 | goods_listing/goods_photo | PostgreSQL 영속 저장, 계정 작성자 FK |
 
-회원/굿즈 테이블은 위와 같이 존재한다. `favorite`, `trade`, `order`, `payment`, `chat_message` 테이블은 없다.
+### V9: 회원 찜
+
+`member_favorite`의 기본 키는 `(member_id, kind, target_id)`다. `member_id`는 `member_account.id` FK이며 회원 삭제 시 cascade한다. `kind`는 ARTIST/CONCERT, `target_id`는 외부/내부 원본 식별자 문자열, `snapshot`은 JSONB, `created_at`은 TIMESTAMPTZ다.
+
+외부 카탈로그 ID와 KOPIS 변환 UUID가 내부 카탈로그 DB 행으로 항상 존재하지 않으므로 target_id에 artist/concert FK는 걸지 않는다. 스냅샷은 회원 개인의 표시용 저장본으로, 검증된 공연 원장이나 새 공개 카탈로그가 아니다. 사진 bytes는 저장하지 않고 출처·라이선스 메타데이터를 보존한다.
+
+`trade`, `order`, `payment`, `chat_message` 테이블은 없다. [회원 찜 상세](account-favorites.md) 참고.
 
 ## 4. 다음 설계 과제 — 미구현
 
-1. 굿즈 수정/삭제, 회원별 찜·신청 관계와 작성자 권한 확장.
+1. 굿즈 수정/삭제·굿즈 찜·거래 신청 관계와 작성자 권한 확장. 내 일정의 계정 저장.
 2. 대량 이미지의 객체 저장소 분리, 보관/삭제·업로드 quota 정책.
 3. 현장 교환 공연을 문자열에서 검증 가능한 공연 ID로 연결.
 4. 승인 예매 일정에 공지 참조를 추가해 출처 추적 강화.
@@ -226,6 +232,6 @@ erDiagram
 
 근거: `backend/src/main/resources/db/migration/V1__create_concert_catalog.sql`,
 `V3__create_verified_ticket_openings.sql`, `V4__create_ticket_notice.sql`,
-`V5~V8`, `mobile/src/lib/goods-demo.ts`, `goods-state.tsx`, `favorites.tsx`.
+`V5~V9`, `mobile/src/lib/goods-demo.ts`, `goods-state.tsx`, `favorites.tsx`.
 
 관련: [아키텍처](architecture.md), [데이터 흐름](data-flows.md).

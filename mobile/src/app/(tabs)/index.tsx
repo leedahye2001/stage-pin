@@ -20,7 +20,8 @@ import { useGoods } from "@/lib/goods-state";
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { colors } from "@/theme/tokens";
 import { getHomeConcerts } from '@/api/concerts';
-import { discoveryConcerts } from '@/lib/home-discovery';
+import { getCurrentMember } from '@/api/auth';
+import { discoveryConcerts, homeConcertAudience } from '@/lib/home-discovery';
 import { useFavorites } from '@/lib/favorites';
 import { useResponsiveLayout, responsiveStyles } from "@/lib/use-responsive-layout";
 
@@ -29,7 +30,9 @@ export default function FanHomeScreen() {
   const [kind, setKind] = useState("전체");
   const [now] = useState(Date.now);
   const { items, loading, error, refresh } = useGoods();
-  const { artists } = useFavorites();
+  const { artists, ready } = useFavorites();
+  const member = useQuery({ queryKey: ['current-member'], queryFn: getCurrentMember, retry: false });
+  const audience = homeConcertAudience(member.data?.id, ready, artists.length);
   const publicConcerts = useQuery({ queryKey: ['home-discovery'], queryFn: getHomeConcerts, staleTime: 300000, retry: false });
   const shows = discoveryConcerts(publicConcerts.data ?? [], now);
   const goods = items
@@ -74,7 +77,7 @@ export default function FanHomeScreen() {
         {!layout.isWide ? <HomeSearch /> : null}
         <HomeHeroCarousel concerts={shows} pending={publicConcerts.isPending} />
         <HomeTicketOpenings />
-        <HomeConcertDiscovery />
+        {audience === 'following' ? <HomeStageSchedule compact /> : <HomeConcertDiscovery />}
         <View style={m.section}>
           <View style={m.between}>
             <Text style={m.sectionTitle}>새로 올라온 굿즈</Text>
@@ -115,7 +118,6 @@ export default function FanHomeScreen() {
             ))}
           </View>
         </View>
-        {artists.length > 0 ? <HomeStageSchedule compact /> : null}
         {exchanges.length > 0 ? <View style={s.onsite}>
           <View style={m.between}>
             <Text style={m.sectionTitle}>현장 교환</Text>

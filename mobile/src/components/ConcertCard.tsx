@@ -12,6 +12,7 @@ type ConcertCardProps = {
   onFavoriteToggle?: () => void;
   onPress: () => void;
   fluid?: boolean;
+  compact?: boolean;
 };
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -22,28 +23,28 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
   minute: '2-digit',
 });
 
-export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress, fluid = false }: ConcertCardProps) {
+export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress, fluid = false, compact = false }: ConcertCardProps) {
   const [now] = useState(Date.now);
   const phase = concertPhase(concert, now);
   const isKopis = concert.source === 'KOPIS';
 
   return (
-    <View style={[styles.card, fluid && { width: '100%' }]}>
+    <View style={[styles.card, (fluid || compact) && { width: '100%' }, compact && styles.listCard]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${concert.title} 공연 상세 보기`}
         onPress={onPress}
-        style={({ pressed }) => pressed && styles.pressed}
+        style={({ pressed }) => [compact && styles.listPress, pressed && styles.pressed]}
       >
         {concert.posterUrl ? (
           <Image
             accessibilityIgnoresInvertColors
             accessibilityLabel={`${concert.title} 포스터`}
             source={{ uri: concert.posterUrl }}
-            style={styles.poster}
+            style={[styles.poster, compact && styles.listPoster]}
           />
         ) : (
-          <View style={styles.posterFallback}>
+          <View style={[styles.posterFallback, compact && styles.listPoster]}>
             <Text style={styles.dateMonth}>
               {new Intl.DateTimeFormat('en-US', { month: 'short' })
                 .format(new Date(concert.startsAt))
@@ -53,7 +54,7 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress, flui
           </View>
         )}
 
-        <View style={styles.content}>
+        <View style={[styles.content, compact && styles.listCopy]}>
           <View style={styles.artistRow}>
             <Text style={[styles.statusBadge, phase === '진행 중' ? styles.ongoingBadge : phase === '예정' ? styles.upcomingBadge : styles.completedBadge]}>{phase}</Text>
           </View>
@@ -82,7 +83,7 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress, flui
           accessibilityRole="button"
           hitSlop={8}
           onPress={onFavoriteToggle}
-          style={styles.favoriteButton}
+          style={[styles.favoriteButton, compact && styles.listFavorite]}
         >
           <Ionicons
             color={favorite ? colors.primary : colors.textMuted}
@@ -97,6 +98,11 @@ export function ConcertCard({ concert, favorite, onFavoriteToggle, onPress, flui
 }
 
 const styles = StyleSheet.create({
+  listCard: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+  listPress: { flexDirection: 'row', gap: 14, alignItems: 'center' },
+  listPoster: { width: 78, height: 108, flexShrink: 0, borderRadius: radius.sm },
+  listCopy: { flex: 1, minWidth: 0, paddingTop: 0, paddingRight: 36 },
+  listFavorite: { top: 12, right: 0 },
   statusBadge: { borderRadius: 8, overflow: 'hidden', fontSize: 12, lineHeight: 18, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 4 },
   completedBadge: { backgroundColor: colors.surfaceMuted, color: colors.textMuted },
   ongoingBadge: { backgroundColor: '#E7F4ED', color: colors.success },

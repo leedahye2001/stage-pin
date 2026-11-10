@@ -1,9 +1,7 @@
 # 공통 UI
 
-- 재사용 가능한 UI와 화면 섹션을 둔다. 화면 경로·외부 데이터 계약을 컴포넌트마다 새로 정의하지 않는다.
-- 색·간격·round는 `@/theme/tokens`를 우선한다. 기본 흰 배경/중립 회색, 보라색은 선택·강조에 사용한다.
+- 색·간격·round는 `@/theme/tokens`를 우선한다. 토큰 변경 시 `../theme/AGENTS.md`의 색상 의미·영향 범위도 확인한다.
 - 모바일 현재 레이아웃을 보존하면서 `useResponsiveLayout`과 기존 공통 크기 계산으로 큰 화면에 대응한다. 분수 viewport에서 카드가 의도치 않게 줄바꿈되지 않는지도 확인한다.
-- `AppTabs.ios.tsx`와 `AppTabs.tsx`, 지도 `.web.tsx`와 네이티브 구현의 public props/행동을 맞춘다. 웹 파일의 DOM API를 네이티브 공통 모듈로 옮기지 않는다.
 - 탭별 padding·터치 영역을 일정하게 유지하고 safe area와 스크롤 하단 콘텐츠를 가리지 않는다.
 - 버튼/아이콘에 접근성 label·role·선택 상태와 적절한 hitSlop을 유지한다. 작은 아이콘 때문에 터치 영역까지 줄이지 않는다.
 - API 대기에는 `LoadingSkeleton`을 재사용하고, 실패·이미지 누락 fallback을 제공한다.

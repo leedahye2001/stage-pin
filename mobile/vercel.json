@@ -4,6 +4,14 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/v1/favorites",
+      "destination": "https://stage-pin-api.onrender.com/api/v1/favorites"
+    },
+    {
+      "source": "/api/v1/favorites/:path*",
+      "destination": "https://stage-pin-api.onrender.com/api/v1/favorites/:path*"
+    },
+    {
       "source": "/api/v1/goods",
       "destination": "https://stage-pin-api.onrender.com/api/v1/goods"
     },
