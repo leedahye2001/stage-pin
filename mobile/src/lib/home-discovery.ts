@@ -1,6 +1,10 @@
 import type { Concert, TicketOpening } from '../api/concerts';
 import { concertPhase } from './home-concerts';
 
+export function homeConcertAudience(memberId: string | undefined, favoritesReady: boolean, artistCount: number) {
+  return memberId && favoritesReady && artistCount > 0 ? 'following' : 'public';
+}
+
 export function discoveryConcerts(concerts: Concert[], now: number): Concert[] {
   return [...new Map(concerts.filter(item => ['KOPIS', 'STAGEPIN'].includes(item.source)
     && Number.isFinite(Date.parse(item.startsAt)) && Number.isFinite(Date.parse(item.endsAt ?? item.startsAt))
