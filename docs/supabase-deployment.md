@@ -44,6 +44,8 @@ Spring API는 Render 무료 Docker 서비스, 웹은 Vercel에 유지한다. DB�
 
 2026-11-25 로컬 검증: 새 일회성 PostgreSQL 17에서 전체 서버 94개 중 93개 통과, 실제 모델 호출 1개 조건부 미실행. 인증 DB 7개, 굿즈 DB 4개, 찜 DB 3개, 새 스키마 DB 1개와 profile 설정 1개는 skip 없이 실행했다. 실제 Supabase 연결과 운영 배포는 로그인/프로젝트 설정 전이므로 미검증이다.
 
+첫 PR 검사에서 기존 Expo SDK 58 패키지 11개의 권장 버전 불일치로 mobile CI가 실패했다. SDK는 58로 유지하고 `expo install --fix`로 권장 버전 및 lockfile을 맞췄으며 자동 추가된 expo-status-bar config plugin도 포함했다. 이후 로컬 lint, 타입 검사, Node 66개, Expo Doctor 20/20, 웹 export가 통과했다. iOS 재빌드/실기기 실행을 검증한 것은 아니다. npm 설치가 보고한 보안 경고 9개(중간 8, 높음 1)는 이번 호환성 보정에서 해결했다고 주장하지 않으며 강제 audit fix는 실행하지 않았다.
+
 ## 무료 한도와 사진
 
 2026-11-25 공식 요금표 기준 Free DB 500MB, Storage 1GB, 일반 egress 월 5GB, cached egress 월 5GB, 활성 프로젝트 2개. 저활동 시 일시정지되며 관리형 자동 백업은 무료에 포함되지 않는다. 현재 사진은 BYTEA여서 **DB 500MB 한도**를 사용한다. Storage 이전과 자동 백업은 이번 변경에 포함하지 않는다. 계속 무료이거나 무중단인 운영을 보장하지 않는다.
