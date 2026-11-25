@@ -8,36 +8,21 @@ services:
     dockerContext: ./backend
     healthCheckPath: /actuator/health
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: supabase
       - key: DB_HOST
-        fromDatabase:
-          name: stage-pin-db
-          property: host
+        sync: false
       - key: DB_PORT
-        fromDatabase:
-          name: stage-pin-db
-          property: port
+        value: "5432"
       - key: DB_NAME
-        fromDatabase:
-          name: stage-pin-db
-          property: database
+        value: postgres
       - key: DB_USERNAME
-        fromDatabase:
-          name: stage-pin-db
-          property: user
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase:
-          name: stage-pin-db
-          property: password
+        sync: false
       - key: KOPIS_API_KEY
         sync: false
       - key: STAGEPIN_ADMIN_KEY
         sync: false
       - key: APP_CORS_ALLOWED_ORIGIN_PATTERNS
         value: https://*.vercel.app,http://localhost:*
-
-databases:
-  - name: stage-pin-db
-    plan: free
-    region: singapore
-    databaseName: stagepin
-    user: stagepin

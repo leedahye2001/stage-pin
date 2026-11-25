@@ -77,6 +77,10 @@ PC와 모바일의 레이아웃을 구분하고 API 대기는 스켈레톤으로
 
 [시스템 구성 상세](docs/architecture.md) | [실제 스키마와 관계](docs/erd.md) | [API와 데이터 흐름](docs/data-flows.md)
 
+### Supabase 전환 설정
+
+Render의 만료된 PostgreSQL 대신 새 Supabase Free DB를 사용하기 위한 `supabase` 프로파일과 외부 DB 배포 설정을 추가했습니다. API의 Render Docker와 프론트 Vercel 구성은 유지합니다. 기존 Render 데이터는 복원하지 않으며, 로컬 Compose DB는 변경하지 않습니다. 실제 운영 전환은 프로젝트 연결과 배포 검증 후 완료됩니다. [연결 설정과 검증 절차](docs/supabase-deployment.md)
+
 ## 4. 핵심 기술 의사결정과 문제 해결
 
 ### 카카오 인증과 서비스 세션 분리
