@@ -101,7 +101,7 @@ backend/src/main/java/com/leedahye/stagepin/
 | 환경 | 프런트 | API | DB | AI |
 | --- | --- | --- | --- | --- |
 | 로컬 | Expo 개발 서버 `8081` | Compose `api`, 호스트 `8080` | Compose `database`, PostgreSQL 17, 볼륨 | 호스트 Ollama. 기본 주소 `host.docker.internal:11434` |
-| 웹 배포 설정 | Vercel: export `dist`, SPA rewrite | Render: backend Dockerfile | Render 별도 PostgreSQL 서비스 | Render 설정에 Ollama 서비스 없음 |
+| 웹 운영 | Vercel: export `dist`, SPA rewrite | Render: backend Dockerfile | Supabase Free PostgreSQL, stagepin 전용 스키마 | Render 설정에 Ollama 서비스 없음 |
 | iOS 개발 빌드 | Xcode/Expo 앱 설치 | 빌드에 지정한 API URL | API를 통해 접근 | API에서 접근 가능한 모델 서버 필요 |
 
 웹 도메인은 `https://stage-pin.vercel.app`, API 주소는 빌드 시 `EXPO_PUBLIC_API_URL`로 결정된다.

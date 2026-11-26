@@ -4,6 +4,8 @@
 2026-11-05: V5~V8 회원/검색/굿즈, 2026-11-06: V9 회원 찜 테이블을 아래 반영했다.
 운영 DB를 역공학한 문서는 아니다.
 
+운영 DB를 Supabase로 전환한 뒤에도 아래 테이블 구조와 FK는 유지한다. 운영은 `stagepin` 전용 스키마, 로컬 Compose는 기존 `public` 스키마를 사용한다. Supabase의 관리형 `auth`/`storage` 스키마는 StagePin 회원/사진 테이블을 대체하지 않는다. [전환 설정과 검증](supabase-deployment.md)
+
 ## 1. 실제 DB ERD
 
 FK가 있는 관계만 선으로 연결했다. `ticket_opening.concert_id`는 UUID 컬럼이지만 **FK 제약이 없다**.
