@@ -79,7 +79,7 @@ PC와 모바일의 레이아웃을 구분하고 API 대기는 스켈레톤으로
 
 ### Supabase 전환 설정
 
-Render의 만료된 PostgreSQL 대신 새 Supabase Free DB를 사용하기 위한 `supabase` 프로파일과 외부 DB 배포 설정을 추가했습니다. API의 Render Docker와 프론트 Vercel 구성은 유지합니다. 기존 Render 데이터는 복원하지 않으며, 로컬 Compose DB는 변경하지 않습니다. 실제 운영 전환은 프로젝트 연결과 배포 검증 후 완료됩니다. [연결 설정과 검증 절차](docs/supabase-deployment.md)
+Render의 만료된 PostgreSQL 대신 새 Supabase Free DB로 운영 연결을 전환했습니다. `supabase` 프로파일에서 전용 `stagepin` 스키마와 암호화된 Session pooler 연결을 사용합니다. API의 Render Docker와 프론트 Vercel 구성은 유지합니다. 기존 Render 데이터는 복원하지 않았고 로컬 Compose DB도 변경하지 않았습니다. 마이그레이션, health, 공개 조회와 비로그인 차단을 확인했으며 실제 계정의 신규 등록은 별도 검증 범위입니다. [연결 설정과 검증 결과](docs/supabase-deployment.md)
 
 ## 4. 핵심 기술 의사결정과 문제 해결
 
